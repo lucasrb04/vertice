@@ -12,7 +12,7 @@ Este arquivo define as diretrizes, comandos e padrões arquiteturais para o agen
 - **Framework:** Next.js (última versão estável, ≥ 15, App Router) com TypeScript.
 - **Estilização & UI:** Tailwind CSS v4 + shadcn/ui (seguindo estritamente [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)).
 - **Banco de Dados & ORM:** PostgreSQL + Drizzle ORM (com extensões `pg_trgm` e `unaccent` para busca e tags).
-- **Autenticação:** Better-Auth (adapter Drizzle) com selo automático para e-mail institucional (`@unifei.edu.br`).
+- **Autenticação:** Better-Auth (adapter Drizzle) — **cadastro e login restritos a e-mails `@unifei.edu.br`** (D31).
 - **Validação:** Zod em todas as rotas e Server Actions.
 - **E-mails:** Resend + React Email.
 - **Testes:** Vitest (unidade + integração contra Postgres real de teste) e Playwright (fluxos E2E críticos).
@@ -21,15 +21,15 @@ Este arquivo define as diretrizes, comandos e padrões arquiteturais para o agen
 
 | Ação | Comando |
 | --- | --- |
-| Instalar dependências | `npm install` |
+| Instalar dependências | `pnpm install` |
 | Subir ambiente local (PostgreSQL via Docker) | `docker compose up -d` |
-| Gerar migrations do Drizzle | `npx drizzle-kit generate` |
-| Aplicar migrations | `npx drizzle-kit migrate` |
-| Popular banco (seed idempotente) | `npm run db:seed` |
-| Rodar servidor de desenvolvimento | `npm run dev` |
-| Rodar testes | `npm test` |
-| Rodar linters e type-check | `npm run lint && npx tsc --noEmit` |
-| Build de produção (Standalone) | `npm run build` |
+| Gerar migrations do Drizzle | `pnpm drizzle-kit generate` |
+| Aplicar migrations | `pnpm drizzle-kit migrate` |
+| Popular banco (seed idempotente) | `pnpm db:seed` |
+| Rodar servidor de desenvolvimento | `pnpm dev` |
+| Rodar testes | `pnpm test` |
+| Rodar linters e type-check | `pnpm lint && pnpm tsc --noEmit` |
+| Build de produção (Standalone) | `pnpm build` |
 
 ## 3. Diretrizes de Código e Arquitetura
 

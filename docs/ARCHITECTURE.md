@@ -237,7 +237,8 @@ export const courses = pgTable(
 // ==========================================
 
 // Tabela de usuário do Better-Auth (modelName "users" + additionalFields: institutionId,
-// systemRole, isBanned, isInstitutionalEmail). As tabelas sessions, accounts e verifications
+// systemRole, isBanned). Só e-mails dos allowedEmailDomains da instituição se cadastram (D31).
+// As tabelas sessions, accounts e verifications
 // são geradas pelo CLI do Better-Auth e incluídas no schema Drizzle. Banir apaga as sessions.
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -247,7 +248,6 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 120 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
-  isInstitutionalEmail: boolean("is_institutional_email").notNull().default(false), // true se @unifei.edu.br verificado
   image: text("image"),
   systemRole: systemRoleEnum("system_role").notNull().default("USER"),
   isBanned: boolean("is_banned").notNull().default(false),
@@ -353,7 +353,7 @@ export const projects = pgTable(
     websiteUrl: varchar("website_url", { length: 255 }),
     instagramUrl: varchar("instagram_url", { length: 255 }),
     contactEmail: varchar("contact_email", { length: 255 }).notNull(),
-    hasInstitutionalBadge: boolean("has_institutional_badge").notNull().default(false),
+    hasInstitutionalBadge: boolean("has_institutional_badge").notNull().default(false), // "Projeto verificado" — concedido manualmente pelo admin (D31)
     status: projectStatusEnum("status").notNull().default("ACTIVE"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -689,15 +689,16 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 FROM base AS deps
-COPY package.json package-lock.json ./
-RUN npm ci
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+RUN corepack enable && pnpm build
 
 FROM base AS runner
 WORKDIR /app
@@ -798,7 +799,7 @@ volumes:
 
 ## 9. Seed Inicial Obrigatório (`src/db/seed.ts`)
 
-O comando `npm run db:seed` deve ser idempotente (`onConflictDoNothing`) e popular:
+O comando `pnpm db:seed` deve ser idempotente (`onConflictDoNothing`) e popular:
 1. **Instituição Padrão:** `slug: "unifei-itajuba"`, `name: "Universidade Federal de Itajubá — Campus Itajubá"`, `allowedEmailDomains: ["unifei.edu.br"]`.
 2. **Cursos de Graduação da UNIFEI (Campus Itajubá):**
    * *IESTI:* Ciência da Computação (`CCO`), Engenharia de Computação (`ECO`), Sistemas de Informação (`SIN`), Engenharia Eletrônica (`EEL`), Engenharia de Controle e Automação (`ECA`), Engenharia Elétrica (`ELT`), Engenharia de Telecomunicações (`ETEL`).

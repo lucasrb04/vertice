@@ -53,8 +53,10 @@ Dentro de cada projeto cadastrado, os membros gestores possuem um dos seguintes 
 * **`ADMIN` (Diretor / Co-orientador):** Pode editar o projeto, criar/editar vagas e gerenciar candidatos.
 * **`REVIEWER` (Avaliador / Membro de RH do Projeto):** Pode visualizar os candidatos inscritos nas vagas do projeto e movimentar seus status no Kanban de seleção, sem permissão para excluir o projeto.
 
-### 2.3. Selo Automático de Vínculo Institucional
-* Qualquer e-mail válido pode criar conta (para não barrar alunos recém-ingressantes sem e-mail institucional ativo ou projetos que usam Gmail próprio), mas contas e projetos vinculados a e-mails com domínio `@unifei.edu.br` recebem automaticamente a flag `is_institutional_email = true` e exibem um selo visual de verificação.
+### 2.3. Acesso Restrito ao Domínio Institucional (D31)
+* **Somente e-mails `@unifei.edu.br` podem criar conta e fazer login.** A validação é feita no servidor contra os domínios permitidos da instituição (`institutions.allowed_email_domains`).
+* Projetos podem informar qualquer e-mail de contato público (ex: Gmail da equipe).
+* O selo de verificação de projeto é concedido manualmente pelo `SYSTEM_ADMIN` (projeto oficial/verificado).
 
 ---
 
@@ -151,7 +153,7 @@ Embora a plataforma opere no modelo *Self-Service* (sem fila de aprovação pré
    * KPIs em tempo real: Total de alunos cadastrados (e % com perfil completo), Projetos ativos por categoria, Vagas abertas vs. encerradas, Total de candidaturas internas + Cliques em editais externos, e taxa de entrega/falha de e-mails.
 2. **Gestão e Intervenção em Projetos e Vagas:**
    * Listagem completa com busca e filtros por status (`ACTIVE`, `SUSPENDED`, `ARCHIVED`).
-   * **Ações de Suporte:** Editar dados de qualquer projeto/vaga (ex: corrigir um link quebrado a pedido de um professor), alterar ou **transferir a propriedade (`OWNER`)** de um projeto para outro usuário (muito comum na troca anual de diretoria/capitania de Projetos Especiais e EJs), e conceder/revogar manualmente o selo de verificação institucional.
+   * **Ações de Suporte:** Editar dados de qualquer projeto/vaga (ex: corrigir um link quebrado a pedido de um professor), alterar ou **transferir a propriedade (`OWNER`)** de um projeto para outro usuário (muito comum na troca anual de diretoria/capitania de Projetos Especiais e EJs), e conceder/revogar manualmente o selo de projeto verificado.
    * **Moderação Reativa (Kill-Switch):** Suspender/ocultar imediatamente um projeto ou vaga em caso de spam, conteúdo impróprio ou informação falsa, registrando o motivo no log de auditoria.
 3. **Governança e Higienização de Tags Abertas (*Tag Management*):**
    * Visualização de todas as tags do sistema com contagem de uso (quantos alunos e quantas vagas utilizam cada tag) e filtro de *"Tags criadas recentemente pelos usuários"*.

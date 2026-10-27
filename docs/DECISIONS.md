@@ -17,6 +17,7 @@ Status: **APROVADO** (2026-10-27). Os demais documentos já foram atualizados pa
 | D4 | Chaves primárias | `uuid` com `defaultRandom()` (UUIDv4) em todas as tabelas. CUID2/UUIDv7 descartados. URLs públicas usam `slug`. | UUIDv4 já elimina enumeração (IDOR); PostgreSQL 16 não gera UUIDv7 nativamente e não precisamos de ordenação por ID. |
 | D5 | Testes | **Vitest** para unidades puras (match, normalização de tags, validador de URL) e para integração de Server Actions/guards contra um Postgres real de teste (container `postgres-test` no `docker-compose`). **Playwright** para 2–3 fluxos críticos E2E (publicar vaga, candidatar-se, mover no Kanban), adicionados nos subprojetos correspondentes. | O fluxo Superpowers usa TDD; guards de segurança precisam ser testados contra o banco real, não mocks. |
 | D6 | Specs e planos | Specs em `docs/superpowers/specs/YYYY-MM-DD-<tema>-design.md`; planos em `docs/plans/YYYY-MM-DD-<tema>.md`. | Convenção do Superpowers + pasta já prevista na arquitetura. |
+| D30 | Gerenciador de pacotes | **pnpm** (lockfile `pnpm-lock.yaml`; Dockerfile usa `corepack enable` + `pnpm install --frozen-lockfile`). | Preferência do autor. |
 
 ## 2. Motor de Match
 
@@ -38,7 +39,7 @@ Adota-se o **modelo de `ARCHITECTURE.md §5`** (é o mais preciso e implementáv
 |---|---|---|
 | D14 | Nomes de enums | Valem os do schema: `application_status` = `APPLIED, IN_REVIEW, INTERVIEW, ACCEPTED, REJECTED`; `application_mode` = `INTERNAL, EXTERNAL`. O PRD (`SUBMITTED`, `INTERNAL_APPLY`) será ajustado. |
 | D15 | Objetivo de carreira | Vira `pgEnum career_goal` = `ACADEMIC, INDUSTRY, IMPACT, LEADERSHIP, EXPLORING` (inclui "Liderança e gestão" do PRD). |
-| D16 | Better-Auth × `users` | A tabela `users` é a tabela de usuário do Better-Auth (via `modelName` + `additionalFields`: `institutionId`, `systemRole`, `isBanned`, `isInstitutionalEmail`), com IDs UUID. As tabelas próprias do Better-Auth (`sessions`, `accounts`, `verifications`) são geradas pelo CLI dele e incluídas no schema Drizzle. Banir usuário apaga suas linhas em `sessions`. |
+| D16 | Better-Auth × `users` | A tabela `users` é a tabela de usuário do Better-Auth (via `modelName` + `additionalFields`: `institutionId`, `systemRole`, `isBanned`), com IDs UUID. As tabelas próprias do Better-Auth (`sessions`, `accounts`, `verifications`) são geradas pelo CLI dele e incluídas no schema Drizzle. Banir usuário apaga suas linhas em `sessions`. |
 | D17 | Novas tabelas (lacunas do PRD) | **`application_events`** — histórico do Kanban: `applicationId, fromStatus, toStatus, message, actorUserId, createdAt`. |
 | | | **`external_application_marks`** — botão "Já me inscrevi neste edital": `userId, opportunityId, createdAt`, único por par. Aparece em "Minhas Candidaturas". |
 | | | **`opportunity_external_clicks`** — deduplicação de cliques: `opportunityId, visitorHash, day`, único pelo trio. `visitorHash` = HMAC(segredo, IP + User-Agent); **IP bruto nunca é armazenado** (LGPD). O contador `externalClicksCount` só incrementa quando a inserção é nova. |
@@ -47,6 +48,7 @@ Adota-se o **modelo de `ARCHITECTURE.md §5`** (é o mais preciso e implementáv
 | D19 | Vaga externa | `applicationMode = EXTERNAL` exige `externalUrl` https (Zod `refine` + `CHECK` no banco). `INTERNAL` ignora `externalUrl`. |
 | D20 | Unsubscribe | Link de *one-click unsubscribe* com token HMAC assinado (sem tabela extra); desliga `emailAlertsEnabled`. |
 | D21 | Texto das vagas | Markdown restrito (negrito, itálico, listas, links https) renderizado sem HTML bruto; validado e limitado por Zod no servidor. |
+| D31 | Cadastro restrito ao domínio institucional | **Só e-mails `@unifei.edu.br` podem criar conta ou entrar.** Validado no servidor (hook do Better-Auth) contra `institutions.allowedEmailDomains`. Substitui o PRD §2.3 ("qualquer e-mail pode criar conta"). Consequências: o campo `users.isInstitutionalEmail` deixa de existir (todo usuário é institucional); `projects.hasInstitutionalBadge` passa a significar **"projeto verificado pelo admin"**, concedido/revogado manualmente no `/admin`; `projects.contactEmail` continua aceitando qualquer e-mail (é só contato público). | Decisão do autor (2026-10-27): reduz spam e contas falsas. Custo aceito: calouros sem e-mail institucional ativo ainda não conseguem se cadastrar. |
 
 ## 4. Segurança e Limites
 
