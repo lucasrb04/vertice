@@ -803,7 +803,7 @@ volumes:
 
 O comando `pnpm db:seed` deve ser idempotente (`onConflictDoNothing`) e popular:
 1. **Instituição Padrão:** `slug: "unifei-itajuba"`, `name: "Universidade Federal de Itajubá — Campus Itajubá"`, `allowedEmailDomains: ["unifei.edu.br"]`.
-2. **Cursos de Graduação da UNIFEI (Campus Itajubá):**
+2. **Cursos de Graduação da UNIFEI (Campus Itajubá):** *(o instituto de cada curso abaixo está impreciso e será revisado; não é crítico para o MVP)*
    * *IESTI:* Ciência da Computação (`CCO`), Engenharia de Computação (`ECO`), Sistemas de Informação (`SIN`), Engenharia Eletrônica (`EEL`), Engenharia de Controle e Automação (`ECA`), Engenharia Elétrica (`ELT`), Engenharia de Telecomunicações (`ETEL`).
    * *IMC:* Engenharia Mecânica (`EME`), Engenharia Mecânica Aeronáutica (`EMA`), Engenharia de Materiais (`EMAT`).
    * *IEPG:* Engenharia de Produção (`EPR`), Administração (`ADM`).
