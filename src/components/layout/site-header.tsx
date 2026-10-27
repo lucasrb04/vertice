@@ -29,7 +29,7 @@ export async function SiteHeader() {
           </div>
         ) : (
           <Link href="/entrar" className="text-sm font-medium text-stone-800 hover:text-brand">
-            Entrar
+            Entrar com Google
           </Link>
         )}
       </div>

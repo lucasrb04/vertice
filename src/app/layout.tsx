@@ -4,9 +4,9 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import "./globals.css";
 
-const heading = Plus_Jakarta_Sans({ variable: "--font-heading", subsets: ["latin"] });
-const sans = Inter({ variable: "--font-sans", subsets: ["latin"] });
-const mono = JetBrains_Mono({ variable: "--font-mono", subsets: ["latin"] });
+const heading = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"] });
+const sans = Inter({ variable: "--font-inter", subsets: ["latin"] });
+const mono = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Vértice — UNIFEI",

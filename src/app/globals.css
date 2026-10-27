@@ -51,9 +51,9 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-heading: var(--font-heading);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+  --font-heading: var(--font-jakarta);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
 }
 
 @layer base {

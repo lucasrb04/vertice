@@ -11,6 +11,7 @@ test("entrar, ver painel, sair", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Olá, Aluno Teste" })).toBeVisible();
   await page.getByRole("button", { name: "Sair" }).click();
   await page.waitForURL("/");
+  await expect(page.getByRole("banner").getByRole("link", { name: "Entrar com Google" })).toBeVisible();
   await page.goto("/painel");
   await expect(page).toHaveURL(/\/entrar$/);
 });
@@ -19,6 +20,22 @@ test("usuário comum vê 404 em /admin", async ({ page }) => {
   await loginAs(page, "comum@unifei.edu.br", "Comum");
   const res = await page.goto("/admin");
   expect(res?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Página não encontrada" })).toBeVisible();
+});
+
+test("rota inexistente usa a mesma página 404 de /admin", async ({ page }) => {
+  const res = await page.goto("/rota-que-nao-existe");
+  expect(res?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: "Página não encontrada" })).toBeVisible();
+});
+
+test("fontes do Design System aplicadas por font-heading, font-sans e font-mono", async ({ page }) => {
+  await page.goto("/rota-que-nao-existe");
+  const family = (selector: string) =>
+    page.locator(selector).first().evaluate((el) => getComputedStyle(el).fontFamily);
+  expect(await family("h1")).toMatch(/Plus Jakarta Sans/);
+  expect(await family("body")).toMatch(/Inter/);
+  expect(await family(".font-mono")).toMatch(/JetBrains Mono/);
 });
 
 test("admin inicial vê o portal", async ({ page }) => {
