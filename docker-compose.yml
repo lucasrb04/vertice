@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5434:5432" # 5432 costuma estar ocupada por um Postgres nativo
+    environment:
+      POSTGRES_USER: vertice
+      POSTGRES_PASSWORD: vertice
+      POSTGRES_DB: vertice_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vertice -d vertice_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  postgres-test:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: vertice
+      POSTGRES_PASSWORD: vertice
+      POSTGRES_DB: vertice_test
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vertice -d vertice_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

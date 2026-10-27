@@ -1,5 +1,9 @@
+import { readFileSync } from "node:fs";
+import { parseEnv } from "node:util";
 import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
+
+const testEnv = parseEnv(readFileSync(".env.test", "utf8"));
 
 export default defineConfig({
   plugins: [tsconfigPaths()],
@@ -20,6 +24,8 @@ export default defineConfig({
           environment: "node",
           include: ["tests/integration/**/*.test.ts"],
           fileParallelism: false,
+          globalSetup: ["tests/setup/integration-global-setup.ts"],
+          env: testEnv,
         },
       },
     ],
