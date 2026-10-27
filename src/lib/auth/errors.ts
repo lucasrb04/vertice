@@ -38,3 +38,22 @@ export function fromAPIError(err: unknown): unknown {
   }
   return err;
 }
+
+/** Sem sessão válida ou conta banida. Quem captura decide: redirecionar (páginas) ou 401 (ações). */
+export class UnauthorizedError extends Error {
+  readonly reason: "NO_SESSION" | "BANNED";
+
+  constructor(reason: "NO_SESSION" | "BANNED") {
+    super(reason);
+    this.name = "UnauthorizedError";
+    this.reason = reason;
+  }
+}
+
+/** Recurso inexistente OU sem permissão: mesma classe e mensagem, para não vazar existência. */
+export class NotFoundError extends Error {
+  constructor() {
+    super("NOT_FOUND");
+    this.name = "NotFoundError";
+  }
+}
