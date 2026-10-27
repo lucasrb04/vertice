@@ -22,12 +22,12 @@ Este documento define a arquitetura de software, modelagem de banco de dados, re
 | **Framework Fullstack** | **Next.js (última estável, ≥ 15, App Router)** + **TypeScript 5** | SSR/RSC nativo para SEO da vitrine pública, Server Actions e tipagem ponta a ponta. |
 | **Banco de Dados** | **PostgreSQL 16 (Alpine)** | Suporte robusto a extensões de busca textual (`pg_trgm`, `unaccent`), índices GIN e transações ACID. |
 | **ORM & Migrations** | **Drizzle ORM** + `drizzle-kit` | Leve, SQL-like, zero overhead de binários Rust (ideal para containers Linux/ARM na OCI) e geração limpa de migrations. |
-| **Autenticação** | **Better-Auth** (Adapter Drizzle) | Gerenciamento seguro de sessão no Postgres, verificação de e-mail, suporte fácil a OAuth (Google) e campos customizados de sessão. |
+| **Autenticação** | **Better-Auth** (Adapter Drizzle) | Sessões no Postgres, login **somente via Google OAuth** restrito a `@unifei.edu.br` (D32) e campos customizados de usuário. |
 | **Estilização & UI** | **Tailwind CSS v4** + **shadcn/ui** (Radix UI) | Componentes acessíveis e customizáveis para construir uma interface autoral (Editorial/Acadêmica) sem "cara de IA". |
 | **Validação & Forms** | **Zod** + **React Hook Form** | Validação compartilhada entre cliente e servidor, bloqueando payloads malformados ou protocolos inseguros (`javascript:`). |
 | **Testes** | **Vitest** + **Playwright** | Unidade (match, tags, URLs) e integração contra Postgres real de teste; E2E nos fluxos críticos. |
 | **E-mails** | **Resend** + **React Email** | Templates transacionais em React/TSX com excelente entregabilidade para domínios `@unifei.edu.br`. |
-| **Segurança & Anti-Bot** | **Cloudflare Turnstile** + **Rate Limiter** | Proteção invisível gratuita em cadastros/criação de projetos e limitação de requisições por IP/Usuário. |
+| **Segurança & Anti-Bot** | **Cloudflare Turnstile** + **Rate Limiter** | Proteção invisível gratuita na criação de projetos e limitação de requisições por IP/Usuário. |
 | **Infraestrutura & Proxy** | **Docker Compose** + **Caddy 2** | Orquestração simples de containers e provisionamento automático de certificados TLS/HTTPS (Let's Encrypt). |
 
 ---
@@ -54,7 +54,7 @@ vertice-unifei/
 ├── src/
 │   ├── app/                      # Rotas do Next.js App Router
 │   │   ├── (public)/             # Rotas públicas (Timeline, Detalhe da Vaga, Página do Projeto)
-│   │   ├── (auth)/               # Login, Cadastro, Verificação de E-mail, Recuperação
+│   │   ├── (auth)/               # Login ("Entrar com Google")
 │   │   ├── (student)/            # Onboarding, Perfil Completo, Minhas Candidaturas
 │   │   ├── (organizer)/          # Wizard de Criação (Projeto + Vaga), Painel do Projeto, Kanban
 │   │   ├── admin/                # Portal do SYSTEM_ADMIN (Dashboard, Projetos, Merge de Tags, Audit)
@@ -641,13 +641,12 @@ Como a plataforma rodará na UNIFEI (onde há forte presença de alunos de Ciên
 
 1. **Guards de Autorização Centralizados (`src/lib/auth/guards.ts`):**
    * `requireAuth()`: Verifica sessão ativa no Better-Auth e garante `user.isBanned === false`.
-   * `requireVerifiedEmail()`: Bloqueia criação de projetos ou candidaturas caso `user.emailVerified === false`.
    * `requireProjectRole(projectId, ["OWNER", "ADMIN", "REVIEWER"])`: Consulta a tabela `project_members` garantindo que o usuário pertence ao projeto **e** ao mesmo `institutionId`. Caso o usuário seja `SYSTEM_ADMIN`, concede acesso de manutenção auditado.
    * `requireSystemAdmin()`: Protege todas as rotas `/admin/*` e `admin.actions.ts`. Qualquer tentativa de acesso por usuário não-admin retorna `404 Not Found` (para não revelar a superfície administrativa) e registra alerta no log.
 2. **Sanitização Estrita de Links Externos (`src/lib/security/url.ts`):**
    * Campos como `externalUrl`, `websiteUrl`, `githubUrl`, `linkedinUrl` e `lattesUrl` utilizam um validador Zod customizado que faz `new URL(val)` e exige estritamente `parsed.protocol === "https:"`, bloqueando vetores XSS como `javascript:`, `data:` ou `vbscript:`.
 3. **Proteção Anti-Spam e Rate Limiting:**
-   * Validação server-side do token **Cloudflare Turnstile** no cadastro, login, recuperação de senha e criação de projeto.
+   * Validação server-side do token **Cloudflare Turnstile** na criação de projeto.
    * Rate Limiter em memória (`LRU Cache` no processo Node standalone) limitando mutações por IP e por `userId` (ex: máx. 3 projetos criados por usuário por dia, máx. 20 candidaturas por hora).
 4. **Content Security Policy (CSP) e Headers HTTP (`next.config.ts`):**
    * `X-Frame-Options: DENY` (anti-clickjacking).
@@ -759,6 +758,9 @@ services:
       DEFAULT_INSTITUTION_SLUG: "unifei-itajuba"
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${NEXT_PUBLIC_APP_URL}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      VISITOR_HASH_SECRET: ${VISITOR_HASH_SECRET}
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
       RESEND_API_KEY: ${RESEND_API_KEY}
       EMAIL_FROM: ${EMAIL_FROM:-"Vértice UNIFEI <nao-responda@seudominio.com.br>"}

@@ -12,7 +12,7 @@ Este arquivo define as diretrizes, comandos e padrões arquiteturais para o agen
 - **Framework:** Next.js (última versão estável, ≥ 15, App Router) com TypeScript.
 - **Estilização & UI:** Tailwind CSS v4 + shadcn/ui (seguindo estritamente [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md)).
 - **Banco de Dados & ORM:** PostgreSQL + Drizzle ORM (com extensões `pg_trgm` e `unaccent` para busca e tags).
-- **Autenticação:** Better-Auth (adapter Drizzle) — **cadastro e login restritos a e-mails `@unifei.edu.br`** (D31).
+- **Autenticação:** Better-Auth (adapter Drizzle) — **login somente com Google, restrito a contas `@unifei.edu.br`** (D31, D32).
 - **Validação:** Zod em todas as rotas e Server Actions.
 - **E-mails:** Resend + React Email.
 - **Testes:** Vitest (unidade + integração contra Postgres real de teste) e Playwright (fluxos E2E críticos).
@@ -48,7 +48,7 @@ Siga rigorosamente o guia em [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md). P
 Estrutura completa em [`docs/ARCHITECTURE.md §3`](docs/ARCHITECTURE.md). Resumo:
 
 - `src/app/(public)`: Timeline pública, detalhes de vagas e páginas de projetos.
-- `src/app/(auth)`: Login, cadastro, verificação de e-mail e recuperação de senha.
+- `src/app/(auth)`: Página de login ("Entrar com Google").
 - `src/app/(student)`: Onboarding, perfil e "Minhas Candidaturas".
 - `src/app/(organizer)`: Wizard de projeto + vaga, painel do projeto e Kanban.
 - `src/app/admin`: Portal do `SYSTEM_ADMIN`.

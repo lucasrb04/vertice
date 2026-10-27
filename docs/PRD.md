@@ -43,7 +43,7 @@ Para permitir que um mesmo aluno veterano seja simultaneamente **candidato a uma
 2. **`USER` (Usuário Autenticado — Aluno / Professor / Líder):**
    * Preenche seu perfil de interesses/competências e recebe recomendações personalizadas ($0\%$ a $100\%$).
    * Candidata-se a vagas com **Triagem Interna** em 1 clique.
-   * Pode criar novos Projetos (desde que tenha **e-mail verificado**) ou ser convidado para gerenciar projetos existentes.
+   * Pode criar novos Projetos ou ser convidado para gerenciar projetos existentes.
 3. **`SYSTEM_ADMIN` (Administrador da Plataforma):**
    * Acesso exclusivo ao **Portal de Admin (`/admin`)** para observabilidade, auditoria de segurança, moderação reativa de projetos/vagas/usuários e governança de tags.
 
@@ -54,7 +54,7 @@ Dentro de cada projeto cadastrado, os membros gestores possuem um dos seguintes 
 * **`REVIEWER` (Avaliador / Membro de RH do Projeto):** Pode visualizar os candidatos inscritos nas vagas do projeto e movimentar seus status no Kanban de seleção, sem permissão para excluir o projeto.
 
 ### 2.3. Acesso Restrito ao Domínio Institucional (D31)
-* **Somente e-mails `@unifei.edu.br` podem criar conta e fazer login.** A validação é feita no servidor contra os domínios permitidos da instituição (`institutions.allowed_email_domains`).
+* **Login exclusivamente via "Entrar com Google" (Google Workspace da UNIFEI), restrito a contas `@unifei.edu.br` (D32).** Não há senha nem recuperação de senha; o primeiro login cria a conta. A validação é feita no servidor contra os domínios permitidos da instituição (`institutions.allowed_email_domains`).
 * Projetos podem informar qualquer e-mail de contato público (ex: Gmail da equipe).
 * O selo de verificação de projeto é concedido manualmente pelo `SYSTEM_ADMIN` (projeto oficial/verificado).
 
@@ -139,10 +139,9 @@ Na criação da vaga, o responsável escolhe entre dois modos de captação:
 
 ### RF06 — Sistema de E-mails Transacionais e Alertas de Match
 Integrado via **Resend + React Email**, com templates limpos e responsivos:
-1. **Verificação de Conta e Autenticação:** Link mágico / código de verificação de e-mail e recuperação de senha.
-2. **Confirmação de Candidatura:** E-mail para o aluno confirmando a inscrição interna + resumo diário ou notificação imediata para o responsável da vaga.
-3. **Atualização de Status do Processo Seletivo:** Disparo imediato quando o projeto altera o status do candidato no Kanban interno (incluindo a mensagem customizada do avaliador).
-4. **Alerta de Novas Vagas com Alto Match (*Match Digest*):**
+1. **Confirmação de Candidatura:** E-mail para o aluno confirmando a inscrição interna + resumo diário ou notificação imediata para o responsável da vaga.
+2. **Atualização de Status do Processo Seletivo:** Disparo imediato quando o projeto altera o status do candidato no Kanban interno (incluindo a mensagem customizada do avaliador).
+3. **Alerta de Novas Vagas com Alto Match (*Match Digest*):**
    * Sempre que uma nova vaga é publicada (processado de forma assíncrona/background ou via Cron Job), alunos que optaram por receber alertas (`email_match_alerts = true`) e possuem afinidade $A(u, v) \ge 80\%$ recebem um e-mail personalizado destacando a vaga e os motivos do match.
    * Todos os e-mails não-transacionais possuem link de *One-Click Unsubscribe* (`List-Unsubscribe` header).
 
@@ -177,7 +176,7 @@ Por ser uma plataforma utilizada em uma universidade com forte presença de curs
    * Links externos de editais, GitHub, Lattes e redes sociais passam por um validador de URL que **aceita exclusivamente o protocolo `https:`** (bloqueando na raiz vetores como `javascript:`, `data:` ou `vbscript:`).
    * Textos descritivos de projetos e vagas não aceitam HTML arbitrário; utiliza-se texto puro estruturado ou Markdown restrito e sanitizado no servidor.
 3. **Proteção Anti-Bot, Anti-Spam e Rate Limiting:**
-   * **Cloudflare Turnstile** (desafio invisível) obrigatório nas telas de Cadastro, Login, Recuperação de Senha e Criação de Projeto.
+   * **Cloudflare Turnstile** (desafio invisível) obrigatório na Criação de Projeto (login e cadastro já passam pelo Google).
    * **Rate Limiting em Camadas:** Implementado no backend por IP e por `user_id` (ex: máximo de 3 projetos criados por usuário por dia; máximo de 20 candidaturas por hora; limite de requisições na busca e no disparo de e-mails de verificação).
 4. **Botão de "Denunciar Vaga/Projeto" na Comunidade:**
    * Qualquer usuário logado pode reportar uma vaga ou projeto suspeito (uma denúncia por usuário por alvo). Ao atingir $5$ denúncias distintas, o alvo entra automaticamente no status `UNDER_REVIEW`, deixa de aparecer na timeline e dispara um alerta por e-mail para o `SYSTEM_ADMIN`.

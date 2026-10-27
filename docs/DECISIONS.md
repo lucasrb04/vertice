@@ -55,8 +55,10 @@ Adota-se o **modelo de `ARCHITECTURE.md §5`** (é o mais preciso e implementáv
 | # | Tema | Decisão |
 |---|---|---|
 | D22 | Limite de projetos | **3 projetos por usuário por dia** (o mais restritivo, do PRD). 20 candidaturas por hora. Limiter em memória (LRU) — válido porque o deploy é de instância única. |
-| D23 | Turnstile | Em cadastro, login, recuperação de senha e criação de projeto (lista do PRD, mais completa). |
+| D23 | Turnstile | Somente na **criação de projeto** (cadastro/login passam pelo Google — ver D32). |
 | D24 | Acesso ao `/admin` por não-admin | Responde 404 e registra em `audit_logs`. |
+| D32 | Método de login | **Somente "Entrar com Google"** (o e-mail da UNIFEI é Google Workspace). Parâmetro `hd=unifei.edu.br` na tela do Google apenas como conveniência; o servidor revalida domínio (D31) e `email_verified` do token. Sem senha, sem recuperação de senha, sem e-mail de verificação; `requireVerifiedEmail()` deixa de existir. O primeiro login cria a conta. | Decisão do autor (2026-10-27). |
+| D33 | Login em testes | Provider de login de teste (sem Google) habilitado **apenas** quando `ENABLE_TEST_AUTH=true` e `NODE_ENV !== "production"`; a aplicação recusa iniciar em produção com a flag ligada. Usado pelos testes de integração e Playwright. | Decisão técnica (Claude): fluxos com Google não são automatizáveis. |
 
 ## 5. Visual
 
