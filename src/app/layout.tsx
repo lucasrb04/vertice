@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${heading.variable} ${sans.variable} ${mono.variable} h-full`}
     >
       <body className="flex min-h-full flex-col">
-        <SiteHeader user={null} />
+        <SiteHeader />
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </body>
