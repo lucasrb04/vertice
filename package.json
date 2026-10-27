@@ -11,7 +11,8 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx --env-file=.env src/db/seed.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
