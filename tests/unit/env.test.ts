@@ -24,6 +24,11 @@ describe("parseEnv", () => {
     expect(() => parseEnv({ ...base, NODE_ENV: "production", ENABLE_TEST_AUTH: "true" }))
       .toThrow(/ENABLE_TEST_AUTH/);
   });
+  it("aceita produção com ENABLE_TEST_AUTH=false", () => {
+    const env = parseEnv({ ...base, NODE_ENV: "production", ENABLE_TEST_AUTH: "false" });
+    expect(env.NODE_ENV).toBe("production");
+    expect(env.ENABLE_TEST_AUTH).toBe(false);
+  });
   it("recusa variável obrigatória ausente", () => {
     const rest: Record<string, string> = { ...base };
     delete rest.DATABASE_URL;
