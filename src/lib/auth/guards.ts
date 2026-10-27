@@ -99,17 +99,22 @@ export async function requireAuth(): Promise<AuthUser> {
   return resolveActiveUser(await getSessionUser());
 }
 
+/** Para Server Components: sem sessão → /entrar; banido → /entrar?error=ACCOUNT_SUSPENDED. */
 export async function requireAuthPage(): Promise<AuthUser> {
+  // Resolve dentro do try e age fora dele: redirect() lança e não pode ser engolido por um catch.
+  let user: AuthUser | null = null;
+  let redirectTo = "/entrar";
   try {
-    return await requireAuth();
+    user = await requireAuth();
   } catch (err) {
-    if (err instanceof UnauthorizedError) {
-      redirect(err.reason === "BANNED" ? "/entrar?error=ACCOUNT_SUSPENDED" : "/entrar");
-    }
-    throw err;
+    if (!(err instanceof UnauthorizedError)) throw err;
+    if (err.reason === "BANNED") redirectTo = "/entrar?error=ACCOUNT_SUSPENDED";
   }
+  if (!user) redirect(redirectTo);
+  return user;
 }
 
+/** Para Server Actions e route handlers. Lança `UnauthorizedError` ou `NotFoundError`. */
 export async function requireProjectRole(
   projectId: string,
   roles: readonly ProjectRole[],
@@ -120,6 +125,34 @@ export async function requireProjectRole(
   return authorizeProjectRole(user, projectId, roles, { ...opts, ipAddress });
 }
 
+/** Para Server Components: como `requireAuthPage` na falta de sessão; sem permissão → notFound(). */
+export async function requireProjectRolePage(
+  projectId: string,
+  roles: readonly ProjectRole[],
+  opts: { allowInactive?: boolean } = {},
+): Promise<ProjectAccess> {
+  const user = await requireAuthPage();
+  const ipAddress = getRequestIp(await headers());
+  let access: ProjectAccess | null = null;
+  try {
+    access = await authorizeProjectRole(user, projectId, roles, { ...opts, ipAddress });
+  } catch (err) {
+    if (!(err instanceof NotFoundError)) throw err;
+  }
+  if (!access) notFound();
+  return access;
+}
+
+/**
+ * Para Server Actions e route handlers. Sem sessão ou banido → `UnauthorizedError`; autenticado
+ * sem SYSTEM_ADMIN → `NotFoundError`, com ADMIN_ACCESS_DENIED auditado (via authorizeSystemAdmin).
+ */
+export async function requireSystemAdmin(path: string): Promise<AuthUser> {
+  const user = await requireAuth();
+  return authorizeSystemAdmin(user, { path, ipAddress: getRequestIp(await headers()) });
+}
+
+/** Para Server Components: qualquer recusa (inclusive sem sessão) vira notFound(), sem redirecionar. */
 export async function requireSystemAdminPage(path: string): Promise<AuthUser> {
   let user: AuthUser | null = null;
   try {
@@ -127,10 +160,12 @@ export async function requireSystemAdminPage(path: string): Promise<AuthUser> {
   } catch (err) {
     if (!(err instanceof UnauthorizedError)) throw err;
   }
+  let admin: AuthUser | null = null;
   try {
-    return await authorizeSystemAdmin(user, { path, ipAddress: getRequestIp(await headers()) });
+    admin = await authorizeSystemAdmin(user, { path, ipAddress: getRequestIp(await headers()) });
   } catch (err) {
-    if (err instanceof NotFoundError) notFound();
-    throw err;
+    if (!(err instanceof NotFoundError)) throw err;
   }
+  if (!admin) notFound();
+  return admin;
 }
