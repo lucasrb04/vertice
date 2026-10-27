@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     "Plataforma de divulgação de vagas, ICs, extensão e projetos especiais da UNIFEI.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="pt-BR"
