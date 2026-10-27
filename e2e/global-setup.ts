@@ -1,8 +1,13 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { parseEnv } from "node:util";
 
 /** Migra, zera e semeia o banco de teste (5433) antes da suíte E2E. */
 export default function globalSetup(): void {
-  execFileSync("pnpm", ["exec", "tsx", "--env-file=.env.test", "e2e/prepare-db.ts"], {
+  // Os valores de .env.test vencem qualquer variável já exportada no shell (ex.: DATABASE_URL de dev).
+  const testEnv = parseEnv(readFileSync(".env.test", "utf8"));
+  execFileSync("pnpm", ["exec", "tsx", "e2e/prepare-db.ts"], {
     stdio: "inherit",
+    env: { ...process.env, ...testEnv },
   });
 }

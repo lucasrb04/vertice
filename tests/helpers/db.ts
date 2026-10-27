@@ -1,9 +1,13 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
+import { assertTestDatabase } from "@/db/test-db-guard";
+import { getEnv } from "@/env";
 import { clearTenantCache } from "@/lib/tenant";
 
 /** Esvazia todas as tabelas do schema público (exceto o controle de migrations do Drizzle). */
 export async function resetDb(): Promise<void> {
+  const env = getEnv();
+  assertTestDatabase(env.NODE_ENV, env.DATABASE_URL);
   clearTenantCache();
   const { rows } = await db.execute<{ tablename: string }>(sql`
     select tablename from pg_tables

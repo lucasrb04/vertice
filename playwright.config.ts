@@ -21,7 +21,7 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       ...testEnv,
-      // A origem do navegador é :3100; o Better-Auth rejeita signOut de outra origem.
+      // A origem do navegador é :3100; a rota /api/sign-out rejeita requisições de outra origem.
       BETTER_AUTH_URL: BASE_URL,
       NEXT_PUBLIC_APP_URL: BASE_URL,
     },

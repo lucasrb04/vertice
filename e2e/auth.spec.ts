@@ -10,6 +10,7 @@ test("entrar, ver painel, sair", async ({ page }) => {
   await page.goto("/painel");
   await expect(page.getByRole("heading", { name: "Olá, Aluno Teste" })).toBeVisible();
   await page.getByRole("button", { name: "Sair" }).click();
+  await page.waitForURL("/");
   await page.goto("/painel");
   await expect(page).toHaveURL(/\/entrar$/);
 });

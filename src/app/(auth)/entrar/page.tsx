@@ -14,7 +14,8 @@ const GENERIC_ERROR_MESSAGE = "Não foi possível entrar. Tente novamente.";
 
 /**
  * Better-Auth 1.7.14 redireciona com `unable_to_get_user_info` quando o `hd` do Google não
- * confere (google.mjs: getUserInfo devolve null -> oauth2/callback.mjs). Equivale a domínio recusado.
+ * confere (google.mjs: getUserInfo devolve null -> oauth2/callback.mjs). Na prática, hd divergente;
+ * o mesmo código pode vir de outras falhas de userinfo, tratadas como domínio recusado.
  */
 const BETTER_AUTH_HD_MISMATCH_CODE = "unable_to_get_user_info";
 
