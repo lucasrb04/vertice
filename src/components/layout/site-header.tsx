@@ -23,7 +23,10 @@ export async function SiteHeader() {
           Vértice
         </Link>
         {user ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            <Link href="/publicar" className="text-sm font-medium text-stone-800 hover:text-brand">
+              Publicar processo
+            </Link>
             <span className="text-sm text-stone-600">{user.name}</span>
             <SignOutButton />
           </div>
