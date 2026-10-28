@@ -26,7 +26,8 @@ export async function createProjectWithOpportunityAction(input: {
       project: input.project,
       opportunity: input.opportunity,
     });
-    revalidatePath("/meus-projetos");
+    revalidatePath("/painel");
+    revalidatePath("/publicar");
     return { projectId };
   });
 }
@@ -35,7 +36,9 @@ export async function updateProjectAction(projectId: string, input: unknown): Pr
   return runAction(async () => {
     const user = await requireAuth();
     await updateProject(user, projectId, input);
-    revalidatePath(`/meus-projetos/${projectId}`);
+    revalidatePath(`/projetos/${projectId}`, "layout");
+    revalidatePath("/painel");
+    revalidatePath("/publicar");
   });
 }
 
@@ -43,7 +46,8 @@ export async function archiveProjectAction(projectId: string): Promise<ActionRes
   return runAction(async () => {
     const user = await requireAuth();
     await archiveProject(user, projectId);
-    revalidatePath("/meus-projetos");
-    revalidatePath(`/meus-projetos/${projectId}`);
+    revalidatePath(`/projetos/${projectId}`, "layout");
+    revalidatePath("/painel");
+    revalidatePath("/publicar");
   });
 }

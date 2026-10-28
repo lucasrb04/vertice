@@ -1,0 +1,166 @@
+import { test, expect, type Page } from "@playwright/test";
+import { SYSTEM_ADMIN_READ_ONLY } from "../src/lib/projects/labels";
+import { MEMBER_NO_ACCOUNT } from "../src/lib/projects/members";
+import { formatDay, todayInSaoPaulo } from "../src/lib/time";
+
+async function loginAs(page: Page, email: string, name: string) {
+  const res = await page.request.post("/api/test-auth/login", { data: { email, name } });
+  expect(res.status()).toBe(200);
+}
+
+/** Hoje + `days` no fuso de Brasília, como YYYY-MM-DD (valor de `<input type="date">`). */
+function dayInSaoPaulo(days: number): string {
+  const d = new Date(`${todayInSaoPaulo()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Cria projeto + processo pelo wizard (mesmos passos do E2E da Task 9) e devolve o uuid do projeto. */
+async function publishProject(page: Page, projectName: string, opportunityTitle: string): Promise<string> {
+  await page.goto("/publicar?novo=1");
+  await page.getByLabel("Nome do projeto").fill(projectName);
+  await page.getByRole("combobox", { name: "Categoria" }).click();
+  await page.getByRole("option", { name: "Projeto especial" }).click();
+  await page.getByLabel("Descrição curta").fill("Equipe de competição de veículos off-road.");
+  await page.getByLabel("E-mail de contato").fill("contato@equipe.com");
+  await page.getByRole("button", { name: "Continuar" }).click();
+
+  await page.getByLabel("Título do processo").fill(opportunityTitle);
+  await page.getByLabel("Descrição das atividades").fill("Projetar e montar o sistema de suspensão.");
+  await page.getByLabel("Prazo final de inscrição").fill(dayInSaoPaulo(10));
+  await page.getByLabel("Link do edital ou formulário").fill("https://unifei.edu.br/edital.pdf");
+  await page.getByRole("button", { name: "Publicar" }).click();
+
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("heading", { level: 1, name: projectName })).toBeVisible();
+  return new URL(page.url()).pathname.split("/").pop()!;
+}
+
+async function addMemberByEmail(page: Page, projectId: string, email: string, roleLabel: "Administrador" | "Revisor") {
+  await page.goto(`/projetos/${projectId}/membros`);
+  await page.getByLabel("E-mail da pessoa").fill(email);
+  await page.getByRole("combobox", { name: "Papel" }).click();
+  await page.getByRole("option", { name: roleLabel }).click();
+  await page.getByRole("button", { name: "Adicionar" }).click();
+}
+
+test("encerrar processo move para Encerrados", async ({ page }) => {
+  await loginAs(page, "dono.encerrar@unifei.edu.br", "Dono Encerrar");
+  await publishProject(page, "Projeto Encerrar", "Processo para encerrar");
+
+  const abertos = page.getByRole("region", { name: "Abertos" });
+  await expect(abertos.getByText("Processo para encerrar")).toBeVisible();
+  await abertos.getByRole("button", { name: "Encerrar agora" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Encerrar processo" }).click();
+
+  await expect(abertos.getByText("Processo para encerrar")).toHaveCount(0);
+  const encerrados = page.getByRole("region", { name: "Encerrados" });
+  await encerrados.locator("summary").click();
+  await expect(encerrados.getByText("Processo para encerrar")).toBeVisible();
+  await expect(encerrados.getByText(`Encerrado em ${formatDay(todayInSaoPaulo())}`)).toBeVisible();
+});
+
+test("duplicar abre formulário pré-preenchido sem prazo", async ({ page }) => {
+  await loginAs(page, "dono.duplicar@unifei.edu.br", "Dono Duplicar");
+  await publishProject(page, "Projeto Duplicar", "Processo para duplicar");
+
+  // Editar: adiciona uma tag existente e salva.
+  await page.getByRole("region", { name: "Abertos" }).getByRole("link", { name: "Editar", exact: true }).click();
+  await expect(page).toHaveURL(/\/processos\/[0-9a-f-]{36}\/editar$/);
+  await page.getByRole("main").getByText("Tags", { exact: true }).click();
+  const tema = page.getByRole("combobox", { name: "Tema" });
+  await tema.fill("python");
+  await expect(page.getByRole("option", { name: "Python" })).toBeVisible();
+  await tema.press("Enter");
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+
+  await page.getByRole("region", { name: "Abertos" }).getByRole("link", { name: "Duplicar" }).click();
+  await expect(page).toHaveURL(/\/processos\/novo\?duplicar=[0-9a-f-]{36}$/);
+  await expect(page.getByLabel("Título do processo")).toHaveValue("Processo para duplicar");
+  await expect(page.getByLabel("Link do edital ou formulário")).toHaveValue("https://unifei.edu.br/edital.pdf");
+  await expect(page.getByLabel("Prazo final de inscrição")).toHaveValue("");
+  // A tag copiada aparece com o nome, não como "Tag".
+  await page.getByRole("main").getByText("Tags", { exact: true }).click();
+  await expect(page.getByRole("list", { name: "Tags escolhidas: Tema" }).getByText("Python", { exact: true })).toBeVisible();
+});
+
+test("REVIEWER vê o painel sem botões de edição", async ({ page, browser }) => {
+  // O revisor entra uma vez para ter conta.
+  const reviewerContext = await browser.newContext();
+  const reviewer = await reviewerContext.newPage();
+  await loginAs(reviewer, "revisor@unifei.edu.br", "Revisor");
+
+  await loginAs(page, "dono.revisor@unifei.edu.br", "Dono Revisor");
+  const projectId = await publishProject(page, "Projeto Revisor", "Processo visto pelo revisor");
+  await addMemberByEmail(page, projectId, "revisor@unifei.edu.br", "Revisor");
+  await expect(page.getByRole("region", { name: "Membros do projeto" }).getByText("revisor@unifei.edu.br")).toBeVisible();
+
+  await reviewer.goto(`/projetos/${projectId}`);
+  const main = reviewer.getByRole("main");
+  await expect(main.getByRole("heading", { level: 1, name: "Projeto Revisor" })).toBeVisible();
+  await expect(main.getByText("Processo visto pelo revisor")).toBeVisible();
+  for (const name of ["Editar", "Encerrar agora", "Duplicar", "Novo processo", "Editar projeto", "Arquivar projeto"]) {
+    await expect(main.getByRole("link", { name, exact: true })).toHaveCount(0);
+    await expect(main.getByRole("button", { name, exact: true })).toHaveCount(0);
+  }
+  await expect(main.getByRole("link", { name: "Membros", exact: true })).toBeVisible();
+
+  // Revisor não acessa as páginas de edição.
+  const res = await reviewer.goto(`/projetos/${projectId}/editar`);
+  expect(res?.status()).toBe(404);
+  await reviewerContext.close();
+});
+
+test("e-mail sem conta mostra mensagem orientadora", async ({ page }) => {
+  await loginAs(page, "dono.membros@unifei.edu.br", "Dono Membros");
+  const projectId = await publishProject(page, "Projeto Membros", "Processo dos membros");
+  await addMemberByEmail(page, projectId, "ninguem@unifei.edu.br", "Administrador");
+  await expect(page.getByText(MEMBER_NO_ACCOUNT)).toBeVisible();
+});
+
+test("/painel lista Meus projetos", async ({ page }) => {
+  await loginAs(page, "dono.painel@unifei.edu.br", "Dono Painel");
+  await page.goto("/painel");
+  await expect(page.getByRole("heading", { name: "Olá, Dono Painel" })).toBeVisible();
+  await expect(page.getByText("Você ainda não participa de nenhum projeto.")).toBeVisible();
+
+  const projectId = await publishProject(page, "Projeto do Painel", "Processo do painel");
+  await page.goto("/painel");
+  const meus = page.getByRole("region", { name: "Meus projetos" });
+  await expect(meus.getByRole("link", { name: /Projeto do Painel/ })).toHaveAttribute("href", `/projetos/${projectId}`);
+  await expect(meus.getByText("Dono", { exact: true })).toBeVisible();
+  await page.getByRole("main").getByRole("link", { name: "Publicar processo seletivo" }).click();
+  await expect(page).toHaveURL(/\/publicar$/);
+});
+
+test("painel de projeto alheio é 404", async ({ page, browser }) => {
+  await loginAs(page, "dono.alheio@unifei.edu.br", "Dono Alheio");
+  const projectId = await publishProject(page, "Projeto Alheio", "Processo alheio");
+
+  const otherContext = await browser.newContext();
+  const other = await otherContext.newPage();
+  await loginAs(other, "intruso@unifei.edu.br", "Intruso");
+  for (const path of ["", "/editar", "/membros", "/processos/novo"]) {
+    const res = await other.goto(`/projetos/${projectId}${path}`);
+    expect(res?.status()).toBe(404);
+    await expect(other.getByRole("heading", { name: "Página não encontrada" })).toBeVisible();
+  }
+  await otherContext.close();
+
+  // SYSTEM_ADMIN sem membership vê o painel só para leitura e não abre as páginas de edição.
+  const adminContext = await browser.newContext();
+  const admin = await adminContext.newPage();
+  await loginAs(admin, "admin@unifei.edu.br", "Admin");
+  await admin.goto(`/projetos/${projectId}`);
+  const main = admin.getByRole("main");
+  await expect(main.getByText(SYSTEM_ADMIN_READ_ONLY)).toBeVisible();
+  await expect(main.getByText("Processo alheio")).toBeVisible();
+  await expect(main.getByRole("link", { name: "Novo processo", exact: true })).toHaveCount(0);
+  await expect(main.getByRole("button", { name: "Encerrar agora", exact: true })).toHaveCount(0);
+  for (const path of ["/editar", "/processos/novo"]) {
+    const res = await admin.goto(`/projetos/${projectId}${path}`);
+    expect(res?.status()).toBe(404);
+  }
+  await adminContext.close();
+});

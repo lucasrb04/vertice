@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, type Tx } from "@/db";
-import { opportunities, opportunityTags, type ProjectStatus } from "@/db/schema";
+import { opportunities, opportunityTags, tags as tagsTable, type ProjectStatus } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
 import type { AuthUser } from "@/lib/auth/guards";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
@@ -106,12 +106,17 @@ function formatCents(cents: number): string {
   return `${s.slice(0, -2)},${s.slice(-2)}`;
 }
 
+/**
+ * Valores do formulário para editar ou duplicar um processo. As tags vão como refs `{ id }` (o
+ * contrato do schema) e os nomes vão à parte em `tagNames` (id → nome), só para exibição.
+ */
 export async function getOpportunityFormValues(
   user: AuthUser,
   projectId: string,
   opportunityId: string,
   mode: "edit" | "duplicate",
-): Promise<OpportunityFormValues> {
+  opts: Opts = {},
+): Promise<{ values: OpportunityFormValues; tagNames: Record<string, string>; isOpen: boolean }> {
   const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   if (!uuidSchema.safeParse(opportunityId).success) throw new NotFoundError();
   const [o] = await db
@@ -121,14 +126,19 @@ export async function getOpportunityFormValues(
   if (!o) throw new NotFoundError();
 
   const tagRows = await db
-    .select({ tagId: opportunityTags.tagId, relationType: opportunityTags.relationType })
+    .select({ tagId: opportunityTags.tagId, relationType: opportunityTags.relationType, name: tagsTable.name })
     .from(opportunityTags)
+    .innerJoin(tagsTable, eq(tagsTable.id, opportunityTags.tagId))
     .where(eq(opportunityTags.opportunityId, o.id));
   const tags: Record<(typeof TAG_GROUPS)[number], { id: string }[]> = { THEME: [], DESIRED_SKILL: [], DEVELOPED_SKILL: [] };
-  for (const r of tagRows) tags[r.relationType].push({ id: r.tagId });
+  const tagNames: Record<string, string> = {};
+  for (const r of tagRows) {
+    tags[r.relationType].push({ id: r.tagId });
+    tagNames[r.tagId] = r.name;
+  }
 
   const dup = mode === "duplicate";
-  return {
+  const values: OpportunityFormValues = {
     title: o.title,
     description: o.description,
     roleArea: o.roleArea ?? "",
@@ -151,4 +161,5 @@ export async function getOpportunityFormValues(
     noOtherScholarship: o.noOtherScholarship,
     tags,
   };
+  return { values, tagNames, isOpen: isOpportunityOpen(o, project.status, opts.now ?? new Date()) };
 }

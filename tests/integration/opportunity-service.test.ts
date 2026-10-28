@@ -149,14 +149,19 @@ describe("getOpportunityFormValues", () => {
     await closeOpportunity(owner, project.id, opportunityId);
 
     const edit = await getOpportunityFormValues(owner, project.id, opportunityId, "edit");
-    expect(edit.deadline).not.toBe("");
-    expect(edit.scholarshipValue).toBe("1200,50");
+    expect(edit.isOpen).toBe(false);
+    expect(edit.values.deadline).not.toBe("");
+    expect(edit.values.scholarshipValue).toBe("1200,50");
 
-    const values = await getOpportunityFormValues(owner, project.id, opportunityId, "duplicate");
+    const { values, tagNames } = await getOpportunityFormValues(owner, project.id, opportunityId, "duplicate");
     expect(values.deadline).toBe("");
     expect(values.resultOn).toBe("");
-    expect(values.tags).toEqual(edit.tags);
+    expect(values.tags).toEqual(edit.values.tags);
     expect(values.tags?.THEME).toHaveLength(1);
+    // As refs continuam `{ id }` (contrato do schema); os nomes vêm à parte para os badges.
+    const themeRef = values.tags!.THEME![0]!;
+    expect(Object.keys(themeRef)).toEqual(["id"]);
+    expect(tagNames).toEqual({ [(themeRef as { id: string }).id]: "Robótica" });
 
     const next = validOpportunityInput({ ...values, deadline: validOpportunityInput().deadline });
     const { opportunityId: newId } = await createOpportunity(owner, project.id, next);

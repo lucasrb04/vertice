@@ -5,9 +5,10 @@ import { requireAuth } from "@/lib/auth/guards";
 import { addMember, changeMemberRole, leaveProject, removeMember } from "@/lib/projects/members";
 import { runAction, type ActionResult } from "./result";
 
+/** Painel, membros e demais subpáginas do projeto; `/painel` lista o papel em cada projeto. */
 function revalidateMembers(projectId: string) {
-  revalidatePath(`/meus-projetos/${projectId}`);
-  revalidatePath(`/meus-projetos/${projectId}/membros`);
+  revalidatePath(`/projetos/${projectId}`, "layout");
+  revalidatePath("/painel");
 }
 
 export async function addMemberAction(projectId: string, input: unknown): Promise<ActionResult> {
@@ -42,6 +43,7 @@ export async function leaveProjectAction(projectId: string): Promise<ActionResul
   return runAction(async () => {
     const user = await requireAuth();
     await leaveProject(user, projectId);
-    revalidatePath("/meus-projetos");
+    revalidateMembers(projectId);
+    revalidatePath("/publicar");
   });
 }

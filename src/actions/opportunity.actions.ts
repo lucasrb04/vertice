@@ -5,8 +5,9 @@ import { requireAuth } from "@/lib/auth/guards";
 import { closeOpportunity, createOpportunity, updateOpportunity } from "@/lib/opportunities/service";
 import { runAction, type ActionResult } from "./result";
 
+/** Painel e páginas de edição/duplicação dos processos do projeto. */
 function revalidateProject(projectId: string) {
-  revalidatePath(`/meus-projetos/${projectId}`);
+  revalidatePath(`/projetos/${projectId}`, "layout");
 }
 
 export async function createOpportunityAction(

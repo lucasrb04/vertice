@@ -25,3 +25,19 @@ export type ScholarshipType = keyof typeof SCHOLARSHIP_LABELS;
 export function deadlineLabel(day: Date | string): string {
   return `Inscrições até ${formatDay(day)}, 23h59 (horário de Brasília)`;
 }
+
+export const ROLE_LABELS = {
+  OWNER: "Dono",
+  ADMIN: "Administrador",
+  REVIEWER: "Revisor",
+} as const;
+
+export const PROJECT_STATUS_LABELS = {
+  ACTIVE: "Ativo",
+  UNDER_REVIEW: "Em revisão",
+  SUSPENDED: "Suspenso",
+  ARCHIVED: "Arquivado",
+} as const;
+
+/** Rótulo do cabeçalho do painel para SYSTEM_ADMIN sem membership (spec §6.6). */
+export const SYSTEM_ADMIN_READ_ONLY = "Administrador do sistema (somente leitura)";
