@@ -73,8 +73,8 @@ export async function getProjectPanel(
       id: o.id,
       title: o.title,
       deadlineAt: o.deadlineAt,
-      // Projeto arquivado com processo ainda OPEN: sem closedAt/prazo vencido, usa o momento atual.
-      closedOn: isOpen ? null : (closedOnDate(o, now) ?? now),
+      // Projeto inativo com processo ainda em andamento: sem data de encerramento (spec §6.3).
+      closedOn: isOpen ? null : closedOnDate(o, now),
       vacanciesCount: o.vacanciesCount ?? 1,
       hasExternalUrl: o.externalUrl !== null,
       internalSelectionEnabled: o.internalSelectionEnabled,
@@ -82,7 +82,15 @@ export async function getProjectPanel(
     (isOpen ? open : closed).push(item);
   }
   open.sort((a, b) => a.deadlineAt.getTime() - b.deadlineAt.getTime());
-  closed.sort((a, b) => b.closedOn!.getTime() - a.closedOn!.getTime());
+  closed.sort((a, b) => {
+    if (a.closedOn && b.closedOn) {
+      const diff = b.closedOn.getTime() - a.closedOn.getTime();
+      if (diff !== 0) return diff;
+    } else if (a.closedOn || b.closedOn) {
+      return a.closedOn ? -1 : 1; // sem data de encerramento por último
+    }
+    return b.deadlineAt.getTime() - a.deadlineAt.getTime();
+  });
   return { open, closed };
 }
 

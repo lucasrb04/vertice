@@ -50,6 +50,7 @@ describe("consultas do painel", () => {
     const panel = await getProjectPanel(access);
     expect(panel.open).toHaveLength(0);
     expect(panel.closed.map((x) => x.id)).toEqual([o.id]);
+    expect(panel.closed[0]!.closedOn).toBeNull();
   });
 
   it("listMyProjects não mostra projeto de que o usuário não é membro", async () => {

@@ -19,7 +19,7 @@ vi.mock("@/lib/auth/session", () => ({
 }));
 vi.mock("@/lib/security/turnstile", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/security/turnstile")>()),
-  verifyTurnstile: async () => state.turnstileOk,
+  verifyTurnstile: async (token: string) => state.turnstileOk && token !== "",
 }));
 
 const { createProjectWithOpportunityAction, updateProjectAction } = await import("@/actions/project.actions");
@@ -55,6 +55,16 @@ describe("Server Actions", () => {
     expect(res).toMatchObject({ ok: false, error: "TURNSTILE_FAILED" });
     expect(await db.select().from(projects)).toHaveLength(0);
     expect(await db.select().from(opportunities)).toHaveLength(0);
+  });
+
+  it("token de tipo ou tamanho inválido → TURNSTILE_FAILED sem gravar", async () => {
+    const user = (await mkUser("a@unifei.edu.br"))!;
+    state.sessionUserId = user.id;
+    for (const turnstileToken of [123 as unknown as string, "x".repeat(2049)]) {
+      const res = await createProjectWithOpportunityAction({ ...wizard(), turnstileToken });
+      expect(res).toMatchObject({ ok: false, error: "TURNSTILE_FAILED" });
+    }
+    expect(await db.select().from(projects)).toHaveLength(0);
   });
 
   it("sem sessão → UNAUTHORIZED", async () => {

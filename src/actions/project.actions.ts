@@ -2,11 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
+import { z } from "zod";
 import { requireAuth } from "@/lib/auth/guards";
 import { archiveProject, createProjectWithOpportunity, updateProject } from "@/lib/projects/service";
 import { getRequestIp } from "@/lib/security/audit";
 import { TurnstileFailedError, verifyTurnstile } from "@/lib/security/turnstile";
 import { runAction, type ActionResult } from "./result";
+
+const turnstileTokenSchema = z.string().max(2048);
 
 export async function createProjectWithOpportunityAction(input: {
   turnstileToken: string;
@@ -15,7 +18,8 @@ export async function createProjectWithOpportunityAction(input: {
 }): Promise<ActionResult<{ projectId: string }>> {
   return runAction(async () => {
     const user = await requireAuth();
-    const token = typeof input?.turnstileToken === "string" ? input.turnstileToken : "";
+    const parsedToken = turnstileTokenSchema.safeParse(input?.turnstileToken);
+    const token = parsedToken.success ? parsedToken.data : "";
     // Antes de qualquer escrita; o serviço não recebe o token.
     if (!(await verifyTurnstile(token, getRequestIp(await headers())))) throw new TurnstileFailedError();
     const { projectId } = await createProjectWithOpportunity(user, {
