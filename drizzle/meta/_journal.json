@@ -22,6 +22,20 @@
       "when": 1793075449742,
       "tag": "0002_bumpy_leopardon",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793151371849,
+      "tag": "0003_gigantic_fallen_one",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793151385521,
+      "tag": "0004_bumpy_microbe",
+      "breakpoints": true
     }
   ]
 }

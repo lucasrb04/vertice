@@ -81,6 +81,7 @@ URLs em português (decisão do Claude):
   - enums com `UNDER_REVIEW`, `career_goal`, `report_target`;
   - `application_events`, `external_application_marks`, `opportunity_external_clicks`, `reports`;
   - `CHECK` no banco garantindo `external_url` não nula quando `application_mode = 'EXTERNAL'` (D19; o "é https" fica no Zod);
+    > Substituído pela D34 no Subprojeto 1: CHECK `opportunities_has_channel`.
   - tabelas do Better-Auth (`sessions`, `accounts`, `verifications`) geradas pelo CLI dele e integradas ao schema, com chaves `uuid` (D16).
 - Conexão em `src/db/index.ts` (pool `pg`).
 - **Seed** (`pnpm db:seed`), idempotente, conforme `ARCHITECTURE.md §9`: instituição `unifei-itajuba`, cursos, tags verificadas (`AREA` e `SKILL`). Promoção do admin: se `INITIAL_ADMIN_EMAIL` estiver definido e o usuário já existir, vira `SYSTEM_ADMIN`.

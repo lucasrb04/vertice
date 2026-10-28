@@ -12,6 +12,7 @@ export const projects = pgTable(
       .references(() => institutions.id, { onDelete: "cascade" }),
     slug: varchar("slug", { length: 100 }).notNull(),
     name: varchar("name", { length: 140 }).notNull(),
+    acronym: varchar("acronym", { length: 20 }), // Sigla opcional (ex: "BAJA")
     shortDescription: varchar("short_description", { length: 280 }).notNull(),
     description: text("description"),
     category: projectCategoryEnum("category").notNull(),

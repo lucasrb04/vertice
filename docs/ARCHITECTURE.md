@@ -119,7 +119,9 @@ import {
   uniqueIndex,
   index,
   jsonb,
+  check,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // ==========================================
 // 1. ENUMS DO DOMÍNIO
@@ -146,13 +148,8 @@ export const projectStatusEnum = pgEnum("project_status", [
 
 export const projectMemberRoleEnum = pgEnum("project_member_role", [
   "OWNER",    // Criador/Coordenador/Capitão (controle total do projeto)
-  "ADMIN",    // Gerencia vagas e membros
+  "ADMIN",    // Edita o projeto e gerencia processos (não gerencia membros)
   "REVIEWER", // Avalia candidatos e move cards no Kanban
-]);
-
-export const applicationModeEnum = pgEnum("application_mode", [
-  "INTERNAL", // Triagem interna em 4 etapas na plataforma
-  "EXTERNAL", // Redirecionamento direto para edital/formulário externo (sem login obrigatório)
 ]);
 
 export const scholarshipTypeEnum = pgEnum("scholarship_type", [
@@ -345,6 +342,7 @@ export const projects = pgTable(
       .references(() => institutions.id, { onDelete: "cascade" }),
     slug: varchar("slug", { length: 100 }).notNull(),
     name: varchar("name", { length: 140 }).notNull(),
+    acronym: varchar("acronym", { length: 20 }), // Sigla opcional (ex: "BAJA")
     shortDescription: varchar("short_description", { length: 280 }).notNull(),
     description: text("description"),
     category: projectCategoryEnum("category").notNull(),
@@ -395,9 +393,9 @@ export const opportunities = pgTable(
     title: varchar("title", { length: 160 }).notNull(),
     description: text("description").notNull(),
     roleArea: varchar("role_area", { length: 80 }), // Ex: "Subsistema de Telemetria", "Pesquisa em Visão Computacional"
-    applicationMode: applicationModeEnum("application_mode").notNull(),
-    externalUrl: varchar("external_url", { length: 500 }), // Obrigatório (https) se applicationMode === "EXTERNAL" — Zod refine + CHECK no banco
-    customQuestion: varchar("custom_question", { length: 280 }), // Pergunta rápida p/ applicationMode === "INTERNAL"
+    internalSelectionEnabled: boolean("internal_selection_enabled").notNull().default(false), // Seleção pela plataforma (D34)
+    externalUrl: varchar("external_url", { length: 500 }), // Opcional; https validado no Zod — D34
+    customQuestion: varchar("custom_question", { length: 280 }), // Pergunta rápida p/ seleção pela plataforma
     scholarshipType: scholarshipTypeEnum("scholarship_type").notNull().default("VOLUNTARY"),
     fundingAgency: varchar("funding_agency", { length: 64 }), // Ex: "FAPEMIG", "CNPq", "PIBIC", "Sem Fomento"
     scholarshipValueCents: integer("scholarship_value_cents"), // Ex: 70000 (R$ 700,00)
@@ -406,7 +404,15 @@ export const opportunities = pgTable(
     targetCourseIds: jsonb("target_course_ids").$type<string[]>().notNull().default([]), // Vazio = Todos os cursos
     minSemester: integer("min_semester"),
     maxSemester: integer("max_semester"),
-    deadlineAt: timestamp("deadline_at", { withTimezone: true }),
+    deadlineAt: timestamp("deadline_at", { withTimezone: true }).notNull(), // 23:59:59 de Brasília do dia informado
+    applicationsOpenOn: date("applications_open_on", { mode: "string" }), // Cronograma (D35): YYYY-MM-DD
+    interviewStartsOn: date("interview_starts_on", { mode: "string" }),
+    interviewEndsOn: date("interview_ends_on", { mode: "string" }),
+    resultOn: date("result_on", { mode: "string" }),
+    activitiesStartOn: date("activities_start_on", { mode: "string" }),
+    availabilityRequirement: varchar("availability_requirement", { length: 200 }),
+    noOtherScholarship: boolean("no_other_scholarship").notNull().default(false),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
     status: opportunityStatusEnum("status").notNull().default("OPEN"),
     viewsCount: integer("views_count").notNull().default(0),
     externalClicksCount: integer("external_clicks_count").notNull().default(0),
@@ -416,6 +422,7 @@ export const opportunities = pgTable(
   (t) => [
     uniqueIndex("opportunities_inst_slug_idx").on(t.institutionId, t.slug),
     index("opportunities_status_deadline_idx").on(t.institutionId, t.status, t.deadlineAt),
+    check("opportunities_has_channel", sql`${t.internalSelectionEnabled} OR ${t.externalUrl} IS NOT NULL`),
   ]
 );
 

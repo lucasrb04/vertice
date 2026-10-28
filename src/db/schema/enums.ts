@@ -21,13 +21,8 @@ export const projectStatusEnum = pgEnum("project_status", [
 
 export const projectMemberRoleEnum = pgEnum("project_member_role", [
   "OWNER",    // Criador/Coordenador/Capitão (controle total do projeto)
-  "ADMIN",    // Gerencia vagas e membros
+  "ADMIN",    // Edita o projeto e gerencia processos (não gerencia membros)
   "REVIEWER", // Avalia candidatos e move cards no Kanban
-]);
-
-export const applicationModeEnum = pgEnum("application_mode", [
-  "INTERNAL", // Triagem interna em 4 etapas na plataforma
-  "EXTERNAL", // Redirecionamento direto para edital/formulário externo (sem login obrigatório)
 ]);
 
 export const scholarshipTypeEnum = pgEnum("scholarship_type", [
