@@ -22,7 +22,7 @@ Na **UNIFEI (Campus Itajubá)** e nas universidades brasileiras em geral, o ecos
 Uma plataforma web centralizada, de **baixíssima fricção de adoção** e **operação autônoma (zero aprovação prévia manual)**, onde:
 * Qualquer visitante visualiza uma **Timeline Pública** de vagas abertas na UNIFEI, com busca textual rápida, filtros combinados e tags abertas.
 * Alunos cadastrados contam com um **Algoritmo de Recomendação e Afinidade** que cruza seus interesses, o que já sabem e **o que querem aprender** com as oportunidades disponíveis, exibindo o percentual de compatibilidade e a justificativa (*Explainable Match*).
-* Líderes de projetos e professores publicam vagas em menos de 2 minutos, escolhendo entre **Triagem Interna na Plataforma (Kanban de 4 etapas)** ou **Redirecionamento Direto para Edital/Link Externo** (sem exigir login do aluno para acessar o link externo).
+* Líderes de projetos e professores publicam vagas em menos de 2 minutos, informando o **link do Edital/Formulário Externo** (acessível sem login) e/ou adotando a **Seleção pela Plataforma (Kanban de 4 etapas)** para gerir os candidatos — os dois canais não são excludentes (D34).
 * O administrador do sistema dispõe de um **Portal de Admin e Auditoria (`/admin`)** para acompanhar métricas, moderar conteúdos sob demanda, higienizar/mesclar tags criadas pelos usuários e intervir em casos de suporte ou segurança.
 
 ### 1.3. Escopo Institucional (Single-Tenant no Frontend, Multi-Tenant no Backend)
@@ -42,7 +42,7 @@ Para permitir que um mesmo aluno veterano seja simultaneamente **candidato a uma
    * Clica em links de **Editais/Formulários Externos** diretamente sem necessidade de criar conta.
 2. **`USER` (Usuário Autenticado — Aluno / Professor / Líder):**
    * Preenche seu perfil de interesses/competências e recebe recomendações personalizadas ($0\%$ a $100\%$).
-   * Candidata-se a vagas com **Triagem Interna** em 1 clique.
+   * Candidata-se a vagas com **Seleção pela Plataforma** em 1 clique.
    * Pode criar novos Projetos ou ser convidado para gerenciar projetos existentes.
 3. **`SYSTEM_ADMIN` (Administrador da Plataforma):**
    * Acesso exclusivo ao **Portal de Admin (`/admin`)** para observabilidade, auditoria de segurança, moderação reativa de projetos/vagas/usuários e governança de tags.
@@ -64,7 +64,7 @@ Dentro de cada projeto cadastrado, os membros gestores possuem um dos seguintes 
 
 ### RF01 — Vitrine Pública, Busca Textual, Filtros e Tags Abertas
 1. **Timeline de Oportunidades:**
-   * Listagem paginada (ou *infinite scroll* leve) de vagas abertas.
+   * Listagem paginada (ou *infinite scroll* leve) de **processos seletivos abertos**, com prazo de encerramento e requisitos visíveis no card. Processos encerrados não aparecem na vitrine nem nas telas iniciais; só são acessíveis via filtro explícito ("incluir encerrados") e no histórico da página do projeto (D36).
    * Ordenação selecionável:
      * *Para Visitantes:* "Mais recentes", "Prazo encerrando em breve", "Mais populares".
      * *Para Usuários Logados:* **"Maior Compatibilidade (Match %)"** (padrão), "Mais recentes", "Prazo encerrando em breve".
@@ -73,7 +73,7 @@ Dentro de cada projeto cadastrado, os membros gestores possuem um dos seguintes 
    * **Filtros Rápidos:**
      * Modalidade: *Iniciação Científica (IC)*, *Projeto Especial (Competição)*, *Extensão*, *PET*, *Empresa Júnior*, *Laboratório / P&D*.
      * Remuneração/Bolsa: *Com Bolsa Remunerada*, *Voluntário*, *A definir*.
-     * Tipo de Inscrição: *Inscrição Rápida (Pela Plataforma)*, *Edital Externo*.
+     * Tipo de Inscrição: *Inscrição pela Plataforma*, *Edital Externo* (não excludentes — uma vaga com os dois canais aparece em ambos os filtros).
      * Curso Elegível e Tags específicas.
 3. **Sistema de Tags Abertas com Normalização:**
    * Ao cadastrar ou editar uma vaga, o líder do projeto pode selecionar tags existentes em um *Combobox* com busca instantânea **ou criar uma nova tag na hora** simplesmente digitando e pressionando `Enter`.
@@ -115,15 +115,15 @@ A especificação matemática completa e normativa está em [`ARCHITECTURE.md §
 1. **Fluxo Unificado (Projeto + 1ª Vaga na mesma jornada):**
    * Se o usuário clica em *"Publicar Vaga"* e ainda não administra nenhum projeto, o sistema apresenta um formulário enxuto de 2 passos:
      * **Passo 1 — Sobre o Projeto:** Nome, Sigla (opcional), Categoria (*IC / Laboratório*, *Projeto Especial*, *Extensão*, *PET*, *Empresa Júnior*), Instituto/Departamento vinculado (opcional), Descrição curta e Links (Instagram, Site, E-mail de contato).
-     * **Passo 2 — Sobre a Vaga:** Título da vaga, Descrição das atividades, Modalidade de Bolsa (*Voluntário*, *PIBIC/CNPq*, *FAPEMIG*, *Bolsa Institucional/Externa*) + Valor (opcional), Carga Horária Semanal estimada ($4\text{h}$ a $20\text{h}$), Prazo final de inscrição, Cursos elegíveis (*Todos* ou seleção específica), Tags (*Desejáveis* e *O que o aluno vai aprender*) e **Modo de Inscrição**.
+     * **Passo 2 — Sobre a Vaga:** Título da vaga, Descrição das atividades, Modalidade de Bolsa (*Voluntário*, *PIBIC/CNPq*, *FAPEMIG*, *Bolsa Institucional/Externa*) + Valor (opcional), Carga Horária Semanal estimada ($4\text{h}$ a $20\text{h}$), **Cronograma do processo** (prazo final de inscrição obrigatório; abertura das inscrições, entrevista/dinâmica, resultado e início das atividades opcionais — D35), **Requisitos formais** (opcionais: período mínimo do curso, disponibilidade de horário, vedação de acúmulo de bolsa — sem CR mínimo, D35), Cursos elegíveis (*Todos* ou seleção específica), Tags (*Desejáveis* e *O que o aluno vai aprender*), **Link do Edital** (opcional) e **Seleção pela Plataforma** (sim/não) — pelo menos um dos dois (D34).
 2. **Presets por Categoria:**
    * Selecionar *Iniciação Científica* pré-configura sugestões de bolsas (*PIBIC, FAPEMIG, Voluntário*) e campo de Professor Orientador.
    * Selecionar *Projeto Especial / Equipe* sugere subáreas comuns (*Elétrica, Mecânica, Software, Gestão, Marketing*).
 
-### RF05 — Fluxo Híbrido de Candidatura e Triagem (Kanban vs. Link Externo)
-Na criação da vaga, o responsável escolhe entre dois modos de captação:
+### RF05 — Fluxo Híbrido de Candidatura e Triagem (Edital + Seleção pela Plataforma)
+Na UNIFEI, a inscrição formal costuma passar por um edital oficial, mas o controle do processo seletivo fica a cargo de cada equipe. Por isso, cada vaga tem **dois canais independentes e não excludentes** (D34). A vaga precisa ter pelo menos um deles e pode ter os dois. Adotar o Vértice para a gestão é opcional: o projeto pode usá-lo só como vitrine centralizadora, ou também como ferramenta de seleção.
 
-1. **Modo A — Triagem Interna pela Plataforma (`INTERNAL`):**
+1. **Seleção pela Plataforma (`internalSelectionEnabled = true`):**
    * O aluno logado clica em *"Candidatar-se"*, revisa os dados do seu perfil que serão compartilhados com o projeto e responde a uma pergunta aberta configurável pelo projeto (ex: *"Por que você tem interesse nesta vaga?"*, máx. $1000$ caracteres).
    * **Painel do Projeto (Kanban / Lista de Inscritos):** Os gestores do projeto visualizam os candidatos em 4 colunas/status:
      1. `APPLIED` (*Inscrito*)
@@ -131,11 +131,11 @@ Na criação da vaga, o responsável escolhe entre dois modos de captação:
      3. `INTERVIEW` (*Entrevista / Dinâmica*)
      4. `ACCEPTED` (*Aprovado*) / `REJECTED` (*Não selecionado*)
    * Ao mover o card de um candidato (ou selecionar múltiplos candidatos em lote), o gestor pode escrever uma **mensagem personalizada** (ex: link do Google Meet e horário da entrevista, ou feedback final) que é enviada por e-mail ao aluno e registrada no histórico da candidatura (tabela `application_events`).
-2. **Modo B — Redirecionamento para Edital/Formulário Externo (`EXTERNAL`):**
-   * O botão principal da vaga exibe *"Acessar Edital / Inscrever-se Externamente"*.
+2. **Link do Edital/Formulário Externo (`externalUrl` preenchido):**
+   * A vaga exibe o botão *"Acessar Edital / Inscrever-se Externamente"*; se a vaga também usa a Seleção pela Plataforma, os dois botões aparecem lado a lado.
    * **Acesso livre sem login:** Qualquer visitante pode clicar e ser redirecionado imediatamente para o link externo (PDF do edital, SIGAA, Google Forms, etc.).
    * **Telemetria para o Projeto:** O clique passa por um endpoint/action de redirecionamento ou beacon que incrementa o contador de **Cliques no Edital** daquela vaga (deduplicado por visitante/dia via hash HMAC de IP + User-Agent; o IP bruto nunca é armazenado).
-   * Se o aluno estiver logado, ele pode marcar o botão *"Já me inscrevi neste edital"* para salvar a vaga na sua aba *"Minhas Candidaturas"* e receber lembretes de prazo.
+   * Se a vaga **não** usa a Seleção pela Plataforma e o aluno estiver logado, ele pode marcar o botão *"Já me inscrevi neste edital"* para salvar a vaga na sua aba *"Minhas Candidaturas"* e receber lembretes de prazo.
 
 ### RF06 — Sistema de E-mails Transacionais e Alertas de Match
 Integrado via **Resend + React Email**, com templates limpos e responsivos:
@@ -212,3 +212,12 @@ Para garantir uma entrega rápida, estável e enxuta para o TCC, os seguintes it
 3. Testes técnicos automatizados ou vídeo-entrevistas gravadas dentro da plataforma.
 4. Integração direta via API privada com o SIGAA da UNIFEI (para evitar burocracia administrativa com a STI da universidade que atrasaria o TCC).
 5. Seletor público de outras universidades no frontend (embora o banco já suporte `institution_id`).
+---
+
+## 7. Evoluções Futuras (Pós-MVP)
+
+Itens planejados para depois que o sistema estiver no ar. **Ainda precisam de refinamento com o autor antes de virar spec.**
+
+1. **Importação de processos seletivos já existentes** *(a refinar)*: mecanismos para trazer para o Vértice processos que hoje vivem fora dele, reduzindo o trabalho manual das equipes. Fontes consideradas:
+   * **A partir do edital** (ex: extrair título, prazos, bolsa e requisitos do edital oficial para pré-preencher a vaga).
+   * **A partir do e-mail** (ex: importar a divulgação ou as inscrições recebidas por e-mail institucional).
