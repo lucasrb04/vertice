@@ -1,4 +1,5 @@
 import { getEnv, type Env } from "@/env";
+import { E2E_TURNSTILE_TOKEN } from "./turnstile-constants";
 
 /** Chaves públicas de teste da Cloudflare (sempre passam). Só valem fora de produção. */
 export const TURNSTILE_TEST_KEYS = {
@@ -6,8 +7,7 @@ export const TURNSTILE_TEST_KEYS = {
   secretKey: "1x0000000000000000000000000000000AA",
 } as const;
 
-/** Token aceito no E2E (mesma condição do login de teste, D33): o teste não depende da rede da Cloudflare. */
-export const E2E_TURNSTILE_TOKEN = "e2e-turnstile-token";
+export { E2E_TURNSTILE_TOKEN };
 
 export const TURNSTILE_FAILED = "Não foi possível verificar que você não é um robô. Tente de novo.";
 

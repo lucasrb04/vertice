@@ -36,7 +36,7 @@ export default async function PainelPage() {
                     <span className="font-medium text-stone-900">{p.name}</span>
                     {p.acronym && <span className="ml-2 font-mono text-xs text-stone-500">{p.acronym}</span>}
                     {p.status !== "ACTIVE" && (
-                      <span className="ml-2 text-xs text-amber-600">{PROJECT_STATUS_LABELS[p.status]}</span>
+                      <span className="ml-2 text-xs text-stone-600">{PROJECT_STATUS_LABELS[p.status]}</span>
                     )}
                   </span>
                   <span className="shrink-0 text-sm text-stone-600">{ROLE_LABELS[p.role]}</span>

@@ -81,3 +81,16 @@ describe("dayString", () => {
     expect(dayString.safeParse("27/10/2026").success).toBe(false);
   });
 });
+
+describe("fix final: R$ e definições de link", () => {
+  it("parseBrlToCents aceita prefixo R$", () => {
+    expect(parseBrlToCents("R$ 700,00")).toBe(70000);
+    expect(parseBrlToCents("R$700")).toBe(70000);
+    expect(parseBrlToCents("R$")).toBeNull();
+  });
+  it("restrictedMarkdown valida definições de link por referência", () => {
+    const md = restrictedMarkdown(500);
+    expect(md.safeParse("texto [x]\n\n[x]: javascript:alert(1)").success).toBe(false);
+    expect(md.safeParse("texto [x]\n\n[x]: https://unifei.edu.br").success).toBe(true);
+  });
+});

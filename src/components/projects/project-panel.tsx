@@ -44,7 +44,7 @@ export function ProjectPanel({
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
           <div className="flex gap-1.5">
             <dt className="text-stone-500">Status</dt>
-            <dd className={cn("font-medium", active ? "text-stone-900" : "text-amber-600")}>
+            <dd className={cn("font-medium", active ? "text-stone-900" : "text-stone-600")}>
               {PROJECT_STATUS_LABELS[project.status]}
             </dd>
           </div>
@@ -56,7 +56,7 @@ export function ProjectPanel({
       </header>
 
       {!active && (
-        <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <p role="status" className="rounded-lg border border-stone-300 bg-stone-100 px-4 py-3 text-sm text-stone-700">
           Projeto {PROJECT_STATUS_LABELS[project.status].toLowerCase()}: o painel fica disponível só para leitura e
           nenhum processo recebe inscrições.
         </p>

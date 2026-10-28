@@ -563,6 +563,13 @@ export function OpportunityForm({
       </OptionalBlock>
 
       <OptionalBlock title="Tags" open={hasErr("tags")}>
+        {(errors.tags ?? []).length > 0 && (
+          <ul role="alert" className="list-disc pl-5 text-sm text-red-700 sm:col-span-6">
+            {(errors.tags ?? []).map((m, i) => (
+              <li key={i}>{m}</li>
+            ))}
+          </ul>
+        )}
         {TAG_GROUPS.map((g) => (
           <div key={g} className="sm:col-span-6">
             <TagCombobox

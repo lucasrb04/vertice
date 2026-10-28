@@ -87,3 +87,27 @@ describe("makeWizardSchema", () => {
     expect(w.safeParse({ project: validProjectInput({ name: "a" }), opportunity: v({}) }).success).toBe(false);
   });
 });
+
+describe("mensagens em português (locale Zod)", () => {
+  const msgs = (input: unknown) => issueMessages(s, input).join(" | ");
+  const noEnglish = (m: string) => {
+    expect(m).not.toMatch(/Too small|Too big|expected|Invalid/);
+  };
+  it("horas semanais fora da faixa", () => {
+    for (const weeklyHours of [2, 21]) {
+      const m = msgs(v({ weeklyHours }));
+      noEnglish(m);
+      expect(m).toMatch(/Demasiado (pequeno|grande)/);
+    }
+  });
+  it("vagas 0", () => {
+    const m = msgs(v({ vacanciesCount: 0 }));
+    noEnglish(m);
+    expect(m).toContain("Demasiado pequeno");
+  });
+  it("tag com 1 caractere", () => {
+    const m = msgs(v({ tags: { THEME: [{ name: "a" }], DESIRED_SKILL: [], DEVELOPED_SKILL: [] } }));
+    noEnglish(m);
+    expect(m).toContain("Demasiado pequeno");
+  });
+});

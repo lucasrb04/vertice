@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Mensagens padrão do Zod em português para regras sem mensagem explícita.
+z.config(z.locales.pt());
+
 export const HTTPS_ONLY = "Use um link começando com https://";
 export const HTML_NOT_ALLOWED = "HTML não é permitido. Use a formatação Markdown.";
 
@@ -43,10 +46,14 @@ export function optionalText(max: number) {
 
 const HTML_TAG = /<\/?[a-z!][^>]*>/i;
 const MD_LINK_TARGET = /\]\(\s*([^)\s]+)/g;
+const MD_REF_DEF = /^\s*\[[^\]]+\]:\s*(\S+)/gm;
 
 export function isRestrictedMarkdown(value: string): { html: boolean; badLink: boolean } {
   let badLink = false;
   for (const m of value.matchAll(MD_LINK_TARGET)) {
+    if (!isHttps(m[1])) badLink = true;
+  }
+  for (const m of value.matchAll(MD_REF_DEF)) {
     if (!isHttps(m[1])) badLink = true;
   }
   return { html: HTML_TAG.test(value), badLink };
@@ -88,7 +95,7 @@ const MAX_CENTS = 99_999_999;
  * Devolve null se inválido ou não positivo.
  */
 export function parseBrlToCents(input: string): number | null {
-  const v = input.trim();
+  const v = input.trim().replace(/^R\$\s*/i, "");
   let reais: string;
   let frac = "";
   let m: RegExpMatchArray | null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { E2E_TURNSTILE_TOKEN } from "@/lib/security/turnstile";
+import { E2E_TURNSTILE_TOKEN } from "@/lib/security/turnstile-constants";
 
 const SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 
