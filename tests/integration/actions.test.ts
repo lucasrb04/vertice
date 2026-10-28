@@ -1,0 +1,101 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { db } from "@/db";
+import { opportunities, projects } from "@/db/schema";
+import { runSeed } from "@/db/seed";
+import { resetDb } from "../helpers/db";
+import { addMember, mkProject, mkUser } from "../helpers/fixtures";
+import { validOpportunityInput, validProjectInput } from "../helpers/inputs";
+
+const state = vi.hoisted(() => ({
+  sessionUserId: null as string | null,
+  turnstileOk: true,
+  headers: new Headers({ "x-forwarded-for": "10.0.0.9" }),
+}));
+
+vi.mock("next/headers", () => ({ headers: async () => state.headers }));
+vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+vi.mock("@/lib/auth/session", () => ({
+  getSessionUser: async () => (state.sessionUserId ? { id: state.sessionUserId } : null),
+}));
+vi.mock("@/lib/security/turnstile", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/security/turnstile")>()),
+  verifyTurnstile: async () => state.turnstileOk,
+}));
+
+const { createProjectWithOpportunityAction, updateProjectAction } = await import("@/actions/project.actions");
+const { searchTagsAction } = await import("@/actions/tag.actions");
+
+describe("Server Actions", () => {
+  beforeEach(async () => {
+    await resetDb();
+    await runSeed();
+    state.sessionUserId = null;
+    state.turnstileOk = true;
+  });
+
+  const wizard = (opportunity = validOpportunityInput()) => ({
+    turnstileToken: "tok",
+    project: validProjectInput(),
+    opportunity,
+  });
+
+  it("cria projeto e processo com Turnstile válido", async () => {
+    const user = (await mkUser("a@unifei.edu.br"))!;
+    state.sessionUserId = user.id;
+    const res = await createProjectWithOpportunityAction(wizard());
+    expect(res.ok).toBe(true);
+    expect(await db.select().from(projects)).toHaveLength(1);
+  });
+
+  it("Turnstile inválido recusa sem gravar nada", async () => {
+    const user = (await mkUser("a@unifei.edu.br"))!;
+    state.sessionUserId = user.id;
+    state.turnstileOk = false;
+    const res = await createProjectWithOpportunityAction(wizard());
+    expect(res).toMatchObject({ ok: false, error: "TURNSTILE_FAILED" });
+    expect(await db.select().from(projects)).toHaveLength(0);
+    expect(await db.select().from(opportunities)).toHaveLength(0);
+  });
+
+  it("sem sessão → UNAUTHORIZED", async () => {
+    const res = await createProjectWithOpportunityAction(wizard());
+    expect(res).toMatchObject({ ok: false, error: "UNAUTHORIZED", message: "Sua sessão expirou. Entre de novo." });
+    expect(await searchTagsAction("py").catch((e: unknown) => (e as Error).name)).toBe("UnauthorizedError");
+  });
+
+  it("erro de validação volta por campo", async () => {
+    const user = (await mkUser("a@unifei.edu.br"))!;
+    state.sessionUserId = user.id;
+    const res = await createProjectWithOpportunityAction(wizard(validOpportunityInput({ externalUrl: "http://x" })));
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error).toBe("VALIDATION");
+    expect(res.fieldErrors?.["opportunity.externalUrl"]).toContain("Use um link começando com https://");
+  });
+
+  it("não-membro recebe NOT_FOUND com a mesma mensagem de id inexistente", async () => {
+    const user = (await mkUser("a@unifei.edu.br"))!;
+    const foreign = (await mkProject())!;
+    state.sessionUserId = user.id;
+    const a = await updateProjectAction(foreign.id, validProjectInput());
+    const b = await updateProjectAction("00000000-0000-4000-8000-000000000000", validProjectInput());
+    expect(a).toEqual(b);
+    expect(a).toMatchObject({ ok: false, error: "NOT_FOUND", message: "Não encontrado." });
+  });
+
+  it("membro OWNER atualiza o projeto", async () => {
+    const user = (await mkUser("a@unifei.edu.br"))!;
+    const p = (await mkProject())!;
+    await addMember(p.id, user.id, "OWNER");
+    state.sessionUserId = user.id;
+    expect(await updateProjectAction(p.id, validProjectInput({ name: "Novo Nome" }))).toMatchObject({ ok: true });
+  });
+
+  it("searchTagsAction exige sessão e valida o tamanho", async () => {
+    const user = (await mkUser("a@unifei.edu.br"))!;
+    state.sessionUserId = user.id;
+    expect(await searchTagsAction("x".repeat(65))).toEqual([]);
+    const found = await searchTagsAction("  pyth ");
+    expect(found.map((t) => t.name)).toContain("Python");
+  });
+});

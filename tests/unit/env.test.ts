@@ -25,7 +25,13 @@ describe("parseEnv", () => {
       .toThrow(/ENABLE_TEST_AUTH/);
   });
   it("aceita produção com ENABLE_TEST_AUTH=false", () => {
-    const env = parseEnv({ ...base, NODE_ENV: "production", ENABLE_TEST_AUTH: "false" });
+    const env = parseEnv({
+      ...base,
+      NODE_ENV: "production",
+      ENABLE_TEST_AUTH: "false",
+      TURNSTILE_SECRET_KEY: "s",
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: "k",
+    });
     expect(env.NODE_ENV).toBe("production");
     expect(env.ENABLE_TEST_AUTH).toBe(false);
   });
@@ -40,5 +46,27 @@ describe("parseEnv", () => {
   it("normaliza INITIAL_ADMIN_EMAIL para minúsculas", () => {
     expect(parseEnv({ ...base, INITIAL_ADMIN_EMAIL: "Admin@UNIFEI.edu.br" }).INITIAL_ADMIN_EMAIL)
       .toBe("admin@unifei.edu.br");
+  });
+  it("recusa produção sem as chaves do Turnstile", () => {
+    expect(() => parseEnv({ ...base, NODE_ENV: "production" })).toThrow(
+      /TURNSTILE_SECRET_KEY: obrigatório em produção/,
+    );
+    expect(() => parseEnv({ ...base, NODE_ENV: "production", TURNSTILE_SECRET_KEY: "s" })).toThrow(
+      /NEXT_PUBLIC_TURNSTILE_SITE_KEY: obrigatório em produção/,
+    );
+  });
+  it("aceita produção com as duas chaves do Turnstile", () => {
+    const env = parseEnv({
+      ...base,
+      NODE_ENV: "production",
+      TURNSTILE_SECRET_KEY: "s",
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: "k",
+    });
+    expect(env.TURNSTILE_SECRET_KEY).toBe("s");
+  });
+  it("dev sem as chaves do Turnstile passa", () => {
+    const env = parseEnv(base);
+    expect(env.TURNSTILE_SECRET_KEY).toBeUndefined();
+    expect(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY).toBeUndefined();
   });
 });

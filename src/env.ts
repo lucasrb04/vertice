@@ -20,8 +20,15 @@ const schema = z
       .enum(["true", "false"])
       .default("false")
       .transform((v) => v === "true"),
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().trim().optional().transform((v) => (v ? v : undefined)),
+    TURNSTILE_SECRET_KEY: z.string().trim().optional().transform((v) => (v ? v : undefined)),
   })
   .superRefine((env, ctx) => {
+    if (env.NODE_ENV === "production") {
+      for (const key of ["NEXT_PUBLIC_TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"] as const) {
+        if (!env[key]) ctx.addIssue({ code: "custom", path: [key], message: "obrigatório em produção" });
+      }
+    }
     if (env.NODE_ENV === "production" && env.ENABLE_TEST_AUTH) {
       ctx.addIssue({
         code: "custom",
