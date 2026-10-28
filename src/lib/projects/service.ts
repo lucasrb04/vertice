@@ -43,6 +43,17 @@ function suffixOf(slug: string, base: string): number {
   return slug === base ? 1 : Number(slug.slice(base.length + 1)) || 1;
 }
 
+export async function assertCoursesBelongToInstitution(tx: Tx, institutionId: string, courseIds: string[]): Promise<void> {
+  if (courseIds.length === 0) return;
+  const found = await tx
+    .select({ id: courses.id })
+    .from(courses)
+    .where(and(eq(courses.institutionId, institutionId), inArray(courses.id, courseIds)));
+  if (found.length !== new Set(courseIds).size) {
+    throw new ValidationError({ targetCourseIds: ["Curso inválido."] });
+  }
+}
+
 export async function insertOpportunity(
   tx: Tx,
   ctx: { user: AuthUser; projectId: string },
@@ -50,15 +61,7 @@ export async function insertOpportunity(
 ): Promise<string> {
   const { user, projectId } = ctx;
 
-  if (input.targetCourseIds.length > 0) {
-    const found = await tx
-      .select({ id: courses.id })
-      .from(courses)
-      .where(and(eq(courses.institutionId, user.institutionId), inArray(courses.id, input.targetCourseIds)));
-    if (found.length !== new Set(input.targetCourseIds).size) {
-      throw new ValidationError({ targetCourseIds: ["Curso inválido."] });
-    }
-  }
+  await assertCoursesBelongToInstitution(tx, user.institutionId, input.targetCourseIds);
 
   const { tags, scholarshipValueCents, deadline, ...rest } = input;
   const [row] = await tx
