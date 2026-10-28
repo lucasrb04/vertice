@@ -168,4 +168,16 @@ describe("updateProject / archiveProject", () => {
     await addMember(project.id, owner.id, "OWNER");
     await expect(updateProject(owner, project.id, validProjectInput())).rejects.toBeInstanceOf(NotFoundError);
   });
+
+  it("SYSTEM_ADMIN com membership real escreve; com REVIEWER não", async () => {
+    const sys = await mkUser("sys2@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
+    const { projectId } = await createProjectWithOpportunity(sys, wizard());
+    await updateProject(sys, projectId, validProjectInput({ name: "Editado Pelo Admin" }));
+    const [row] = await db.select().from(projects).where(eq(projects.id, projectId));
+    expect(row.name).toBe("Editado Pelo Admin");
+
+    const other = await mkProject();
+    await addMember(other.id, sys.id, "REVIEWER");
+    await expect(updateProject(sys, other.id, validProjectInput())).rejects.toBeInstanceOf(NotFoundError);
+  });
 });

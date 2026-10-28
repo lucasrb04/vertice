@@ -1,4 +1,6 @@
-import type { ProjectRole } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
+import { db } from "@/db";
+import { projectMembers, type ProjectRole } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
 import { authorizeProjectRole, type AuthUser, type ProjectAccess } from "@/lib/auth/guards";
 
@@ -16,7 +18,16 @@ export async function loadProjectForWrite(
   roles: readonly ProjectRole[],
 ): Promise<ProjectAccess & { membership: { role: ProjectRole } }> {
   const access = await authorizeProjectRole(user, projectId, ALL_ROLES, { allowInactive: true });
-  const { membership } = access;
+  let membership = access.membership;
+  if (!membership && user.systemRole === "SYSTEM_ADMIN") {
+    // authorizeProjectRole não consulta project_members para SYSTEM_ADMIN; só uma membership real habilita escrita.
+    const [row] = await db
+      .select({ role: projectMembers.role })
+      .from(projectMembers)
+      .where(and(eq(projectMembers.projectId, access.project.id), eq(projectMembers.userId, user.id)))
+      .limit(1);
+    membership = row ?? null;
+  }
   if (!membership || !roles.includes(membership.role) || access.project.status !== "ACTIVE") {
     throw new NotFoundError();
   }
