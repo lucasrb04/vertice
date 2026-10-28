@@ -2,7 +2,15 @@ import { isIP } from "node:net";
 import { db, type Db, type Tx } from "@/db";
 import { auditLogs } from "@/db/schema";
 
-export type AuditAction = "ADMIN_MAINTENANCE_ACCESS" | "ADMIN_ACCESS_DENIED" | "USER_BANNED";
+export type AuditAction =
+  | "ADMIN_MAINTENANCE_ACCESS"
+  | "ADMIN_ACCESS_DENIED"
+  | "USER_BANNED"
+  | "PROJECT_ARCHIVED"
+  | "PROJECT_MEMBER_ADDED"
+  | "PROJECT_MEMBER_REMOVED"
+  | "PROJECT_MEMBER_ROLE_CHANGED"
+  | "PROJECT_MEMBER_LEFT";
 export type AuditTargetType = "PROJECT" | "OPPORTUNITY" | "TAG" | "USER" | "ROUTE";
 
 export type AuditEntry = {

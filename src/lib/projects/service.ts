@@ -1,0 +1,164 @@
+import { and, eq, gt, inArray, like, sql } from "drizzle-orm";
+import { db, type Tx } from "@/db";
+import { courses, opportunities, projectMembers, projects } from "@/db/schema";
+import type { AuthUser } from "@/lib/auth/guards";
+import { RateLimitError, ValidationError, fromZodError } from "@/lib/domain-errors";
+import { logAudit } from "@/lib/security/audit";
+import { opportunitySlug, projectSlugBase } from "@/lib/slug";
+import { syncOpportunityTags } from "@/lib/tags/service";
+import { deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
+import type { OpportunityInput } from "@/lib/validation/opportunity";
+import { makeWizardSchema } from "@/lib/validation/opportunity";
+import { projectInputSchema, type ProjectInput } from "@/lib/validation/project";
+import { EDITOR_ROLES, OWNER_ONLY, loadProjectForWrite } from "./permissions";
+
+export const PROJECT_RATE_LIMIT = "Você atingiu o limite de 3 projetos criados por dia. Tente de novo amanhã.";
+
+const MAX_PROJECTS_PER_DAY = 3;
+const DAY_MS = 24 * 3_600_000;
+
+function isUniqueViolation(err: unknown): boolean {
+  const e = err as { code?: string; cause?: { code?: string } } | null;
+  return e?.code === "23505" || e?.cause?.code === "23505";
+}
+
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
+/** Menor sufixo livre a partir de `minSuffix`: base, base-2, base-3… */
+async function nextFreeProjectSlug(tx: Tx, institutionId: string, base: string, minSuffix = 1): Promise<string> {
+  const rows = await tx
+    .select({ slug: projects.slug })
+    .from(projects)
+    .where(and(eq(projects.institutionId, institutionId), like(projects.slug, `${escapeLike(base)}%`)));
+  const taken = new Set(rows.map((r) => r.slug));
+  for (let n = minSuffix; ; n++) {
+    const candidate = n === 1 ? base : `${base}-${n}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
+function suffixOf(slug: string, base: string): number {
+  return slug === base ? 1 : Number(slug.slice(base.length + 1)) || 1;
+}
+
+export async function insertOpportunity(
+  tx: Tx,
+  ctx: { user: AuthUser; projectId: string },
+  input: OpportunityInput,
+): Promise<string> {
+  const { user, projectId } = ctx;
+
+  if (input.targetCourseIds.length > 0) {
+    const found = await tx
+      .select({ id: courses.id })
+      .from(courses)
+      .where(and(eq(courses.institutionId, user.institutionId), inArray(courses.id, input.targetCourseIds)));
+    if (found.length !== new Set(input.targetCourseIds).size) {
+      throw new ValidationError({ targetCourseIds: ["Curso inválido."] });
+    }
+  }
+
+  const { tags, scholarshipValueCents, deadline, ...rest } = input;
+  const [row] = await tx
+    .insert(opportunities)
+    .values({
+      ...rest,
+      institutionId: user.institutionId,
+      projectId,
+      slug: opportunitySlug(input.title),
+      scholarshipValueCents,
+      deadlineAt: deadlineFromDay(deadline),
+    })
+    .returning({ id: opportunities.id });
+
+  await syncOpportunityTags(tx, { institutionId: user.institutionId, userId: user.id, opportunityId: row.id }, tags);
+  return row.id;
+}
+
+export async function createProjectWithOpportunity(
+  user: AuthUser,
+  input: unknown,
+  opts: { now?: Date } = {},
+): Promise<{ projectId: string; opportunityId: string }> {
+  const now = opts.now ?? new Date();
+  const parsed = makeWizardSchema({ today: todayInSaoPaulo(now) }).safeParse(input);
+  if (!parsed.success) throw fromZodError(parsed.error);
+  const { project: projectInput, opportunity } = parsed.data;
+
+  return db.transaction(async (tx) => {
+    // Serializa criações do mesmo usuário para o limite diário não ser furado por corrida.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${"project-create:" + user.id}))`);
+
+    const [{ count }] = await tx
+      .select({ count: sql<number>`count(*)::int` })
+      .from(projects)
+      .innerJoin(projectMembers, eq(projectMembers.projectId, projects.id))
+      .where(
+        and(
+          eq(projectMembers.userId, user.id),
+          eq(projectMembers.role, "OWNER"),
+          gt(projects.createdAt, new Date(now.getTime() - DAY_MS)),
+        ),
+      );
+    if (count >= MAX_PROJECTS_PER_DAY) throw new RateLimitError(PROJECT_RATE_LIMIT);
+
+    const base = projectSlugBase(projectInput.name);
+    let slug = await nextFreeProjectSlug(tx, user.institutionId, base);
+    let projectId: string | undefined;
+    for (let attempt = 0; attempt < 2 && !projectId; attempt++) {
+      try {
+        // Savepoint: uma violação de unicidade não pode abortar a transação inteira.
+        const [row] = await tx.transaction((sp) =>
+          sp
+            .insert(projects)
+            .values({ ...projectInput, institutionId: user.institutionId, slug })
+            .returning({ id: projects.id }),
+        );
+        projectId = row.id;
+      } catch (err) {
+        if (attempt === 1 || !isUniqueViolation(err)) throw err;
+        slug = await nextFreeProjectSlug(tx, user.institutionId, base, suffixOf(slug, base) + 1);
+      }
+    }
+    if (!projectId) throw new Error("PROJECT_INSERT_FAILED");
+
+    await tx.insert(projectMembers).values({ projectId, userId: user.id, role: "OWNER" });
+    const opportunityId = await insertOpportunity(tx, { user, projectId }, opportunity);
+    return { projectId, opportunityId };
+  });
+}
+
+export async function updateProject(user: AuthUser, projectId: string, input: unknown): Promise<void> {
+  const parsed = projectInputSchema.safeParse(input);
+  if (!parsed.success) throw fromZodError(parsed.error);
+  const data: ProjectInput = parsed.data;
+
+  const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
+  // slug, institutionId e status ficam de fora de propósito.
+  await db
+    .update(projects)
+    .set({ ...data, updatedAt: new Date() })
+    .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId)));
+}
+
+export async function archiveProject(user: AuthUser, projectId: string): Promise<void> {
+  const { project } = await loadProjectForWrite(user, projectId, OWNER_ONLY);
+  await db.transaction(async (tx) => {
+    await tx
+      .update(projects)
+      .set({ status: "ARCHIVED", updatedAt: new Date() })
+      .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId)));
+    await logAudit(
+      {
+        institutionId: project.institutionId,
+        actorUserId: user.id,
+        action: "PROJECT_ARCHIVED",
+        targetType: "PROJECT",
+        targetId: project.id,
+      },
+      tx,
+    );
+  });
+}
