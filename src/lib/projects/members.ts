@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { projectMembers, users } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
 import type { AuthUser } from "@/lib/auth/guards";
+import { isUniqueViolation } from "@/lib/db-errors";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
 import { ALL_ROLES, OWNER_ONLY, loadProjectForWrite } from "@/lib/projects/permissions";
 import { logAudit } from "@/lib/security/audit";
@@ -13,17 +14,12 @@ export const MEMBER_NO_ACCOUNT =
   "Essa pessoa ainda não entrou no Vértice. Peça para ela entrar uma vez com a conta da UNIFEI e tente de novo.";
 
 export const addMemberInputSchema = z.object({
-  email: z.email().trim().toLowerCase(),
+  email: z.string().trim().toLowerCase().pipe(z.email()),
   role: z.enum(["ADMIN", "REVIEWER"]),
 });
 
 const assignableRoleSchema = addMemberInputSchema.shape.role;
 const uuidSchema = z.string().uuid();
-
-function isUniqueViolation(err: unknown): boolean {
-  const e = err as { code?: string; cause?: { code?: string } } | null;
-  return e?.code === "23505" || e?.cause?.code === "23505";
-}
 
 function requireUuid(value: string): string {
   if (!uuidSchema.safeParse(value).success) throw new NotFoundError();

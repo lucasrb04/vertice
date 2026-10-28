@@ -1,5 +1,6 @@
 import { and, eq, gt, inArray, like, sql } from "drizzle-orm";
 import { db, type Tx } from "@/db";
+import { isUniqueViolation } from "@/lib/db-errors";
 import { courses, opportunities, projectMembers, projects } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
 import { RateLimitError, ValidationError, fromZodError } from "@/lib/domain-errors";
@@ -16,11 +17,6 @@ export const PROJECT_RATE_LIMIT = "Você atingiu o limite de 3 projetos criados 
 
 const MAX_PROJECTS_PER_DAY = 3;
 const DAY_MS = 24 * 3_600_000;
-
-function isUniqueViolation(err: unknown): boolean {
-  const e = err as { code?: string; cause?: { code?: string } } | null;
-  return e?.code === "23505" || e?.cause?.code === "23505";
-}
 
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/g, "\\$&");

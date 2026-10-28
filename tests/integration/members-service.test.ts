@@ -34,7 +34,7 @@ describe("members service", () => {
     const { owner, project } = await setup();
     const a = await mkUser("novo.admin@unifei.edu.br");
     const r = await mkUser("novo.rev@unifei.edu.br");
-    await addMemberTo(owner, project.id, { email: "Novo.Admin@UNIFEI.edu.br", role: "ADMIN" });
+    await addMemberTo(owner, project.id, { email: "  Novo.Admin@UNIFEI.edu.br ", role: "ADMIN" });
     await addMemberTo(owner, project.id, { email: "novo.rev@unifei.edu.br", role: "REVIEWER" });
     expect(await roleOf(project.id, a.id)).toBe("ADMIN");
     expect(await roleOf(project.id, r.id)).toBe("REVIEWER");
