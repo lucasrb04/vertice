@@ -39,8 +39,9 @@ async function findMyApplicationId(opportunityId: string): Promise<string | null
   try {
     const sessionUser = await getSessionUser();
     return sessionUser ? await getMyApplicationId(sessionUser.id, opportunityId) : null;
-  } catch (error) {
-    console.error("[processo] falha ao consultar a sessão", error);
+  } catch {
+    // Sem o objeto do erro: o do Drizzle traz a consulta e os parâmetros.
+    console.error("[processo] falha ao consultar a sessão");
     return null;
   }
 }

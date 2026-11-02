@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { applications, opportunities, projects, users } from "@/db/schema";
 import { getEnv } from "@/env";
 import { APPLICATION_STATUS_LABELS, type ApplicationStatus } from "@/lib/applications/labels";
-import { sendEmail } from "./send";
+import { sendEmail, sendEmailBatch } from "./send";
 import { ApplicationReceivedEmail } from "./templates/application-received";
 import { StatusChangedEmail } from "./templates/status-changed";
 
@@ -48,12 +48,11 @@ export async function notifyApplicationReceived(applicationId: string): Promise<
   }
 }
 
-/** Aviso de mudança de etapa, um e-mail por candidatura e em sequência. Nunca lança. */
+/** Aviso de mudança de etapa, um e-mail por candidatura numa só chamada ao provedor. Nunca lança. */
 export async function notifyStatusChanged(
   moved: { applicationId: string; toStatus: ApplicationStatus; message: string | null }[],
 ): Promise<void> {
   if (moved.length === 0) return;
-  let byId;
   try {
     const rows = await recipients().where(
       inArray(
@@ -61,17 +60,13 @@ export async function notifyStatusChanged(
         moved.map((m) => m.applicationId),
       ),
     );
-    byId = new Map(rows.map((r) => [r.applicationId, r]));
-  } catch {
-    logFailure("os avisos de mudança de etapa");
-    return;
-  }
-  for (const item of moved) {
-    const row = byId.get(item.applicationId);
-    if (!row || row.isBanned) continue;
-    try {
+    const byId = new Map(rows.map((r) => [r.applicationId, r]));
+    const url = myApplicationsUrl();
+    const emails = moved.flatMap((item) => {
+      const row = byId.get(item.applicationId);
+      if (!row || row.isBanned) return [];
       const statusLabel = APPLICATION_STATUS_LABELS[item.toStatus];
-      await sendEmail({
+      return {
         to: row.email,
         subject: `Sua candidatura mudou de etapa: ${statusLabel}`,
         react: createElement(StatusChangedEmail, {
@@ -80,11 +75,12 @@ export async function notifyStatusChanged(
           projectName: row.projectName,
           statusLabel,
           message: item.message,
-          url: myApplicationsUrl(),
+          url,
         }),
-      });
-    } catch {
-      logFailure("um aviso de mudança de etapa");
-    }
+      };
+    });
+    await sendEmailBatch(emails);
+  } catch {
+    logFailure("os avisos de mudança de etapa");
   }
 }

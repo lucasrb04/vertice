@@ -22,6 +22,8 @@ export const OPPORTUNITY_CLOSED = "Este processo já foi encerrado e não pode s
 
 export const HAS_APPLICATIONS = "Este processo já tem candidaturas.";
 
+export const QUESTION_LOCKED = "A pergunta não pode mudar depois das primeiras candidaturas.";
+
 type Opts = { now?: Date };
 
 function parseInput(input: unknown, now: Date): OpportunityInput {
@@ -31,6 +33,13 @@ function parseInput(input: unknown, now: Date): OpportunityInput {
 }
 
 const uuidSchema = z.uuid();
+
+const normalizeQuestion = (question: string | null) => question?.trim() || null;
+
+async function countApplications(client: Pick<Tx, "select">, opportunityId: string): Promise<number> {
+  const [{ n }] = await client.select({ n: count() }).from(applications).where(eq(applications.opportunityId, opportunityId));
+  return n;
+}
 
 /** Trava a linha do processo (que precisa ser do projeto da rota) e exige que ainda esteja aberto. */
 async function lockOpenOpportunity(
@@ -79,12 +88,10 @@ export async function updateOpportunity(
     const row = await lockOpenOpportunity(tx, project, opportunityId, now);
     await assertCoursesBelongToInstitution(tx, row.institutionId, data.targetCourseIds);
 
-    if (row.internalSelectionEnabled && !data.internalSelectionEnabled) {
-      const [{ n }] = await tx
-        .select({ n: count() })
-        .from(applications)
-        .where(eq(applications.opportunityId, row.id));
-      if (n > 0) throw new DomainError("HAS_APPLICATIONS", HAS_APPLICATIONS);
+    const turningOff = row.internalSelectionEnabled && !data.internalSelectionEnabled;
+    const questionChanged = normalizeQuestion(row.customQuestion) !== normalizeQuestion(data.customQuestion);
+    if ((turningOff || questionChanged) && (await countApplications(tx, row.id)) > 0) {
+      throw new DomainError("HAS_APPLICATIONS", turningOff ? HAS_APPLICATIONS : QUESTION_LOCKED);
     }
 
     // slug, projectId, institutionId, status, contadores e closedAt ficam de fora de propósito.
@@ -134,7 +141,13 @@ export async function getOpportunityFormValues(
   opportunityId: string,
   mode: "edit" | "duplicate",
   opts: Opts = {},
-): Promise<{ values: OpportunityFormValues; tagNames: Record<string, string>; isOpen: boolean }> {
+): Promise<{
+  values: OpportunityFormValues;
+  tagNames: Record<string, string>;
+  isOpen: boolean;
+  /** Só no modo de edição: a duplicata é um processo novo, sem candidaturas. */
+  hasApplications: boolean;
+}> {
   const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   if (!uuidSchema.safeParse(opportunityId).success) throw new NotFoundError();
   const [o] = await db
@@ -180,5 +193,10 @@ export async function getOpportunityFormValues(
     noOtherScholarship: o.noOtherScholarship,
     tags,
   };
-  return { values, tagNames, isOpen: isOpportunityOpen(o, project.status, opts.now ?? new Date()) };
+  return {
+    values,
+    tagNames,
+    isOpen: isOpportunityOpen(o, project.status, opts.now ?? new Date()),
+    hasApplications: !dup && (await countApplications(db, o.id)) > 0,
+  };
 }

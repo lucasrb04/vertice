@@ -1,20 +1,22 @@
-import { createElement } from "react";
+import { createElement, type ReactElement } from "react";
 import { render } from "@react-email/render";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseEnv, type Env } from "@/env";
 
 const sendMock = vi.fn();
+const batchMock = vi.fn();
 const resendCtor = vi.fn();
 vi.mock("resend", () => ({
   Resend: class {
     emails = { send: sendMock };
+    batch = { send: batchMock };
     constructor(key: string) {
       resendCtor(key);
     }
   },
 }));
 
-import { sendEmail } from "@/lib/email/send";
+import { sendEmail, sendEmailBatch } from "@/lib/email/send";
 import { StatusChangedEmail } from "@/lib/email/templates/status-changed";
 
 const base = {
@@ -37,7 +39,7 @@ const FROM = "Vértice <nao-responda@example.com>";
 const withKey: Env = parseEnv({ ...base, RESEND_API_KEY: "re_fake", EMAIL_FROM: FROM });
 const noKey: Env = parseEnv(base);
 
-const msg = (react = createElement("p", null, "oi")) => ({ to: "aluno@unifei.edu.br", subject: "Assunto", react });
+const msg = (react: ReactElement = createElement("p", null, "oi")) => ({ to: "aluno@unifei.edu.br", subject: "Assunto", react });
 
 describe("env de e-mail", () => {
   it("produção sem RESEND_API_KEY ou EMAIL_FROM lança", () => {
@@ -86,6 +88,108 @@ describe("sendEmail", () => {
     const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
     expect(vi.mocked(console.error)).toHaveBeenCalledTimes(2);
     for (const piece of ["Maria", "aluno@", "unifei.edu.br", "mensagem-secreta"]) expect(logged).not.toContain(piece);
+  });
+});
+
+describe("limite do provedor", () => {
+  const rateLimited = { data: null, error: { name: "rate_limit_exceeded", message: "aluno@unifei.edu.br", statusCode: 429 } };
+  const accepted = { data: { id: "1" }, error: null };
+
+  beforeEach(() => {
+    sendMock.mockReset();
+    batchMock.mockReset();
+    vi.useFakeTimers();
+    vi.spyOn(console, "info").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  /** Deixa a chamada pendente até o relógio falso andar 999 ms e confere que a segunda tentativa só vem aos 1000 ms. */
+  async function expectRetryAfterOneSecond(mock: typeof sendMock, run: () => Promise<unknown>) {
+    const pending = run();
+    await vi.advanceTimersByTimeAsync(999);
+    expect(mock).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1);
+    return pending;
+  }
+
+  it("envio único tenta de novo uma vez depois de 1 s", async () => {
+    sendMock.mockResolvedValueOnce(rateLimited).mockResolvedValueOnce(accepted);
+    expect(await expectRetryAfterOneSecond(sendMock, () => sendEmail(msg(), withKey))).toBe(true);
+    expect(sendMock).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(console.error)).not.toHaveBeenCalled();
+  });
+
+  it("lote vai numa chamada só, cada um com seu destinatário, HTML e texto", async () => {
+    batchMock.mockResolvedValue({ data: { data: [{ id: "1" }, { id: "2" }] }, error: null });
+    const count = await sendEmailBatch([msg(), { ...msg(), to: "bia@unifei.edu.br" }], withKey);
+    expect(count).toBe(2);
+    expect(batchMock).toHaveBeenCalledTimes(1);
+    expect(sendMock).not.toHaveBeenCalled();
+    const [emails, options] = batchMock.mock.calls[0]!;
+    expect(emails.map((e: { to: string }) => e.to)).toEqual(["aluno@unifei.edu.br", "bia@unifei.edu.br"]);
+    expect(emails[0]).toMatchObject({ from: FROM, subject: "Assunto" });
+    expect(emails[0].html).toContain("oi");
+    expect(emails[0].text).toContain("oi");
+    // Um endereço recusado não derruba os outros.
+    expect(options).toMatchObject({ batchValidation: "permissive" });
+  });
+
+  it("lote limitado tenta de novo uma vez depois de 1 s, sem repetir além disso", async () => {
+    batchMock.mockResolvedValueOnce(rateLimited).mockResolvedValueOnce({ data: { data: [{ id: "1" }] }, error: null });
+    expect(await expectRetryAfterOneSecond(batchMock, () => sendEmailBatch([msg()], withKey))).toBe(1);
+    expect(batchMock).toHaveBeenCalledTimes(2);
+
+    batchMock.mockClear();
+    batchMock.mockResolvedValue(rateLimited);
+    const failed = sendEmailBatch([msg()], withKey);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(await failed).toBe(0);
+    expect(batchMock).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(console.error)).toHaveBeenCalledTimes(1);
+  });
+
+  it("outro erro não tenta de novo", async () => {
+    batchMock.mockResolvedValue({ data: null, error: { name: "validation_error", message: "x", statusCode: 422 } });
+    expect(await sendEmailBatch([msg()], withKey)).toBe(0);
+    expect(batchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("recusa parcial e falha ao montar um e-mail não levam dados do aluno ao log e não barram os outros", async () => {
+    const secret = "Maria Souza mensagem-secreta";
+    const Broken = (): never => {
+      throw new Error(secret);
+    };
+    batchMock.mockResolvedValue({
+      data: { data: [{ id: "1" }], errors: [{ index: 1, message: `invalid ${secret}` }] },
+      error: null,
+    });
+    const count = await sendEmailBatch(
+      [
+        { ...msg(createElement(Broken)), to: "maria@unifei.edu.br" },
+        msg(),
+        { ...msg(), to: "bia@unifei.edu.br" },
+      ],
+      withKey,
+    );
+    expect(count).toBe(1);
+    expect(batchMock.mock.calls[0]![0].map((e: { to: string }) => e.to)).toEqual([
+      "aluno@unifei.edu.br",
+      "bia@unifei.edu.br",
+    ]);
+    const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
+    for (const piece of ["Maria", "maria@", "mensagem-secreta", "aluno@"]) expect(logged).not.toContain(piece);
+  });
+
+  it("sem chave, ou sem nada para enviar, não chama a rede e avisa uma vez só", async () => {
+    expect(await sendEmailBatch([], withKey)).toBe(0);
+    expect(batchMock).not.toHaveBeenCalled();
+    expect(await sendEmailBatch([msg(), msg()], noKey)).toBe(0);
+    expect(batchMock).not.toHaveBeenCalled();
+    expect(vi.mocked(console.info)).toHaveBeenCalledTimes(1);
   });
 });
 

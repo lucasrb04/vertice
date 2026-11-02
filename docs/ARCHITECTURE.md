@@ -64,7 +64,8 @@ vertice-unifei/
 │   │   ├── ui/                   # Primitivos do shadcn/ui customizados pelo Design System
 │   │   ├── layout/               # Header, Footer, CommandBar, Navegação
 │   │   ├── opportunities/        # OpportunityCard, MatchBadge, ExplainableMatchPopover, Filters
-│   │   ├── projects/             # ProjectHeader, KanbanBoard, MemberManager
+│   │   ├── projects/             # ProjectPanel, OpportunityForm, MemberManager
+│   │   ├── applications/         # ApplyForm, ApplicationBoard (Kanban) e MoveDialog
 │   │   ├── vitrine/              # OpportunityCard, Carousel, Filters, SafeMarkdown, Schedule, Requirements
 │   │   └── tags/                 # TagCombobox (Autocomplete + Criação de Tag Aberta)
 │   ├── db/
@@ -74,6 +75,8 @@ vertice-unifei/
 │   │   └── seed-demo.ts          # Dados fictícios "Demo" (pnpm db:seed:demo; recusa produção e banco que não seja local: `localhost`, `127.0.0.1` ou `[::1]`, sem `host`/`hostaddr` na query)
 │   ├── lib/
 │   │   ├── auth/                 # Configuração do Better-Auth + Guards (requireAuth, requireAdmin)
+│   │   ├── applications/         # Candidatura, quadro de candidatos, Minhas Candidaturas e rótulos das etapas
+│   │   ├── opportunities/        # Processos seletivos: criar, editar, encerrar e estado aberto/encerrado
 │   │   ├── matching/             # Motor matemático de Afinidade e Explainable Match (Puro + Testável)
 │   │   ├── public/               # Consultas da vitrine, parser de URL, rótulos e telemetria (sem imports de next/*)
 │   │   ├── search/               # Normalização de Tags

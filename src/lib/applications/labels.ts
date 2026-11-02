@@ -18,3 +18,6 @@ export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
   ACCEPTED: "Aprovado",
   REJECTED: "Não selecionado",
 };
+
+/** Etapas em que o resultado ainda não saiu. */
+export const IN_PROGRESS_STATUSES: readonly ApplicationStatus[] = ["APPLIED", "IN_REVIEW", "INTERVIEW"];

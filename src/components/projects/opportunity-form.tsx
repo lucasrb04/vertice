@@ -136,6 +136,7 @@ export function OpportunityForm({
   category,
   initialValues,
   initialTagNames,
+  questionLockedHint,
   onSubmit,
   submitLabel,
   submitDisabled = false,
@@ -149,6 +150,8 @@ export function OpportunityForm({
   category?: ProjectCategory | "";
   initialValues?: OpportunityFormValues;
   initialTagNames?: Record<string, string>;
+  /** Explicação de por que a pergunta está travada; presente, o campo fica somente leitura. */
+  questionLockedHint?: string;
   onSubmit?: (values: OpportunityFormValues) => Promise<ActionResult<unknown>>;
   submitLabel?: string;
   submitDisabled?: boolean;
@@ -353,8 +356,23 @@ export function OpportunityForm({
           )}
         </div>
         {draft.internalSelectionEnabled && (
-          <Field label="Pergunta para os candidatos" optional errors={err("customQuestion")} className="sm:col-span-6">
-            {(p) => <Input {...p} value={draft.customQuestion} onChange={text("customQuestion")} maxLength={280} />}
+          <Field
+            label="Pergunta para os candidatos"
+            optional
+            hint={questionLockedHint}
+            errors={err("customQuestion")}
+            className="sm:col-span-6"
+          >
+            {(p) => (
+              <Input
+                {...p}
+                value={draft.customQuestion}
+                onChange={text("customQuestion")}
+                maxLength={280}
+                readOnly={Boolean(questionLockedHint)}
+                className={questionLockedHint ? "bg-stone-100 text-stone-600" : undefined}
+              />
+            )}
           </Field>
         )}
       </Block>

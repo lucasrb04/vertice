@@ -9,7 +9,7 @@ import {
   studentProfiles,
 } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
-import type { ApplicationStatus } from "./labels";
+import { IN_PROGRESS_STATUSES, type ApplicationStatus } from "./labels";
 
 /** Estado do aluno diante de um processo, para a página de candidatura. */
 export async function getApplyContext(user: AuthUser, opportunityId: string) {
@@ -48,6 +48,8 @@ export type MyApplication = {
   /** Nulo quando o processo está em revisão: a página pública devolveria 404. */
   opportunitySlug: string | null;
   projectName: string;
+  /** Projeto arquivado com a candidatura ainda em andamento: o aluno não terá resultado por aqui. */
+  projectArchived: boolean;
   status: ApplicationStatus;
   appliedAt: Date;
   messages: { toStatus: ApplicationStatus; message: string; createdAt: Date }[];
@@ -62,6 +64,7 @@ export async function listMyApplications(user: AuthUser): Promise<MyApplication[
       opportunitySlug: opportunities.slug,
       opportunityStatus: opportunities.status,
       projectName: projects.name,
+      projectStatus: projects.status,
       status: applications.status,
       appliedAt: applications.createdAt,
     })
@@ -91,8 +94,9 @@ export async function listMyApplications(user: AuthUser): Promise<MyApplication[
     list.push({ toStatus: e.toStatus, message: e.message!, createdAt: e.createdAt });
     byApplication.set(e.applicationId, list);
   }
-  return rows.map(({ opportunityStatus, opportunitySlug, ...row }) => ({
+  return rows.map(({ opportunityStatus, opportunitySlug, projectStatus, ...row }) => ({
     ...row,
+    projectArchived: projectStatus === "ARCHIVED" && IN_PROGRESS_STATUSES.includes(row.status),
     opportunitySlug: opportunityStatus === "UNDER_REVIEW" ? null : opportunitySlug,
     messages: byApplication.get(row.id) ?? [],
   }));

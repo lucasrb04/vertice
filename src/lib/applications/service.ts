@@ -14,18 +14,20 @@ import { NotFoundError } from "@/lib/auth/errors";
 import type { AuthUser } from "@/lib/auth/guards";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { DomainError, fromZodError, RateLimitError } from "@/lib/domain-errors";
-import { OPPORTUNITY_CLOSED } from "@/lib/opportunities/service";
 import { isOpportunityOpen, opensInFuture } from "@/lib/opportunities/status";
 import { publicOpportunitySql } from "@/lib/public/queries";
 import { applicationLimiter } from "@/lib/security/rate-limit";
 import { lockProjectSearchDocuments } from "@/lib/search/index-documents";
 import { applySchema, type ApplyInput } from "@/lib/validation/application";
 
+export const APPLICATIONS_CLOSED = "As candidaturas deste processo foram encerradas.";
 export const NO_INTERNAL_SELECTION = "Este processo não recebe candidaturas pelo Vértice.";
 export const NOT_OPEN_YET = "As candidaturas deste processo ainda não abriram.";
 export const ALREADY_APPLIED = "Você já se candidatou a este processo.";
 export const PROJECT_MEMBER = "Você faz parte da equipe deste projeto e não pode se candidatar.";
 export const APPLICATION_RATE_LIMITED = "Muitas candidaturas em pouco tempo. Tente de novo mais tarde.";
+
+const ANSWER_REQUIRED = "Responda à pergunta.";
 
 const fieldError = (path: string, message: string) =>
   fromZodError(new ZodError([{ code: "custom", path: [path], message }]));
@@ -67,9 +69,7 @@ export async function applyToOpportunity(
       ),
     );
   if (!target) throw new NotFoundError();
-  if (target.customQuestion && !data.answerText) {
-    throw fieldError("answerText", "Responda à pergunta.");
-  }
+  if (target.customQuestion && !data.answerText) throw fieldError("answerText", ANSWER_REQUIRED);
 
   const [course] = await db
     .select({ id: courses.id })
@@ -91,9 +91,11 @@ export async function applyToOpportunity(
       const [project] = await tx.select({ status: projects.status }).from(projects).where(eq(projects.id, target.projectId));
       if (!opp || !project || opp.status === "UNDER_REVIEW") throw new NotFoundError();
 
-      if (!isOpportunityOpen(opp, project.status, now)) throw new DomainError("OPPORTUNITY_CLOSED", OPPORTUNITY_CLOSED);
+      if (!isOpportunityOpen(opp, project.status, now)) throw new DomainError("OPPORTUNITY_CLOSED", APPLICATIONS_CLOSED);
       if (!opp.internalSelectionEnabled) throw new DomainError("NO_INTERNAL_SELECTION", NO_INTERNAL_SELECTION);
       if (opensInFuture(opp.applicationsOpenOn, now)) throw new DomainError("NOT_OPEN_YET", NOT_OPEN_YET);
+      // A pergunta pode ter sido criada depois da leitura lá de cima; vale a linha travada.
+      if (opp.customQuestion && !data.answerText) throw fieldError("answerText", ANSWER_REQUIRED);
 
       const [member] = await tx
         .select({ userId: projectMembers.userId })

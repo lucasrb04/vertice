@@ -101,12 +101,20 @@ export async function addProjectMember(projectId: string, email: string, role: "
 }
 
 /** Candidatura de um usuário já logado, como `applyToOpportunity` grava. */
-export async function insertApplication(opportunityId: string, email: string) {
+export async function insertApplication(
+  opportunityId: string,
+  email: string,
+  status: (typeof applications.$inferInsert)["status"] = "APPLIED",
+) {
   const [user] = await getDb().select({ id: users.id }).from(users).where(eq(users.email, email));
-  const [app] = await getDb().insert(applications).values({ opportunityId, userId: user!.id }).returning();
+  const [app] = await getDb().insert(applications).values({ opportunityId, userId: user!.id, status }).returning();
   await getDb()
     .insert(applicationEvents)
     .values({ applicationId: app!.id, fromStatus: null, toStatus: "APPLIED", actorUserId: user!.id });
+}
+
+export async function updateCustomQuestion(opportunityId: string, customQuestion: string) {
+  await getDb().update(opportunities).set({ customQuestion }).where(eq(opportunities.id, opportunityId));
 }
 
 export async function updateProjectStatus(projectId: string, status: ProjectValues["status"]) {

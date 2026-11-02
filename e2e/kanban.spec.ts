@@ -160,6 +160,67 @@ test("celular: colunas em lista, sem rolagem horizontal da página", async ({ pa
   expect(overflow).toBe(0);
 });
 
+test("800 px: quadro rola por dentro, sem rolagem horizontal da página", async ({ page }) => {
+  const id = seq++;
+  const { project, opportunity } = await insertProcess({ title: "Processo largo", internalSelectionEnabled: true });
+  for (const [name, status] of [
+    ["Ana", "ACCEPTED"],
+    ["Bia", "REJECTED"],
+  ] as const) {
+    const email = `${name.toLowerCase()}.largo.${id}@unifei.edu.br`;
+    await loginAs(page, email, `${name} Larga ${id}`);
+    await insertApplication(opportunity.id, email, status);
+  }
+  const reviewer = `revisora.largo.${id}@unifei.edu.br`;
+  await loginAs(page, reviewer, "Revisora");
+  await addProjectMember(project.id, reviewer, "REVIEWER");
+
+  await page.setViewportSize({ width: 800, height: 700 });
+  await page.goto(`/projetos/${project.id}/processos/${opportunity.id}/candidatos`);
+  await expect(inColumn(page, "Aprovado", `Ana Larga ${id}`)).toBeAttached();
+  await expect(inColumn(page, "Não selecionado", `Bia Larga ${id}`)).toBeAttached();
+  const { scrollWidth, innerWidth } = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }));
+  expect(scrollWidth).toBeLessThanOrEqual(innerWidth);
+});
+
+test("candidato que virou REVIEWER vê o próprio card sem controles", async ({ page }) => {
+  const { project, opportunity, ana, bia } = await boardWithTwoCandidates(page);
+  await loginAs(page, ana.email, ana.name);
+  await addProjectMember(project.id, ana.email, "REVIEWER");
+  await page.goto(`/projetos/${project.id}/processos/${opportunity.id}/candidatos`);
+
+  await expect(page.getByText("Sua candidatura")).toHaveCount(1);
+  await expect(page.getByRole("checkbox", { name: `Selecionar ${ana.name}` })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: `Mover para (${ana.name})` })).toHaveCount(0);
+  await expect(page.getByRole("checkbox", { name: `Selecionar ${bia.name}` })).toBeVisible();
+  await expect(page.getByRole("button", { name: `Mover para (${bia.name})` })).toBeVisible();
+
+  await page.getByRole("button", { name: `Mover para (${bia.name})` }).click();
+  await expect(page.getByRole("dialog")).toContainText("O aluno recebe um e-mail e vê a mensagem em Minhas candidaturas.");
+});
+
+test("arquivar cita os candidatos em andamento e o aluno vê Projeto arquivado", async ({ page }) => {
+  const { project, ana, opportunity } = await boardWithTwoCandidates(page);
+  const owner = `dona.${seq++}@unifei.edu.br`;
+  await loginAs(page, owner, "Dona");
+  await addProjectMember(project.id, owner, "OWNER");
+
+  await page.goto(`/projetos/${project.id}`);
+  await page.getByRole("button", { name: "Arquivar projeto" }).click();
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog).toContainText("2 candidatos ainda em andamento");
+  await dialog.getByRole("button", { name: "Arquivar" }).click();
+  await expect(dialog).toBeHidden();
+
+  await loginAs(page, ana.email, ana.name);
+  await page.goto("/minhas-candidaturas");
+  await expect(page.getByRole("link", { name: opportunity.title })).toBeVisible();
+  await expect(page.getByText("Projeto arquivado")).toBeVisible();
+});
+
 test("projeto arquivado: só leitura", async ({ page }) => {
   const { project, opportunity, ana } = await boardWithTwoCandidates(page);
   await updateProjectStatus(project.id, "ARCHIVED");

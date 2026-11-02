@@ -79,7 +79,8 @@ Resend + React Email. Dois modelos: confirmação de candidatura e mudança de e
 
 - Desistência da candidatura e exclusão dos dados dela (LGPD): falta decidir.
 - Por quanto tempo guardar candidaturas de processos encerrados (LGPD).
-- Domínio remetente do Resend: precisa de conta e DNS do autor.
+- Domínio remetente do Resend: precisa de conta e DNS do autor. É pré-requisito para a produção subir: sem `RESEND_API_KEY` e `EMAIL_FROM`, a aplicação recusa iniciar.
+- Falta o `Dockerfile` citado em ARCHITECTURE §8.2: ainda não existe no repositório, e o deploy depende dele.
 - `SYSTEM_ADMIN` sem membership não vê candidatos; moderação pode exigir revisão disso.
 
 ## 10. Aceite

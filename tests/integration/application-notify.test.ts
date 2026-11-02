@@ -9,12 +9,19 @@ import { mkOpportunity, mkProject, mkUser } from "../helpers/fixtures";
 
 type Sent = { to: string; subject: string; react: Parameters<typeof render>[0] };
 const sent: Sent[] = [];
+const batches: number[] = [];
 const failFor = new Set<string>();
 vi.mock("@/lib/email/send", () => ({
   sendEmail: vi.fn(async (input: Sent) => {
     if (failFor.has(input.to)) throw new Error(`boom ${input.to}`);
     sent.push(input);
     return true;
+  }),
+  sendEmailBatch: vi.fn(async (inputs: Sent[]) => {
+    batches.push(inputs.length);
+    for (const input of inputs) if (failFor.has(input.to)) throw new Error(`boom ${input.to}`);
+    sent.push(...inputs);
+    return inputs.length;
   }),
 }));
 
@@ -37,6 +44,7 @@ beforeEach(async () => {
   await resetDb();
   await runSeed();
   sent.length = 0;
+  batches.length = 0;
   failFor.clear();
   vi.spyOn(console, "error").mockImplementation(() => {});
 });
@@ -59,7 +67,7 @@ describe("notifyApplicationReceived", () => {
 });
 
 describe("notifyStatusChanged", () => {
-  it("envia um e-mail por item, com a etapa em pt-BR e a mensagem", async () => {
+  it("manda um e-mail por item numa só chamada ao provedor, com a etapa em pt-BR e a mensagem", async () => {
     const { opp } = await mkApplication();
     const a = await apply(opp.id);
     const b = await apply(opp.id);
@@ -67,6 +75,7 @@ describe("notifyStatusChanged", () => {
       { applicationId: a.app.id, toStatus: "INTERVIEW", message: "Entrevista na segunda, 14h" },
       { applicationId: b.app.id, toStatus: "REJECTED", message: null },
     ]);
+    expect(batches).toEqual([2]);
     expect(sent.map((s) => s.to)).toEqual([a.student.email, b.student.email]);
     const first = await render(sent[0]!.react);
     expect(first).toContain("Entrevista");
@@ -76,19 +85,28 @@ describe("notifyStatusChanged", () => {
     expect(second).not.toContain("Mensagem da equipe");
   });
 
-  it("falha em um item não impede os outros nem lança, e o log não traz dados do aluno", async () => {
+  it("banido e candidatura inexistente ficam de fora do lote", async () => {
+    const { opp } = await mkApplication();
+    const a = await apply(opp.id);
+    const banned = await apply(opp.id);
+    await db.update(users).set({ isBanned: true }).where(eq(users.id, banned.student.id));
+    await notifyStatusChanged([
+      { applicationId: banned.app.id, toStatus: "ACCEPTED", message: null },
+      { applicationId: "00000000-0000-4000-8000-000000000000", toStatus: "ACCEPTED", message: null },
+      { applicationId: a.app.id, toStatus: "ACCEPTED", message: null },
+    ]);
+    expect(sent.map((s) => s.to)).toEqual([a.student.email]);
+  });
+
+  it("falha do envio não lança e o log não traz dados do aluno", async () => {
     const { opp } = await mkApplication();
     const a = await apply(opp.id, "Maria Souza");
-    const b = await apply(opp.id);
     failFor.add(a.student.email);
     await expect(
-      notifyStatusChanged([
-        { applicationId: a.app.id, toStatus: "ACCEPTED", message: "segredo-da-mensagem" },
-        { applicationId: b.app.id, toStatus: "ACCEPTED", message: null },
-      ]),
+      notifyStatusChanged([{ applicationId: a.app.id, toStatus: "ACCEPTED", message: "segredo-da-mensagem" }]),
     ).resolves.toBeUndefined();
-    expect(sent.map((s) => s.to)).toEqual([b.student.email]);
     const logged = JSON.stringify(vi.mocked(console.error).mock.calls);
+    expect(vi.mocked(console.error)).toHaveBeenCalled();
     for (const piece of ["Maria", a.student.email, "segredo-da-mensagem", "boom"]) expect(logged).not.toContain(piece);
   });
 

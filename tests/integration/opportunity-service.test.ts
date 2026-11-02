@@ -202,3 +202,63 @@ describe("updateOpportunity: seleção pela plataforma", () => {
     expect(row.customQuestion).toBeNull();
   });
 });
+
+describe("updateOpportunity: pergunta com candidaturas", () => {
+  const LOCKED = "A pergunta não pode mudar depois das primeiras candidaturas.";
+  const withQuestion = (customQuestion: string) =>
+    validOpportunityInput({ externalUrl: "", internalSelectionEnabled: true, customQuestion });
+
+  async function withApplication() {
+    const { owner, project } = await setup();
+    const { opportunityId } = await createOpportunity(owner, project.id, withQuestion("Por quê?"));
+    const student = await mkUser("aluno@unifei.edu.br");
+    await db.insert(applications).values({ opportunityId, userId: student.id });
+    return { owner, project, opportunityId };
+  }
+
+  it("mudar, tirar ou criar a pergunta é recusado", async () => {
+    const { owner, project, opportunityId } = await withApplication();
+    for (const question of ["Outra pergunta?", ""]) {
+      const err = await updateOpportunity(owner, project.id, opportunityId, withQuestion(question)).catch((e) => e);
+      expect(err).toBeInstanceOf(DomainError);
+      expect(err.code).toBe("HAS_APPLICATIONS");
+      expect(err.userMessage).toBe(LOCKED);
+    }
+    expect((await get(opportunityId)).customQuestion).toBe("Por quê?");
+
+    await db.update(opportunities).set({ customQuestion: null }).where(eq(opportunities.id, opportunityId));
+    await expect(updateOpportunity(owner, project.id, opportunityId, withQuestion("Nova?"))).rejects.toMatchObject({
+      code: "HAS_APPLICATIONS",
+      userMessage: LOCKED,
+    });
+  });
+
+  it("salvar sem mudança continua funcionando, mesmo com espaços em volta", async () => {
+    const { owner, project, opportunityId } = await withApplication();
+    await updateOpportunity(owner, project.id, opportunityId, {
+      ...withQuestion("  Por quê?  "),
+      title: "Título novo de teste",
+    });
+    const row = await get(opportunityId);
+    expect(row.title).toBe("Título novo de teste");
+    expect(row.customQuestion).toBe("Por quê?");
+  });
+
+  it("sem candidaturas a pergunta muda", async () => {
+    const { owner, project } = await setup();
+    const { opportunityId } = await createOpportunity(owner, project.id, withQuestion("Por quê?"));
+    await updateOpportunity(owner, project.id, opportunityId, withQuestion("Outra?"));
+    expect((await get(opportunityId)).customQuestion).toBe("Outra?");
+  });
+
+  it("os valores do formulário dizem se já há candidaturas", async () => {
+    const { owner, project, opportunityId } = await withApplication();
+    const edit = await getOpportunityFormValues(owner, project.id, opportunityId, "edit");
+    expect(edit.hasApplications).toBe(true);
+    const duplicate = await getOpportunityFormValues(owner, project.id, opportunityId, "duplicate");
+    expect(duplicate.hasApplications).toBe(false);
+
+    const fresh = await createOpportunity(owner, project.id, withQuestion("Por quê?"));
+    expect((await getOpportunityFormValues(owner, project.id, fresh.opportunityId, "edit")).hasApplications).toBe(false);
+  });
+});

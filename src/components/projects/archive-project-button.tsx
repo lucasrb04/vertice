@@ -1,17 +1,16 @@
 "use client";
 
 import { archiveProjectAction } from "@/actions/project.actions";
+import { archiveConfirmation } from "@/lib/projects/labels";
 import { ConfirmActionButton } from "./confirm-action-button";
 
-const ARCHIVE_CONFIRMATION = "Arquivar encerra todos os processos do projeto e não pode ser desfeito nesta versão.";
-
 /** Só para o OWNER em projeto ACTIVE (spec §6.6): arquivar é definitivo nesta fase. */
-export function ArchiveProjectButton({ projectId }: { projectId: string }) {
+export function ArchiveProjectButton({ projectId, inProgressCount }: { projectId: string; inProgressCount: number }) {
   return (
     <ConfirmActionButton
       label="Arquivar projeto"
       title="Arquivar este projeto?"
-      description={ARCHIVE_CONFIRMATION}
+      description={archiveConfirmation(inProgressCount)}
       confirmLabel="Arquivar"
       action={() => archiveProjectAction(projectId)}
       variant="destructive"

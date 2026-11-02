@@ -22,7 +22,7 @@ Na **UNIFEI (Campus Itajubá)** e nas universidades brasileiras em geral, o ecos
 Uma plataforma web centralizada, de **baixíssima fricção de adoção** e **operação autônoma (zero aprovação prévia manual)**, onde:
 * Qualquer visitante visualiza uma **Timeline Pública** de vagas abertas na UNIFEI, com busca textual rápida, filtros combinados e tags abertas.
 * Alunos cadastrados contam com um **Algoritmo de Recomendação e Afinidade** que cruza seus interesses, o que já sabem e **o que querem aprender** com as oportunidades disponíveis, exibindo o percentual de compatibilidade e a justificativa (*Explainable Match*).
-* Líderes de projetos e professores publicam vagas em menos de 2 minutos, informando o **link do Edital/Formulário Externo** (acessível sem login) e/ou adotando a **Seleção pela Plataforma (Kanban de 4 etapas)** para gerir os candidatos — os dois canais não são excludentes (D34).
+* Líderes de projetos e professores publicam vagas em menos de 2 minutos, informando o **link do Edital/Formulário Externo** (acessível sem login) e/ou adotando a **Seleção pela Plataforma (Kanban de 5 etapas)** para gerir os candidatos — os dois canais não são excludentes (D34).
 * O administrador do sistema dispõe de um **Portal de Admin e Auditoria (`/admin`)** para acompanhar métricas, moderar conteúdos sob demanda, higienizar/mesclar tags criadas pelos usuários e intervir em casos de suporte ou segurança.
 
 ### 1.3. Escopo Institucional (Single-Tenant no Frontend, Multi-Tenant no Backend)
@@ -125,11 +125,12 @@ Na UNIFEI, a inscrição formal costuma passar por um edital oficial, mas o cont
 
 1. **Seleção pela Plataforma (`internalSelectionEnabled = true`):**
    * O aluno logado clica em *"Candidatar-se"*, revisa os dados do seu perfil que serão compartilhados com o projeto e responde a uma pergunta aberta configurável pelo projeto (ex: *"Por que você tem interesse nesta vaga?"*, máx. $1000$ caracteres).
-   * **Painel do Projeto (Kanban / Lista de Inscritos):** Os gestores do projeto visualizam os candidatos em 4 colunas/status:
+   * **Painel do Projeto (Kanban / Lista de Inscritos):** Os gestores do projeto visualizam os candidatos em 5 colunas/status:
      1. `APPLIED` (*Inscrito*)
      2. `IN_REVIEW` (*Em Análise*)
      3. `INTERVIEW` (*Entrevista / Dinâmica*)
-     4. `ACCEPTED` (*Aprovado*) / `REJECTED` (*Não selecionado*)
+     4. `ACCEPTED` (*Aprovado*)
+     5. `REJECTED` (*Não selecionado*)
    * Ao mover o card de um candidato (ou selecionar múltiplos candidatos em lote), o gestor pode escrever uma **mensagem personalizada** (ex: link do Google Meet e horário da entrevista, ou feedback final) que é enviada por e-mail ao aluno e registrada no histórico da candidatura (tabela `application_events`).
 2. **Link do Edital/Formulário Externo (`externalUrl` preenchido):**
    * A vaga exibe o botão *"Acessar Edital / Inscrever-se Externamente"*; se a vaga também usa a Seleção pela Plataforma, os dois botões aparecem lado a lado.
@@ -139,7 +140,7 @@ Na UNIFEI, a inscrição formal costuma passar por um edital oficial, mas o cont
 
 ### RF06 — Sistema de E-mails Transacionais e Alertas de Match
 Integrado via **Resend + React Email**, com templates limpos e responsivos:
-1. **Confirmação de Candidatura:** E-mail para o aluno confirmando a inscrição interna + resumo diário ou notificação imediata para o responsável da vaga.
+1. **Confirmação de Candidatura:** E-mail para o aluno confirmando a inscrição interna. No MVP não há aviso por e-mail à equipe: o painel do projeto mostra a contagem de candidatos.
 2. **Atualização de Status do Processo Seletivo:** Disparo imediato quando o projeto altera o status do candidato no Kanban interno (incluindo a mensagem customizada do avaliador).
 3. **Alerta de Novas Vagas com Alto Match (*Match Digest*):**
    * Sempre que uma nova vaga é publicada (processado de forma assíncrona/background ou via Cron Job), alunos que optaram por receber alertas (`email_match_alerts = true`) e possuem afinidade $A(u, v) \ge 80\%$ recebem um e-mail personalizado destacando a vaga e os motivos do match.

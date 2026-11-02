@@ -1,5 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
-import { clearOpportunities, closeTestDb, daysFromNow, insertProcess } from "./helpers";
+import {
+  addProjectMember,
+  clearOpportunities,
+  closeTestDb,
+  daysFromNow,
+  insertApplication,
+  insertProcess,
+  updateCustomQuestion,
+} from "./helpers";
 
 test.beforeEach(clearOpportunities);
 test.afterAll(closeTestDb);
@@ -54,6 +62,43 @@ test("com sessão, preenche o perfil, responde e envia", async ({ page }) => {
 
   await page.goto(`/processo/${opportunity.slug}/candidatar`);
   await expect(page.getByText("Você já se candidatou a este processo.")).toBeVisible();
+});
+
+test("pergunta criada com o formulário aberto: avisa para recarregar", async ({ page }) => {
+  const { opportunity } = await insertProcess({ title: "Processo que ganha pergunta", internalSelectionEnabled: true });
+  await loginAs(page, "recarrega.e2e@unifei.edu.br", "Recarrega E2E");
+  await page.goto(`/processo/${opportunity.slug}/candidatar`);
+  await page.getByRole("combobox", { name: "Curso" }).click();
+  await page.getByRole("option").first().click();
+  await page.getByLabel("Período").fill("3");
+
+  await updateCustomQuestion(opportunity.id, "Por que você quer entrar?");
+  await page.getByRole("button", { name: "Enviar candidatura" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Recarregue a página" })).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByLabel("Por que você quer entrar?")).toBeVisible();
+});
+
+test("com candidaturas, a pergunta fica somente leitura e o processo ainda salva", async ({ page }) => {
+  const { project, opportunity } = await insertProcess({
+    title: "Processo com pergunta fixa",
+    internalSelectionEnabled: true,
+    customQuestion: "Por que você quer entrar?",
+  });
+  await loginAs(page, "fixa.aluno@unifei.edu.br", "Aluno");
+  await insertApplication(opportunity.id, "fixa.aluno@unifei.edu.br");
+  await loginAs(page, "fixa.dona@unifei.edu.br", "Dona");
+  await addProjectMember(project.id, "fixa.dona@unifei.edu.br", "OWNER");
+
+  await page.goto(`/projetos/${project.id}/processos/${opportunity.id}/editar`);
+  const question = page.getByLabel("Pergunta para os candidatos");
+  await expect(question).toHaveValue("Por que você quer entrar?");
+  await expect(question).toHaveAttribute("readonly", "");
+  await expect(page.getByText("A pergunta não pode mudar depois das primeiras candidaturas.")).toBeVisible();
+
+  await page.getByRole("button", { name: "Salvar alterações" }).click();
+  await expect(page).toHaveURL(new RegExp(`/projetos/${project.id}$`));
 });
 
 test("antes da abertura o botão fica desabilitado", async ({ page }) => {

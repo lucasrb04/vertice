@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { OpportunityForm } from "@/components/projects/opportunity-form";
 import { Button } from "@/components/ui/button";
-import { OPPORTUNITY_CLOSED } from "@/lib/opportunities/service";
+import { OPPORTUNITY_CLOSED, QUESTION_LOCKED } from "@/lib/opportunities/service";
 import { listCourses } from "@/lib/projects/queries";
 import { loadProjectEditPage } from "../../../access";
 import { loadOpportunityValuesPage } from "../../../opportunity-values";
@@ -15,7 +15,7 @@ export default async function EditOpportunityPage({
 }) {
   const { projectId, opportunityId } = await params;
   const { user, project } = await loadProjectEditPage(projectId);
-  const { values, tagNames, isOpen } = await loadOpportunityValuesPage(user, project.id, opportunityId, "edit");
+  const { values, tagNames, isOpen, hasApplications } = await loadOpportunityValuesPage(user, project.id, opportunityId, "edit");
   const courses = isOpen ? await listCourses(project.institutionId) : [];
 
   return (
@@ -34,6 +34,7 @@ export default async function EditOpportunityPage({
             category={project.category}
             initialValues={values}
             initialTagNames={tagNames}
+            questionLockedHint={hasApplications ? QUESTION_LOCKED : undefined}
           />
         ) : (
           <div className="space-y-4 rounded-lg border border-stone-200 bg-white p-5">

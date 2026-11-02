@@ -5,8 +5,10 @@ import { applicationEvents, applications, auditLogs, studentProfiles } from "@/d
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { getBoard, moveApplications } from "@/lib/applications/board";
+import { applyToOpportunity } from "@/lib/applications/service";
 import type { ApplicationStatus } from "@/lib/applications/labels";
 import { DomainError, ValidationError } from "@/lib/domain-errors";
+import { applicationLimiter } from "@/lib/security/rate-limit";
 import { resetDb } from "../helpers/db";
 import { addMember, mkCourse, mkForeignInstitution, mkOpportunity, mkProject, mkUser } from "../helpers/fixtures";
 
@@ -319,6 +321,41 @@ describe("moveApplications", () => {
     const res = await moveApplications(ctx.reviewer, input(ctx, [a, ...fill], "INTERVIEW", "x".repeat(2000)));
     expect(res.moved).toHaveLength(1);
     expect(res.skipped).toBe(49);
+  });
+
+  it("aluno se candidata, vira REVIEWER e não move a própria candidatura", async () => {
+    const { project, opp } = await setup();
+    applicationLimiter.reset();
+    const student = await mkUser(`aluno${seq++}@unifei.edu.br`);
+    const course = await mkCourse("CCO");
+    const { applicationId } = await applyToOpportunity(student, {
+      opportunitySlug: opp.slug,
+      courseId: course.id,
+      currentSemester: 4,
+    });
+    await addMember(project.id, student.id, "REVIEWER");
+    const other = await apply(opp.id);
+
+    // Ele continua vendo os concorrentes (D45), mas só o próprio card vem marcado.
+    const board = await getBoard(student, project.id, opp.id);
+    const cards = board.columns[0].cards;
+    expect(cards.find((c) => c.id === applicationId)?.isOwn).toBe(true);
+    expect(cards.find((c) => c.id === other.id)?.isOwn).toBe(false);
+
+    const res = await moveApplications(student, {
+      projectId: project.id,
+      opportunityId: opp.id,
+      items: [
+        { applicationId, fromStatus: "APPLIED" },
+        { applicationId: other.id, fromStatus: "APPLIED" },
+      ],
+      toStatus: "ACCEPTED",
+    });
+
+    expect(res).toEqual({ moved: [{ applicationId: other.id, toStatus: "ACCEPTED", message: null }], skipped: 1 });
+    expect(await statusOf(applicationId)).toBe("APPLIED");
+    expect(await moveEvents(applicationId)).toHaveLength(0);
+    expect(await statusOf(other.id)).toBe("ACCEPTED");
   });
 
   it("movimentos concorrentes: só um vence, com um evento", async () => {

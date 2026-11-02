@@ -42,6 +42,7 @@ export default async function MinhasCandidaturasPage() {
                     <span className="font-medium [overflow-wrap:anywhere] text-stone-900">{a.opportunityTitle}</span>
                   )}
                   <p className="text-sm [overflow-wrap:anywhere] text-stone-600">{a.projectName}</p>
+                  {a.projectArchived && <p className="text-sm font-medium text-stone-700">Projeto arquivado</p>}
                 </div>
                 <p className="shrink-0 text-sm font-medium text-stone-900">
                   <span className="sr-only">Etapa: </span>

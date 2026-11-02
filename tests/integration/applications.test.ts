@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { applicationEvents, applications, studentProfiles } from "@/db/schema";
+import { applicationEvents, applications, opportunities, studentProfiles } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { applyToOpportunity } from "@/lib/applications/service";
@@ -19,6 +19,7 @@ beforeEach(async () => {
 });
 
 let seq = 0;
+const CLOSED_MESSAGE = "As candidaturas deste processo foram encerradas.";
 const DAY = 24 * 3_600_000;
 const day = (offset: number) => new Date(Date.now() + offset * DAY).toISOString().slice(0, 10);
 
@@ -94,7 +95,9 @@ describe("applyToOpportunity", () => {
       { project: {}, opp: { deadlineAt: new Date(Date.now() - DAY) } },
     ]) {
       const { opp, student, input } = await setup(setupArgs.opp);
-      await expect(applyToOpportunity(student, input)).rejects.toBeInstanceOf(DomainError);
+      const err = await applyToOpportunity(student, input).catch((e) => e);
+      expect(err).toBeInstanceOf(DomainError);
+      expect(err.userMessage).toBe(CLOSED_MESSAGE);
       expect(await rows(opp.id)).toHaveLength(0);
     }
     const archived = await mkProject({ status: "ARCHIVED" });
@@ -103,7 +106,31 @@ describe("applyToOpportunity", () => {
     const course = await mkCourse("CCO");
     await expect(
       applyToOpportunity(student, { opportunitySlug: opp.slug, courseId: course.id, currentSemester: 3 }),
-    ).rejects.toMatchObject({ code: "OPPORTUNITY_CLOSED" });
+    ).rejects.toMatchObject({ code: "OPPORTUNITY_CLOSED", userMessage: CLOSED_MESSAGE });
+  });
+
+  it("pergunta criada enquanto a candidatura espera a trava: recusa sem resposta", async () => {
+    const { opp, student, input } = await setup();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let locked!: () => void;
+    const holding = new Promise<void>((resolve) => (locked = resolve));
+    const editor = db.transaction(async (tx) => {
+      await tx.update(opportunities).set({ customQuestion: "Por quê?" }).where(eq(opportunities.id, opp.id));
+      locked();
+      await gate;
+    });
+    await holding;
+    // A leitura inicial ainda vê o processo sem pergunta; a linha travada já mostra a pergunta.
+    const pending = applyToOpportunity(student, input).catch((e) => e);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    release();
+    await editor;
+
+    const err = await pending;
+    expect(err).toBeInstanceOf(ValidationError);
+    expect(err.fieldErrors.answerText).toEqual(["Responda à pergunta."]);
+    expect(await rows(opp.id)).toHaveLength(0);
   });
 
   it("recusa antes da abertura", async () => {

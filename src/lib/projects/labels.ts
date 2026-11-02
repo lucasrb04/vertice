@@ -41,3 +41,11 @@ export const PROJECT_STATUS_LABELS = {
 
 /** Rótulo do cabeçalho do painel para SYSTEM_ADMIN sem membership (spec §6.6). */
 export const SYSTEM_ADMIN_READ_ONLY = "Administrador do sistema (somente leitura)";
+
+/** Texto de confirmação do arquivamento, com os candidatos que ficarão sem resultado, se houver. */
+export function archiveConfirmation(inProgressCount: number): string {
+  const base = "Arquivar encerra todos os processos do projeto e não pode ser desfeito nesta versão.";
+  if (inProgressCount === 0) return base;
+  const who = inProgressCount === 1 ? "1 candidato" : `${inProgressCount} candidatos`;
+  return `${base} Há ${who} ainda em andamento (Inscrito, Em análise ou Entrevista).`;
+}

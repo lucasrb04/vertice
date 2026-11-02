@@ -86,6 +86,42 @@ describe("listMyApplications", () => {
   });
 });
 
+describe("listMyApplications: dois alunos e projeto arquivado", () => {
+  it("mensagens de outro aluno na mesma oportunidade não vazam", async () => {
+    const project = await mkProject();
+    const opp = await mkOpportunity(project.id);
+    const me = await mkUser(`eu${seq++}@unifei.edu.br`);
+    const other = await mkUser(`outro${seq++}@unifei.edu.br`);
+    const reviewer = await mkUser(`rev${seq++}@unifei.edu.br`);
+    const mine = await apply(me.id, opp.id, at(0));
+    const theirs = await apply(other.id, opp.id, at(1));
+    await db.insert(applicationEvents).values([
+      { applicationId: mine.id, fromStatus: "APPLIED", toStatus: "IN_REVIEW", message: "Para mim.", actorUserId: reviewer.id, createdAt: at(2) },
+      { applicationId: theirs.id, fromStatus: "APPLIED", toStatus: "REJECTED", message: "Para o outro.", actorUserId: reviewer.id, createdAt: at(3) },
+    ]);
+
+    const list = await listMyApplications(me);
+    expect(list.map((x) => x.id)).toEqual([mine.id]);
+    expect(list[0].messages).toEqual([{ toStatus: "IN_REVIEW", message: "Para mim.", createdAt: at(2) }]);
+    expect(JSON.stringify(list)).not.toContain("Para o outro.");
+  });
+
+  it("marca projeto arquivado só na candidatura em andamento", async () => {
+    const archived = await mkProject({ status: "ARCHIVED" });
+    const active = await mkProject();
+    const me = await mkUser(`eu${seq++}@unifei.edu.br`);
+    const inProgress = await apply(me.id, (await mkOpportunity(archived.id)).id, at(1));
+    const finished = await apply(me.id, (await mkOpportunity(archived.id)).id, at(2));
+    await db.update(applications).set({ status: "ACCEPTED" }).where(eq(applications.id, finished.id));
+    const elsewhere = await apply(me.id, (await mkOpportunity(active.id)).id, at(3));
+
+    const byId = new Map((await listMyApplications(me)).map((x) => [x.id, x]));
+    expect(byId.get(inProgress.id)?.projectArchived).toBe(true);
+    expect(byId.get(finished.id)?.projectArchived).toBe(false);
+    expect(byId.get(elsewhere.id)?.projectArchived).toBe(false);
+  });
+});
+
 describe("getMyApplicationId", () => {
   it("devolve o id da própria candidatura, ou nulo", async () => {
     const project = await mkProject();

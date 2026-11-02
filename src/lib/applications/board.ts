@@ -23,6 +23,8 @@ export type BoardCard = {
   answerText: string | null;
   profileLink: string | null;
   history: { toStatus: ApplicationStatus; message: string | null; createdAt: Date }[];
+  /** Candidatura de quem está vendo o quadro: ela não pode ser movida por ele (D45). */
+  isOwn: boolean;
 };
 
 export type Board = {
@@ -74,6 +76,7 @@ export async function getBoard(
   const rows = await db
     .select({
       id: applications.id,
+      userId: applications.userId,
       status: applications.status,
       name: users.name,
       email: users.email,
@@ -115,7 +118,9 @@ export async function getBoard(
     canMove: project.status === "ACTIVE",
     columns: APPLICATION_STATUSES.map((status) => ({
       status,
-      cards: rows.filter((r) => r.status === status).map((r) => ({ ...r, history: historyOf.get(r.id) ?? [] })),
+      cards: rows
+        .filter((r) => r.status === status)
+        .map(({ userId, ...r }) => ({ ...r, history: historyOf.get(r.id) ?? [], isOwn: userId === user.id })),
     })),
   };
 }
@@ -123,7 +128,8 @@ export async function getBoard(
 /**
  * Move candidaturas entre etapas. Processo encerrado continua movendo: a seleção ocorre depois do
  * prazo. A etapa de origem enviada é conferida com a linha travada; a que não confere, já está no
- * destino ou não é deste processo não muda e conta em `skipped`. Quem envia e-mail usa `moved`.
+ * destino, não é deste processo ou é do próprio ator (D45) não muda e conta em `skipped`. Quem envia
+ * e-mail usa `moved`.
  */
 export async function moveApplications(user: AuthUser, input: MoveInput): Promise<MoveResult> {
   const parsed = moveSchema.safeParse(input);
@@ -151,13 +157,15 @@ export async function moveApplications(user: AuthUser, input: MoveInput): Promis
 
     const expected = new Map(items.map((i) => [i.applicationId, i.fromStatus]));
     const rows = await tx
-      .select({ id: applications.id, status: applications.status })
+      .select({ id: applications.id, status: applications.status, userId: applications.userId })
       .from(applications)
       .where(and(inArray(applications.id, [...expected.keys()]), eq(applications.opportunityId, opportunity.id)))
       .orderBy(asc(applications.id))
       .for("update");
 
-    const movable = rows.filter((r) => r.status === expected.get(r.id) && r.status !== toStatus);
+    const movable = rows.filter(
+      (r) => r.status === expected.get(r.id) && r.status !== toStatus && r.userId !== user.id,
+    );
     if (movable.length > 0) {
       await tx
         .update(applications)

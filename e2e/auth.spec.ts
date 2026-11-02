@@ -16,6 +16,20 @@ test("entrar, ver painel, sair", async ({ page }) => {
   await expect(page).toHaveURL(/\/entrar$/);
 });
 
+test("erro de login volta a /entrar mantendo next", async ({ page }) => {
+  await page.goto("/entrar?next=%2Fprocesso%2Fabc%2Fcandidatar&error=SOMETHING");
+  await expect(page.getByRole("alert")).toBeVisible();
+  const signIn = page.waitForRequest("**/api/auth/sign-in/social");
+  await page.route("**/accounts.google.com/**", (route) => route.abort());
+  await page.getByRole("main").getByRole("button", { name: "Entrar com Google" }).click();
+  const request = await signIn;
+  const { callbackURL, errorCallbackURL } = request.postDataJSON();
+  expect(callbackURL).toBe("/processo/abc/candidatar");
+  expect(errorCallbackURL).toBe("/entrar?next=%2Fprocesso%2Fabc%2Fcandidatar");
+  // O Better-Auth valida as duas URLs: a resposta tem de aceitar, não só o navegador enviar.
+  expect((await request.response())?.status()).toBe(200);
+});
+
 test("usuário comum vê 404 em /admin", async ({ page }) => {
   await loginAs(page, "comum@unifei.edu.br", "Comum");
   const res = await page.goto("/admin");

@@ -33,11 +33,12 @@ function CandidateCard({
   onMove: (opener: HTMLElement) => void;
 }) {
   const details = [card.courseName, card.currentSemester ? `${card.currentSemester}º período` : null].filter(Boolean);
+  const showControls = canMove && !card.isOwn;
 
   return (
     <li className="space-y-2 rounded-lg border border-stone-200 bg-white p-3">
       <div className="flex items-start gap-2.5">
-        {canMove && (
+        {showControls && (
           <Checkbox
             aria-label={`Selecionar ${card.name}`}
             className="mt-0.5"
@@ -49,6 +50,7 @@ function CandidateCard({
           <p className="font-medium [overflow-wrap:anywhere] text-stone-900">{card.name}</p>
           {details.length > 0 && <p className="text-sm [overflow-wrap:anywhere] text-stone-600">{details.join(" · ")}</p>}
           <p className="font-mono text-xs text-stone-500">{formatDay(card.appliedAt)}</p>
+          {card.isOwn && <p className="text-xs font-medium text-stone-600">Sua candidatura</p>}
         </div>
       </div>
       <details className="text-sm">
@@ -102,7 +104,7 @@ function CandidateCard({
           </div>
         </dl>
       </details>
-      {canMove && (
+      {showControls && (
         <Button type="button" variant="outline" size="sm" onClick={(e) => onMove(e.currentTarget)}>
           Mover para<span className="sr-only"> ({card.name})</span>
         </Button>
@@ -194,7 +196,8 @@ export function ApplicationBoard({ board }: { board: Board }) {
         {result}
       </p>
 
-      <div className="grid gap-6 md:flex md:gap-3 md:overflow-x-auto md:pb-2">
+      {/* `relative`: sem ele, os textos `sr-only` dos cards escapam da rolagem e alargam a página. */}
+      <div className="relative grid gap-6 md:flex md:gap-3 md:overflow-x-auto md:pb-2">
         {board.columns.map((column) => (
           <section
             key={column.status}

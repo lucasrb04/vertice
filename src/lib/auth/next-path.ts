@@ -7,3 +7,8 @@ export function safeNextPath(raw: string | undefined, fallback = "/painel"): str
   if (raw.includes("\\") || /[\u0000-\u001f\u007f]/.test(raw)) return fallback;
   return raw;
 }
+
+/** Para onde o login volta em caso de erro, sem perder o destino. `next` já passou por `safeNextPath`. */
+export function signInErrorPath(next: string): string {
+  return `/entrar?next=${encodeURIComponent(next)}`;
+}

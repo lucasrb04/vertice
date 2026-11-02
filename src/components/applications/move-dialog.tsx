@@ -105,7 +105,7 @@ export function MoveDialog({
           <Field
             label="Mensagem ao candidato"
             optional
-            hint={`Até ${MOVE_MESSAGE_MAX} caracteres. Aparece em Minhas candidaturas.`}
+            hint={`Até ${MOVE_MESSAGE_MAX} caracteres. O aluno recebe um e-mail e vê a mensagem em Minhas candidaturas.`}
             errors={errorsFor(errors, "message")}
           >
             {(p) => (

@@ -2,6 +2,7 @@ import { and, asc, count, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { applications, courses, opportunities, projectMembers, projects, users } from "@/db/schema";
 import type { ProjectCategory, ProjectRole, ProjectStatus } from "@/db/schema";
+import { IN_PROGRESS_STATUSES } from "@/lib/applications/labels";
 import type { AuthUser, ProjectAccess } from "@/lib/auth/guards";
 import { closedOnDate, isOpportunityOpen } from "@/lib/opportunities/status";
 
@@ -61,7 +62,7 @@ export type PanelOpportunity = {
 export async function getProjectPanel(
   access: ProjectAccess,
   now: Date = new Date(),
-): Promise<{ open: PanelOpportunity[]; closed: PanelOpportunity[] }> {
+): Promise<{ open: PanelOpportunity[]; closed: PanelOpportunity[]; inProgressCount: number }> {
   const rows = await db
     .select()
     .from(opportunities)
@@ -69,7 +70,11 @@ export async function getProjectPanel(
 
   const counts = access.membership
     ? await db
-        .select({ opportunityId: applications.opportunityId, total: count() })
+        .select({
+          opportunityId: applications.opportunityId,
+          total: count(),
+          inProgress: sql<number>`count(*) filter (where ${inArray(applications.status, [...IN_PROGRESS_STATUSES])})`.mapWith(Number),
+        })
         .from(applications)
         .innerJoin(opportunities, eq(opportunities.id, applications.opportunityId))
         .where(eq(opportunities.projectId, access.project.id))
@@ -104,7 +109,7 @@ export async function getProjectPanel(
     }
     return b.deadlineAt.getTime() - a.deadlineAt.getTime();
   });
-  return { open, closed };
+  return { open, closed, inProgressCount: counts.reduce((sum, c) => sum + c.inProgress, 0) };
 }
 
 export async function listMembers(

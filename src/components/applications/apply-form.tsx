@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { ANSWER_MAX, PROFILE_LINK_MAX } from "@/lib/validation/application";
 
+const QUESTION_ADDED = "Este processo passou a ter uma pergunta. Recarregue a página para responder.";
+
 export type ApplyFormInitial = { courseId: string; currentSemester: string; profileLink: string };
 
 type Requirements = { minSemester: number | null; maxSemester: number | null; targetCourseIds: string[] };
@@ -76,7 +78,8 @@ export function ApplyForm({
     }
     if (!res.ok) {
       setErrors(res.fieldErrors ?? {});
-      setMessage(res.message);
+      // Sem campo de resposta na tela, o erro dele não apareceria em lugar nenhum.
+      setMessage(!question && res.fieldErrors?.answerText ? QUESTION_ADDED : res.message);
       setPending(false);
       return;
     }

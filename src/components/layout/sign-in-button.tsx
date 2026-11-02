@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
+import { signInErrorPath } from "@/lib/auth/next-path";
 
 /** `next` já passou por `safeNextPath`. */
 export function SignInButton({ next = "/painel" }: { next?: string }) {
@@ -14,7 +15,7 @@ export function SignInButton({ next = "/painel" }: { next?: string }) {
       await authClient.signIn.social({
         provider: "google",
         callbackURL: next,
-        errorCallbackURL: "/entrar",
+        errorCallbackURL: signInErrorPath(next),
       });
     } finally {
       setPending(false);

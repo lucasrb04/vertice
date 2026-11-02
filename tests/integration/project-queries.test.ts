@@ -43,6 +43,29 @@ describe("consultas do painel", () => {
     expect(panel.open[0]).toMatchObject({ vacanciesCount: 1, hasExternalUrl: true, internalSelectionEnabled: false });
   });
 
+  it("getProjectPanel conta candidatos em andamento, só para quem tem membership real", async () => {
+    const owner = (await mkUser("dona@unifei.edu.br"))!;
+    const project = (await mkProject())!;
+    await addMember(project.id, owner.id, "OWNER");
+    const opp = (await mkOpportunity(project.id))!;
+    const closed = (await mkOpportunity(project.id, { status: "CLOSED", closedAt: new Date() }))!;
+    const other = (await mkOpportunity((await mkProject())!.id))!;
+    const statuses = ["APPLIED", "IN_REVIEW", "INTERVIEW", "ACCEPTED", "REJECTED"] as const;
+    for (const [i, status] of statuses.entries()) {
+      const student = (await mkUser(`a${i}@unifei.edu.br`))!;
+      await db.insert(applications).values({ opportunityId: opp.id, userId: student.id, status });
+      if (i === 0) await db.insert(applications).values({ opportunityId: closed.id, userId: student.id, status });
+      if (i === 0) await db.insert(applications).values({ opportunityId: other.id, userId: student.id, status });
+    }
+
+    const panel = await getProjectPanel(await authorizeProjectRole(owner as AuthUser, project.id, ["OWNER"]));
+    expect(panel.inProgressCount).toBe(4);
+
+    const admin = (await mkUser("adm@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" }))!;
+    const adminPanel = await getProjectPanel(await authorizeProjectRole(admin as AuthUser, project.id, ["OWNER"]));
+    expect(adminPanel.inProgressCount).toBe(0);
+  });
+
   it("getProjectPanel conta candidaturas só para quem tem membership real", async () => {
     const user = (await mkUser("o@unifei.edu.br"))!;
     const admin = (await mkUser("adm@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" }))!;

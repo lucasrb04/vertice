@@ -20,6 +20,7 @@ export function ProjectPanel({
   canManageMembers,
   open,
   closed,
+  inProgressCount,
 }: {
   project: Project;
   /** `null` só para SYSTEM_ADMIN sem membership (somente leitura). */
@@ -28,6 +29,7 @@ export function ProjectPanel({
   canManageMembers: boolean;
   open: PanelOpportunity[];
   closed: PanelOpportunity[];
+  inProgressCount: number;
 }) {
   const now = new Date();
   const active = project.status === "ACTIVE";
@@ -81,7 +83,7 @@ export function ProjectPanel({
             <Link href={`/projeto/${project.slug}`}>Ver página pública</Link>
           </Button>
         )}
-        {canManageMembers && <ArchiveProjectButton projectId={project.id} />}
+        {canManageMembers && <ArchiveProjectButton projectId={project.id} inProgressCount={inProgressCount} />}
       </nav>
 
       <section aria-labelledby="abertos">
