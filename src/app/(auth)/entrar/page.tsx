@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { SignInButton } from "@/components/layout/sign-in-button";
 import { isAuthErrorCode, UnauthorizedError, type AuthErrorCode } from "@/lib/auth/errors";
 import { resolveActiveUser } from "@/lib/auth/guards";
+import { safeNextPath } from "@/lib/auth/next-path";
 import { getSessionUser } from "@/lib/auth/session";
 
 const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
@@ -29,16 +30,17 @@ function errorMessage(raw: string | undefined): string | null {
 export default async function EntrarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string | string[] }>;
+  searchParams: Promise<{ error?: string | string[]; next?: string | string[] }>;
 }) {
+  const { error, next: rawNext } = await searchParams;
+  const next = safeNextPath(Array.isArray(rawNext) ? rawNext[0] : rawNext);
   try {
     await resolveActiveUser(await getSessionUser());
-    redirect("/painel");
+    redirect(next);
   } catch (err) {
     if (!(err instanceof UnauthorizedError)) throw err;
   }
 
-  const { error } = await searchParams;
   const message = errorMessage(Array.isArray(error) ? error[0] : error);
 
   return (
@@ -57,7 +59,7 @@ export default async function EntrarPage({
           </p>
         ) : null}
         <div className="mt-6">
-          <SignInButton />
+          <SignInButton next={next} />
         </div>
       </div>
     </section>

@@ -99,11 +99,14 @@ export async function requireAuth(): Promise<AuthUser> {
   return resolveActiveUser(await getSessionUser());
 }
 
-/** Para Server Components: sem sessão → /entrar; banido → /entrar?error=ACCOUNT_SUSPENDED. */
-export async function requireAuthPage(): Promise<AuthUser> {
+/**
+ * Para Server Components: sem sessão → /entrar (com `?next=` se `nextPath` vier); banido →
+ * /entrar?error=ACCOUNT_SUSPENDED. `nextPath` precisa ser um caminho interno fixo da página.
+ */
+export async function requireAuthPage(nextPath?: string): Promise<AuthUser> {
   // Resolve dentro do try e age fora dele: redirect() lança e não pode ser engolido por um catch.
   let user: AuthUser | null = null;
-  let redirectTo = "/entrar";
+  let redirectTo = nextPath ? `/entrar?next=${encodeURIComponent(nextPath)}` : "/entrar";
   try {
     user = await requireAuth();
   } catch (err) {

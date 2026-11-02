@@ -40,3 +40,6 @@ export function createRateLimiter(opts: { limit: number; windowMs: number; maxKe
 }
 
 export const tagCreationLimiter = createRateLimiter({ limit: 30, windowMs: 3_600_000 });
+
+/** Candidaturas por usuário (D22). */
+export const applicationLimiter = createRateLimiter({ limit: 20, windowMs: 3_600_000 });

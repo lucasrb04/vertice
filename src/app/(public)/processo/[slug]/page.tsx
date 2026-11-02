@@ -120,8 +120,20 @@ export default async function ProcessoPage({ params }: Props) {
                 {urgency!.text}
               </p>
               <p className="font-mono text-xs leading-relaxed text-stone-600">{deadlineLabel(opportunity.deadlineAt)}</p>
+              {opportunity.internalSelectionEnabled &&
+                (opensLater ? (
+                  <Button size="lg" className="w-full" disabled>
+                    Candidaturas abrem em {opportunity.applicationsOpenOn!.slice(8, 10)}/
+                    {opportunity.applicationsOpenOn!.slice(5, 7)}
+                  </Button>
+                ) : (
+                  // Página pública: sem sessão aqui; quem decide o login é a página de candidatura.
+                  <Button asChild size="lg" className="w-full">
+                    <Link href={`/processo/${slug}/candidatar`}>Candidatar-se</Link>
+                  </Button>
+                ))}
               {editalHref && (
-                <Button asChild size="lg" className="w-full">
+                <Button asChild size="lg" variant={opportunity.internalSelectionEnabled ? "outline" : "default"} className="w-full">
                   <a href={editalHref} target="_blank" rel="nofollow noopener">
                     Acessar edital
                   </a>
