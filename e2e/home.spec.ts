@@ -161,6 +161,31 @@ test("botões rolam o carrossel e desabilitam nas pontas; o teclado também rola
   await expect.poll(scrollLeft).toBeGreaterThan(0);
 });
 
+test("o teclado leva o carrossel ao fim sem perder o foco do botão", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await insertMany(8);
+  await page.goto("/");
+
+  const row = page.getByRole("region", { name: "Últimos publicados" });
+  const next = page.getByRole("button", { name: "Ver próximos em Últimos publicados" });
+  const scrollLeft = () => row.evaluate((el) => el.scrollLeft);
+
+  await next.focus();
+  for (let i = 0; i < 8; i++) {
+    await page.keyboard.press("Enter");
+    await page.waitForTimeout(500);
+    if ((await next.getAttribute("aria-disabled")) === "true") break;
+  }
+  await expect(next).toHaveAttribute("aria-disabled", "true");
+  await expect(next).toBeFocused();
+
+  const before = await scrollLeft();
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(300);
+  expect(await scrollLeft()).toBe(before);
+  await expect(next).toBeFocused();
+});
+
 test("com poucos processos não há botões de rolagem", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 800 });
   await insertProcess({ title: "Processo único" });

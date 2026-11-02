@@ -21,8 +21,6 @@ export function Carousel({
   children: ReactNode;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const prevRef = useRef<HTMLButtonElement>(null);
-  const nextRef = useRef<HTMLButtonElement>(null);
   const [can, setCan] = useState({ prev: false, next: false });
 
   const measure = useCallback(() => {
@@ -33,13 +31,6 @@ export function Carousel({
       next: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
     });
   }, []);
-
-  // Botão desabilitado perde o foco: leva o foco ao botão oposto para o teclado não se perder.
-  useEffect(() => {
-    const active = document.activeElement;
-    if (!can.prev && active === prevRef.current && can.next) nextRef.current?.focus();
-    else if (!can.next && active === nextRef.current && can.prev) prevRef.current?.focus();
-  }, [can]);
 
   useEffect(() => {
     const el = scrollerRef.current;
@@ -66,26 +57,24 @@ export function Carousel({
         <div className="min-w-0 flex-1">{header}</div>
         <div className={cn("flex shrink-0 gap-1", !can.prev && !can.next && "invisible")}>
           <Button
-            ref={prevRef}
             type="button"
             variant="outline"
             size="icon"
-            className="bg-white"
+            className="bg-white aria-disabled:pointer-events-none aria-disabled:opacity-50"
             aria-label={`Ver anteriores em ${label}`}
-            disabled={!can.prev}
-            onClick={() => scroll(-1)}
+            aria-disabled={!can.prev}
+            onClick={() => can.prev && scroll(-1)}
           >
             <ChevronLeft aria-hidden />
           </Button>
           <Button
-            ref={nextRef}
             type="button"
             variant="outline"
             size="icon"
-            className="bg-white"
+            className="bg-white aria-disabled:pointer-events-none aria-disabled:opacity-50"
             aria-label={`Ver próximos em ${label}`}
-            disabled={!can.next}
-            onClick={() => scroll(1)}
+            aria-disabled={!can.next}
+            onClick={() => can.next && scroll(1)}
           >
             <ChevronRight aria-hidden />
           </Button>

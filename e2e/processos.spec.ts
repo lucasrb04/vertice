@@ -140,4 +140,39 @@ test.describe("celular, com JavaScript", () => {
     await expect(details).toHaveJSProperty("open", true);
     await expect(extension).toBeFocused();
   });
+
+  test("desmarcar o último filtro mantém o painel aberto", async ({ page }) => {
+    await insertProcess({ title: "PET um", project: { category: "PET" } });
+    await page.goto("/processos");
+    await hydrated(page);
+    await page.getByText("Filtros", { exact: true }).click();
+    const details = page.locator("details");
+    const pet = page.getByRole("checkbox", { name: "PET" }).first();
+    await pet.check();
+    await expect(page).toHaveURL(/category=PET/);
+    await pet.uncheck();
+    await expect(page).not.toHaveURL(/category=/);
+    await expect(details).toHaveJSProperty("open", true);
+  });
+
+  test("a ordenação pelo teclado mantém o foco e o seletor acompanha o histórico", async ({ page }) => {
+    await insertProcess({ title: "Prazo longe", deadlineAt: daysFromNow(30) });
+    await insertProcess({ title: "Prazo perto", deadlineAt: daysFromNow(3) });
+    await page.goto("/processos");
+    await hydrated(page);
+    const sort = page.locator("select#ordenacao");
+    await sort.focus();
+    await page.keyboard.press("ArrowDown");
+    await expect(page).toHaveURL(/sort=deadline/);
+    await expect(sort).toBeFocused();
+    await expect(sort.locator("option:checked")).toHaveText("Prazo mais próximo");
+
+    // O envio automático usa `replace`; uma navegação com `push` cria o histórico para voltar.
+    await page.evaluate(() => (window as unknown as { next: { router: { push(href: string): void } } }).next.router.push("/processos?sort=popular"));
+    await expect(sort.locator("option:checked")).toHaveText("Mais procurados");
+    await page.goBack();
+    await expect(page).toHaveURL(/sort=deadline/);
+    await expect(sort.locator("option:checked")).toHaveText("Prazo mais próximo");
+    await expect(sort).toHaveValue("deadline");
+  });
 });

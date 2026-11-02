@@ -6,6 +6,7 @@ import { Filters } from "@/components/vitrine/filters";
 import { OpportunityCard } from "@/components/vitrine/opportunity-card";
 import { Pagination } from "@/components/vitrine/pagination";
 import { SearchBox } from "@/components/vitrine/search-box";
+import { SortSelect } from "@/components/vitrine/sort-select";
 import { listFilterOptions, searchOpportunities } from "@/lib/public/queries";
 import { defaultSort, parseVitrineParams, type VitrineSort } from "@/lib/public/search-params";
 import { getDefaultInstitution } from "@/lib/tenant";
@@ -74,19 +75,10 @@ export default async function ProcessosPage({
             <label htmlFor="ordenacao" className="text-sm text-stone-600">
               Ordenar por
             </label>
-            <select
-              id="ordenacao"
-              key={sortValue}
-              name="sort"
-              defaultValue={sortParam(sortValue)}
-              className="h-9 min-w-0 rounded-md border border-stone-200 bg-white px-2 text-sm text-stone-800"
-            >
-              {sortOptions.map((s) => (
-                <option key={s} value={sortParam(s)}>
-                  {SORT_LABELS[s]}
-                </option>
-              ))}
-            </select>
+            <SortSelect
+              value={sortParam(sortValue)}
+              options={sortOptions.map((s) => ({ value: sortParam(s), label: SORT_LABELS[s] }))}
+            />
           </div>
 
           {correction ? <CorrectionNotice params={params} correction={correction} /> : null}

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { FiltersDisclosure } from "@/components/vitrine/filters-disclosure";
 import { CATEGORY_LABELS, SCHOLARSHIP_LABELS } from "@/lib/public/labels";
 import type { VitrineParams } from "@/lib/public/search-params";
 import { PROJECT_CATEGORIES } from "@/lib/validation/project";
@@ -33,7 +34,7 @@ export function Filters({ params, options }: { params: VitrineParams; options: O
   const courseKnown = !params.course || options.courses.some((c) => c.code === params.course);
 
   return (
-    <details open={active} className="group rounded-lg border border-stone-200 bg-white lg:border-0 lg:bg-transparent lg:[&::details-content]:block lg:[&::details-content]:[content-visibility:visible]">
+    <FiltersDisclosure defaultOpen={active} className="group rounded-lg border border-stone-200 bg-white lg:border-0 lg:bg-transparent lg:[&::details-content]:block lg:[&::details-content]:[content-visibility:visible]">
       <summary className="flex min-h-11 cursor-pointer items-center justify-between px-4 text-sm font-medium text-stone-900 supports-[selector(::details-content)]:lg:hidden">
         Filtros
       </summary>
@@ -103,6 +104,6 @@ export function Filters({ params, options }: { params: VitrineParams; options: O
           Aplicar
         </Button>
       </div>
-    </details>
+    </FiltersDisclosure>
   );
 }
