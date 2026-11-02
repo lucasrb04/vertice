@@ -78,7 +78,7 @@ vertice-unifei/
 │   │   ├── public/               # Consultas da vitrine, parser de URL, rótulos e telemetria (sem imports de next/*)
 │   │   ├── search/               # Normalização de Tags
 │   │   ├── security/             # Validador Turnstile, Rate Limiter, Sanitizador de URLs, AuditLogger
-│   │   ├── email/                # Cliente Resend + Templates React Email
+│   │   ├── email/                # sendEmail (Resend), notify.ts (candidatura e etapa) e Templates React Email
 │   │   └── tenant.ts             # Helper getDefaultInstitution() com cache em memória
 │   └── actions/                  # Server Actions separadas por domínio
 │       ├── onboarding.actions.ts
@@ -842,3 +842,14 @@ O comando `pnpm db:seed` deve ser idempotente (`onConflictDoNothing`) e popular:
    * *Áreas (`AREA`):* Inteligência Artificial, Ciência de Dados, Desenvolvimento Web, Sistemas Embarcados, Aeroespacial, Automobilística, Robótica, Energias Renováveis, Sustentabilidade, Gestão de Projetos, Finanças, Automação Industrial, Física Aplicada, Biotecnologia.
    * *Habilidades (`SKILL`):* Python, TypeScript, React, C/C++, ROS, SolidWorks, AutoCAD, MATLAB, ANSYS, PCB / Altium, Impressão 3D, Power BI, Marketing Digital, Gestão de Pessoas, Redação Científica, Inglês Técnico.
 4. **Promoção Automática do Admin Inicial:** Caso a variável `INITIAL_ADMIN_EMAIL` esteja definida no `.env`, o usuário com esse e-mail recebe `systemRole = "SYSTEM_ADMIN"`.
+
+### E-mails transacionais
+
+`src/lib/email/send.ts` envia pelo Resend e nunca lança: sem `RESEND_API_KEY` não há chamada de rede (devolve `false`). `notify.ts` monta os avisos de candidatura recebida e de mudança de etapa a partir do banco; as Server Actions os disparam em `after()`, depois do commit, com `try/catch`. Falhas são registradas sem e-mail, nome ou mensagem do aluno. Variáveis:
+
+| Variável | Regra |
+| --- | --- |
+| `RESEND_API_KEY` | Obrigatória em produção; fora dela, vazia desativa o envio |
+| `EMAIL_FROM` | Obrigatória em produção; remetente em domínio verificado no Resend |
+
+Os e-mails são transacionais (sem link de descadastro).

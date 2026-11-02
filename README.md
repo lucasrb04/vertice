@@ -25,6 +25,10 @@ Preencha em `.env` pelo menos `BETTER_AUTH_SECRET` (mínimo 32 caracteres, ex.: 
 é o segredo do HMAC que anonimiza visitantes nos contadores de cliques e visualizações. Fora de produção, vazio usa um
 valor fixo de desenvolvimento.
 
+E-mails (confirmação de candidatura e mudança de etapa) saem pelo Resend. Em produção, `RESEND_API_KEY` e `EMAIL_FROM`
+(ex.: `Vértice UNIFEI <nao-responda@dominio.com.br>`, em domínio verificado no Resend) são obrigatórios. Fora de
+produção, sem `RESEND_API_KEY` nada é enviado: o servidor só registra que o envio foi ignorado. Os testes nunca usam a rede.
+
 Portas no host:
 
 | Banco | Porta | Uso |

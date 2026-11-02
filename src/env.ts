@@ -29,10 +29,19 @@ const schema = z
       .min(32)
       .optional()
       .or(z.literal("").transform(() => undefined)),
+    // Resend: sem chave não há envio (dev, testes e build). Chave e remetente são obrigatórios em produção.
+    RESEND_API_KEY: z.string().trim().optional().transform((v) => (v ? v : undefined)),
+    EMAIL_FROM: z.string().trim().optional().transform((v) => (v ? v : undefined)),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === "production") {
-      for (const key of ["NEXT_PUBLIC_TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "VISITOR_HASH_SECRET"] as const) {
+      for (const key of [
+        "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+        "TURNSTILE_SECRET_KEY",
+        "VISITOR_HASH_SECRET",
+        "RESEND_API_KEY",
+        "EMAIL_FROM",
+      ] as const) {
         if (!env[key]) ctx.addIssue({ code: "custom", path: [key], message: "obrigatório em produção" });
       }
     }

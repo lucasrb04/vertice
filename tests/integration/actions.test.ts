@@ -10,10 +10,12 @@ const state = vi.hoisted(() => ({
   sessionUserId: null as string | null,
   turnstileOk: true,
   headers: new Headers({ "x-forwarded-for": "10.0.0.9" }),
+  afterCallbacks: [] as (() => Promise<void>)[],
 }));
 
 vi.mock("next/headers", () => ({ headers: async () => state.headers }));
 vi.mock("next/cache", () => ({ revalidatePath: () => {} }));
+vi.mock("next/server", () => ({ after: (cb: () => Promise<void>) => state.afterCallbacks.push(cb) }));
 vi.mock("@/lib/auth/session", () => ({
   getSessionUser: async () => (state.sessionUserId ? { id: state.sessionUserId } : null),
 }));
@@ -32,6 +34,7 @@ describe("Server Actions", () => {
     await runSeed();
     state.sessionUserId = null;
     state.turnstileOk = true;
+    state.afterCallbacks.length = 0;
   });
 
   const wizard = (opportunity = validOpportunityInput()) => ({
@@ -115,15 +118,19 @@ describe("Server Actions", () => {
     };
 
     expect(await moveApplicationsAction(input)).toMatchObject({ ok: false, error: "UNAUTHORIZED" });
+    expect(state.afterCallbacks).toHaveLength(0);
 
     const outsider = (await mkUser("fora@unifei.edu.br"))!;
     state.sessionUserId = outsider.id;
     expect(await moveApplicationsAction(input)).toEqual({ ok: false, error: "NOT_FOUND", message: "Não encontrado." });
+    expect(state.afterCallbacks).toHaveLength(0);
 
     const reviewer = (await mkUser("rev@unifei.edu.br"))!;
     await addMember(project.id, reviewer.id, "REVIEWER");
     state.sessionUserId = reviewer.id;
     expect(await moveApplicationsAction(input)).toEqual({ ok: true, data: { moved: 1, skipped: 0 } });
+    // O aviso por e-mail só é agendado para quem foi movido, e sem expor nada ao cliente.
+    expect(state.afterCallbacks).toHaveLength(1);
   });
 
   it("searchTagsAction exige sessão e valida o tamanho", async () => {

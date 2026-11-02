@@ -32,6 +32,8 @@ describe("parseEnv", () => {
       TURNSTILE_SECRET_KEY: "s",
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: "k",
       VISITOR_HASH_SECRET: "v".repeat(32),
+      RESEND_API_KEY: "re_fake",
+      EMAIL_FROM: "Vértice <a@example.com>",
     });
     expect(env.NODE_ENV).toBe("production");
     expect(env.ENABLE_TEST_AUTH).toBe(false);
@@ -63,6 +65,8 @@ describe("parseEnv", () => {
       TURNSTILE_SECRET_KEY: "s",
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: "k",
       VISITOR_HASH_SECRET: "v".repeat(32),
+      RESEND_API_KEY: "re_fake",
+      EMAIL_FROM: "Vértice <a@example.com>",
     });
     expect(env.TURNSTILE_SECRET_KEY).toBe("s");
   });
