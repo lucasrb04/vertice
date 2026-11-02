@@ -54,7 +54,7 @@ Projeto (sigla ou nome) com selo discreto se verificado, categoria, título, bol
 
 Params: `q` (até 100), `category` (repetível), `scholarship` (`PAID`|`VOLUNTARY`; `BOTH` entra nos dois), `course` (código; processo sem cursos definidos é aberto a todos e sempre entra), `tags` (slugs, separados por vírgula; AND), `encerrados=1`, `sort` (`relevance`, `recent`, `deadline`, `popular`), `page`. Inválidos são ignorados. Padrão: `relevance` com `q`, senão `recent`. Com `encerrados=1`, abertos sempre vêm antes. 12 itens por página, links de paginação. Título conta o total. Sem resultados: mensagem e link para limpar filtros. Filtros em `<details>` no celular; aplicam automaticamente com JS e por botão "Aplicar" sem JS.
 
-**Busca:** normaliza com `lower(unaccent())`; casa por `ILIKE %q%` em título, área, nome/sigla do projeto, orientador, descrição e tags, ou `word_similarity > 0.4` em título, nome do projeto e tags. Ordena por maior similaridade.
+**Busca:** normaliza com `lower(unaccent())`; casa por `ILIKE %q%` em título, área, nome/sigla do projeto, orientador, descrição e tags, ou, só quando o termo tem ao menos 4 letras, `word_similarity > 0.4` em título, nome do projeto e tags (termos curtos como `C++` ou `100%` casariam qualquer palavra com a mesma inicial). Ordena por maior similaridade.
 
 **Popularidade** (D38): `views_count + external_clicks_count`.
 
