@@ -27,6 +27,8 @@ describe("SafeMarkdown", () => {
     ["relativo", "[x](/admin)"],
     ["protocolo implícito", "[x](//a.com)"],
     ["data", "[x](data:text/html,oi)"],
+    ["https com barra única", "[x](https:/admin)"],
+    ["https sem barras", "[x](https:admin)"],
     ["referência javascript", "[x]\n\n[x]: javascript:alert(1)"],
     ["maiúsculas", "[x](JaVaScRiPt:alert(1))"],
   ])("link %s vira texto, sem href", (_, source) => {

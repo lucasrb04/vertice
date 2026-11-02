@@ -8,7 +8,7 @@ export const HTML_NOT_ALLOWED = "HTML não é permitido. Use a formatação Mark
 
 export function isHttps(value: string): boolean {
   try {
-    return new URL(value).protocol === "https:";
+    return /^https:\/\//i.test(value) && new URL(value).protocol === "https:";
   } catch {
     return false;
   }

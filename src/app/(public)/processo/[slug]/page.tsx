@@ -63,13 +63,16 @@ export default async function ProcessoPage({ params }: Props) {
   const requestHeaders = await headers();
   const ip = getRequestIp(requestHeaders);
   const userAgent = requestHeaders.get("user-agent");
-  after(async () => {
-    try {
-      await recordView(opportunity.id, visitorHash(ip, userAgent, getVisitorHashSecret()));
-    } catch (error) {
-      console.error("[telemetria] falha ao registrar visualização", error);
-    }
-  });
+  // Prefetch do roteador não é visita: não conta visualização.
+  if (!requestHeaders.has("next-router-prefetch")) {
+    after(async () => {
+      try {
+        await recordView(opportunity.id, visitorHash(ip, userAgent, getVisitorHashSecret()));
+      } catch (error) {
+        console.error("[telemetria] falha ao registrar visualização", error);
+      }
+    });
+  }
 
   const editalHref = opportunity.externalUrl && isHttps(opportunity.externalUrl) ? `/processo/${slug}/edital` : null;
   const urgency = isOpen ? deadlineChip(opportunity.deadlineAt) : null;

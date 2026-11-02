@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+// <a> comum no link de limpar: recarrega e zera os campos não controlados do formulário.
 export function EmptyResults({ filtered }: { filtered: boolean }) {
   return (
     <div className="rounded-lg border border-stone-200 bg-white px-5 py-8">
@@ -10,12 +9,12 @@ export function EmptyResults({ filtered }: { filtered: boolean }) {
           : "Quando um projeto da UNIFEI abrir inscrições, ele aparece aqui."}
       </p>
       {filtered && (
-        <Link
+        <a
           href="/processos"
           className="mt-4 inline-block text-sm font-medium text-brand underline underline-offset-4"
         >
           Limpar busca e filtros
-        </Link>
+        </a>
       )}
     </div>
   );

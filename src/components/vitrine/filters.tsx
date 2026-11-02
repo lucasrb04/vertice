@@ -24,11 +24,17 @@ export function Filters({ params, options }: { params: VitrineParams; options: O
     ...options.tags,
     ...params.tags.filter((s) => !known.has(s)).map((slug) => ({ slug, name: slug })),
   ];
+  const active =
+    params.categories.length > 0 ||
+    !!params.scholarship ||
+    !!params.course ||
+    params.tags.length > 0 ||
+    params.includeClosed;
   const courseKnown = !params.course || options.courses.some((c) => c.code === params.course);
 
   return (
-    <details className="group rounded-lg border border-stone-200 bg-white lg:border-0 lg:bg-transparent lg:[&::details-content]:block lg:[&::details-content]:[content-visibility:visible]">
-      <summary className="flex min-h-11 cursor-pointer items-center justify-between px-4 text-sm font-medium text-stone-900 lg:hidden">
+    <details open={active} className="group rounded-lg border border-stone-200 bg-white lg:border-0 lg:bg-transparent lg:[&::details-content]:block lg:[&::details-content]:[content-visibility:visible]">
+      <summary className="flex min-h-11 cursor-pointer items-center justify-between px-4 text-sm font-medium text-stone-900 supports-[selector(::details-content)]:lg:hidden">
         Filtros
       </summary>
       <div className="space-y-5 border-t border-stone-200 p-4 lg:border-0 lg:p-0">

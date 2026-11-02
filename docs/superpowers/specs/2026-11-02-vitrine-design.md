@@ -69,7 +69,7 @@ Nome, sigla, categoria, instituto, orientador, selo, descrição Markdown, site,
 ### 5.7. Telemetria
 
 - `GET /processo/[slug]/edital`: revalida `https`, registra clique, responde 302. Sem link ou não público: 404.
-- `visitorHash = HMAC-SHA256(VISITOR_HASH_SECRET, ip + "|" + userAgent)`; IP bruto nunca é gravado. Dia em Brasília. `external_clicks_count` só incrementa em inserção nova, na mesma transação.
+- `visitorHash = HMAC-SHA256(VISITOR_HASH_SECRET, ip + "\n" + userAgent)`; IP bruto nunca é gravado. Dia em Brasília. `external_clicks_count` só incrementa em inserção nova, na mesma transação.
 - Visualização: incrementa `views_count` após a resposta (`after`), no máximo uma vez por visitante/processo/dia (limiter em memória), nunca falha a página.
 - `VISITOR_HASH_SECRET`: mínimo 32 caracteres, obrigatório em produção; fora dela, valor fixo de desenvolvimento.
 

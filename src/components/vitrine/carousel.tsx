@@ -21,6 +21,8 @@ export function Carousel({
   children: ReactNode;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const prevRef = useRef<HTMLButtonElement>(null);
+  const nextRef = useRef<HTMLButtonElement>(null);
   const [can, setCan] = useState({ prev: false, next: false });
 
   const measure = useCallback(() => {
@@ -31,6 +33,13 @@ export function Carousel({
       next: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
     });
   }, []);
+
+  // Botão desabilitado perde o foco: leva o foco ao botão oposto para o teclado não se perder.
+  useEffect(() => {
+    const active = document.activeElement;
+    if (!can.prev && active === prevRef.current && can.next) nextRef.current?.focus();
+    else if (!can.next && active === nextRef.current && can.prev) prevRef.current?.focus();
+  }, [can]);
 
   useEffect(() => {
     const el = scrollerRef.current;
@@ -57,6 +66,7 @@ export function Carousel({
         <div className="min-w-0 flex-1">{header}</div>
         <div className={cn("flex shrink-0 gap-1", !can.prev && !can.next && "invisible")}>
           <Button
+            ref={prevRef}
             type="button"
             variant="outline"
             size="icon"
@@ -68,6 +78,7 @@ export function Carousel({
             <ChevronLeft aria-hidden />
           </Button>
           <Button
+            ref={nextRef}
             type="button"
             variant="outline"
             size="icon"

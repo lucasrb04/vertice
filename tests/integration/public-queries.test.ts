@@ -76,6 +76,17 @@ describe("busca", () => {
   });
 });
 
+describe("relevância com acerto exato", () => {
+  it("acerto exato (sigla, área, orientador) vem antes de acerto aproximado", async () => {
+    const fuzzy = await mkProject({ name: "Grupo A" });
+    const exact = await mkProject({ name: "Grupo B", acronym: "ROBOTICA" });
+    await mkOpportunity(exact.id, { title: "Vaga de apoio" });
+    // Criado depois (desempate por recência o poria primeiro) e com título quase igual.
+    await mkOpportunity(fuzzy.id, { title: "Robotca" });
+    expect(await titles({ q: "robotica" })).toEqual(["Vaga de apoio", "Robotca"]);
+  });
+});
+
 describe("visibilidade e filtros", () => {
   it("UNDER_REVIEW e SUSPENDED nunca aparecem; outra instituição também não", async () => {
     const ok = await mkProject();
@@ -263,14 +274,36 @@ describe("detalhes", () => {
 });
 
 describe("filtros disponíveis", () => {
-  it("12 tags mais usadas com uso > 0", async () => {
+  it("12 tags mais usadas em processos abertos e públicos; cursos da instituição", async () => {
     await mkCourse("CCO");
-    for (let i = 0; i < 14; i++) await mkTag(`Tag ${String(i).padStart(2, "0")}`, { usageCount: i });
+    const p = await mkProject();
+    // Tag i é usada por i processos abertos: Tag 13 lidera, Tag 00 não é usada.
+    const opps = [];
+    for (let i = 0; i < 13; i++) opps.push(await mkOpportunity(p.id, { title: `Vaga ${i}` }));
+    for (let i = 0; i < 14; i++) {
+      const tag = await mkTag(`Tag ${String(i).padStart(2, "0")}`);
+      for (let j = 0; j < i && j < opps.length; j++) await tagOpportunity(opps[j].id, tag!.id);
+    }
     const o = await listFilterOptions(inst);
     expect(o.tags).toHaveLength(12);
     expect(o.tags[0].name).toBe("Tag 13");
     expect(o.tags.map((t) => t.name)).not.toContain("Tag 00");
     expect(o.courses.map((c) => c.code)).toContain("CCO");
   });
-});
 
+  it("tag usada só por processo em revisão, projeto suspenso ou processo encerrado não aparece", async () => {
+    const ok = await mkProject();
+    const susp = await mkProject({ status: "SUSPENDED" });
+    const visible = await mkOpportunity(ok.id);
+    const review = await mkOpportunity(ok.id, { status: "UNDER_REVIEW" });
+    const suspended = await mkOpportunity(susp.id);
+    const closed = await mkOpportunity(ok.id, { deadlineAt: new Date(Date.now() - D) });
+    const publicTag = await mkTag("Visivel");
+    await tagOpportunity(visible.id, publicTag!.id);
+    for (const [name, opp] of [["Revisao", review], ["Suspenso", suspended], ["Encerrado", closed]] as const) {
+      const t = await mkTag(name, { usageCount: 99 });
+      await tagOpportunity(opp.id, t!.id);
+    }
+    expect((await listFilterOptions(inst)).tags.map((t) => t.name)).toEqual(["Visivel"]);
+  });
+});

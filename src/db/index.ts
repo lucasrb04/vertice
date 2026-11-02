@@ -7,7 +7,11 @@ import * as schema from "./schema";
 let pool: Pool | undefined;
 
 function createDb() {
-  pool = new Pool({ connectionString: getEnv().DATABASE_URL });
+  pool = new Pool({
+    connectionString: getEnv().DATABASE_URL,
+    connectionTimeoutMillis: 5000,
+    statement_timeout: 10000,
+  });
   // Erro em cliente ocioso (ex.: Postgres reiniciou) não pode derrubar o processo.
   pool.on("error", (err) => {
     console.error("Erro em cliente ocioso do pool do Postgres:", err.message);

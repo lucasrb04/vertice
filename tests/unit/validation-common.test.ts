@@ -15,7 +15,7 @@ describe("httpsUrl", () => {
     );
   });
   it("recusa protocolos que não são https", () => {
-    for (const bad of ["http://unifei.edu.br", "javascript:alert(1)", "data:text/html,x", "unifei.edu.br", "ftp://x"])
+    for (const bad of ["http://unifei.edu.br", "javascript:alert(1)", "data:text/html,x", "unifei.edu.br", "ftp://x", "https:/admin", "https:admin"])
       expect(httpsUrl(500).safeParse(bad).success).toBe(false);
   });
   it("usa a mensagem fixa", () => {

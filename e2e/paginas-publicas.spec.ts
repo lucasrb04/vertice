@@ -254,3 +254,13 @@ test.describe("celular de 360 px", () => {
     expect(await noPageOverflow(page)).toBe(true);
   });
 });
+
+test("prefetch do roteador não conta visualização", async ({ request }) => {
+  const { opportunity } = await insertProcess({ title: "Processo prefetch" });
+  const res = await request.get(`/processo/${opportunity.slug}`, {
+    headers: { RSC: "1", "Next-Router-Prefetch": "1" },
+  });
+  expect(res.status()).toBe(200);
+  await new Promise((r) => setTimeout(r, 1000));
+  expect((await opportunityCounters(opportunity.id)).views).toBe(0);
+});

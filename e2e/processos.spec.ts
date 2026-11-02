@@ -112,3 +112,30 @@ test.describe("sem JavaScript", () => {
     expect(await titles(page)).toEqual(["Robótica PET"]);
   });
 });
+
+test.describe("celular, com JavaScript", () => {
+  test.use({ viewport: { width: 360, height: 740 } });
+
+  test("marcar duas categorias mantém o painel aberto, o foco e uma URL sem parâmetros vazios", async ({ page }) => {
+    await insertProcess({ title: "PET um", project: { category: "PET" } });
+    await insertProcess({ title: "Extensão um", project: { category: "EXTENSION" } });
+    await insertProcess({ title: "Outro um", project: { category: "LAB_GROUP" } });
+    await page.goto("/processos");
+    await hydrated(page);
+    await page.getByText("Filtros", { exact: true }).click();
+    const details = page.locator("details");
+    await expect(details).toHaveJSProperty("open", true);
+
+    const pet = page.getByRole("checkbox", { name: "PET" }).first();
+    await pet.check();
+    await expect(page).toHaveURL(/category=PET/);
+    const extension = page.getByRole("checkbox", { name: /Extensão/ }).first();
+    await extension.check();
+    await expect(page).toHaveURL(/category=EXTENSION/);
+    await expect(page).toHaveURL(/category=PET/);
+    expect(new URL(page.url()).search).not.toMatch(/=(&|$)/);
+    await expect(cards(page)).toHaveCount(2);
+    await expect(details).toHaveJSProperty("open", true);
+    await expect(extension).toBeFocused();
+  });
+});

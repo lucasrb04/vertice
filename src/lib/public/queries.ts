@@ -85,7 +85,11 @@ function searchSql(rawQ: string): { where: SQL; score: SQL } | null {
     OR ${tagLike}
     ${simClauses}
   )`;
-  return { where, score: useSimilarity ? sql`greatest(${simTitle}, ${simProject}, ${simTag})` : sql`0::float8` };
+  // Acerto exato (LIKE) vale mais que qualquer similaridade (máx. 1): sigla, área e orientador não têm similaridade.
+  const exactBonus = sql`(case when ${ilike(opportunities.title)} OR ${ilike(opportunities.roleArea)} OR ${ilike(projects.name)}
+    OR ${ilike(projects.acronym)} OR ${ilike(projects.advisorName)} OR ${tagLike} then 2 else 0 end)::float8`;
+  const sim = useSimilarity ? sql`greatest(${simTitle}, ${simProject}, ${simTag})` : sql`0::float8`;
+  return { where, score: sql`(${exactBonus} + ${sim})` };
 }
 
 function filtersSql(institutionId: string, p: VitrineParams, now: Date, search: ReturnType<typeof searchSql>): SQL {
@@ -410,9 +414,20 @@ export async function listFilterOptions(
       .orderBy(asc(courses.name)),
     db
       .select({ slug: tags.normalizedSlug, name: tags.name })
-      .from(tags)
-      .where(and(eq(tags.institutionId, institutionId), sql`${tags.usageCount} > 0`))
-      .orderBy(desc(tags.usageCount), asc(tags.name), asc(tags.id))
+      .from(opportunityTags)
+      .innerJoin(tags, eq(tags.id, opportunityTags.tagId))
+      .innerJoin(opportunities, eq(opportunities.id, opportunityTags.opportunityId))
+      .innerJoin(projects, eq(projects.id, opportunities.projectId))
+      .where(
+        and(
+          eq(opportunities.institutionId, institutionId),
+          eq(tags.institutionId, institutionId),
+          publicOpportunitySql(),
+          openOpportunitySql(new Date()),
+        ),
+      )
+      .groupBy(tags.id, tags.normalizedSlug, tags.name)
+      .orderBy(sql`count(*) desc`, asc(tags.name))
       .limit(12),
   ]);
   return { courses: courseRows, tags: tagRows };

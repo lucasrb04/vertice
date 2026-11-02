@@ -73,6 +73,7 @@ export default async function ProcessosPage({
             </label>
             <select
               id="ordenacao"
+              key={sortValue}
               name="sort"
               defaultValue={sortParam(sortValue)}
               className="h-9 min-w-0 rounded-md border border-stone-200 bg-white px-2 text-sm text-stone-800"
@@ -85,6 +86,7 @@ export default async function ProcessosPage({
             </select>
           </div>
 
+          <h2 className="sr-only">Resultados</h2>
           {items.length === 0 ? (
             <EmptyResults filtered={filtered} />
           ) : (
