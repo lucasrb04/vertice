@@ -1,4 +1,4 @@
-import { customType, index, integer, pgTable, primaryKey, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
+import { customType, date, index, integer, pgTable, primaryKey, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
 import { institutions } from "./institutions";
 import { opportunities } from "./opportunities";
 
@@ -44,4 +44,20 @@ export const searchSynonyms = pgTable(
     canonical: varchar("canonical", { length: 64 }).notNull(),
   },
   (t) => [primaryKey({ columns: [t.institutionId, t.term, t.canonical] })],
+);
+
+// Buscas sem resultado, agregadas por termo e dia: nunca guarda usuário nem IP. Linhas com mais de
+// 90 dias são apagadas a cada gravação (src/lib/search/zero-results.ts), pois não há agendador.
+export const searchZeroResults = pgTable(
+  "search_zero_results",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    institutionId: uuid("institution_id")
+      .notNull()
+      .references(() => institutions.id, { onDelete: "cascade" }),
+    term: varchar("term", { length: 120 }).notNull(), // normalizado: minúsculas, sem acentos
+    day: date("day").notNull(),
+    count: integer("count").notNull().default(1),
+  },
+  (t) => [uniqueIndex("search_zero_results_unique_idx").on(t.institutionId, t.term, t.day), index("search_zero_results_day_idx").on(t.day)],
 );

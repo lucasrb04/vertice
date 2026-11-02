@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { after } from "next/server";
 import { AutoSubmit } from "@/components/vitrine/auto-submit";
 import { CorrectionNotice } from "@/components/vitrine/correction-notice";
 import { EmptyResults } from "@/components/vitrine/empty-results";
@@ -9,6 +10,7 @@ import { SearchBox } from "@/components/vitrine/search-box";
 import { SortSelect } from "@/components/vitrine/sort-select";
 import { listFilterOptions, searchOpportunities } from "@/lib/public/queries";
 import { defaultSort, parseVitrineParams, type VitrineSort } from "@/lib/public/search-params";
+import { recordZeroResult, shouldLogZeroResult } from "@/lib/search/zero-results";
 import { getDefaultInstitution } from "@/lib/tenant";
 
 // Prazos e contagens mudam com o relógio: nunca pré-renderizar.
@@ -37,6 +39,17 @@ export default async function ProcessosPage({
     listFilterOptions(institution.id),
   ]);
   const { items, total, page, pageCount, correction } = result;
+
+  // Agregado por termo e dia, sem usuário nem IP; a página não espera a gravação.
+  if (shouldLogZeroResult(params, total)) {
+    after(async () => {
+      try {
+        await recordZeroResult(institution.id, params.q);
+      } catch (error) {
+        console.error("[busca] falha ao registrar busca sem resultado", error);
+      }
+    });
+  }
 
   const sortOptions: VitrineSort[] = params.q
     ? ["relevance", "recent", "deadline", "popular"]
