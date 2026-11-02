@@ -1,5 +1,5 @@
 import { eq, sql, type SQL } from "drizzle-orm";
-import { db, type Db, type Tx } from "@/db";
+import { db, type Tx } from "@/db";
 import { opportunities, projects, searchVocabulary } from "@/db/schema";
 import { publicOpportunitySql } from "@/lib/public/queries";
 
@@ -20,8 +20,8 @@ const documentVector = sql`
   || ${weighted(concat(projects.name, opportunities.roleArea, projects.advisorName), "B")}
   || ${weighted(concat(opportunities.description), "C")}`;
 
-async function upsertDocuments(executor: Pick<Db, "execute">, where: SQL): Promise<void> {
-  await executor.execute(sql`
+async function upsertDocuments(tx: Tx, where: SQL): Promise<void> {
+  await tx.execute(sql`
     insert into search_documents (opportunity_id, institution_id, document)
     select ${opportunities.id}, ${opportunities.institutionId}, ${documentVector}
     from ${opportunities} join ${projects} on ${projects.id} = ${opportunities.projectId}
@@ -34,9 +34,15 @@ async function upsertDocuments(executor: Pick<Db, "execute">, where: SQL): Promi
 /**
  * Serializa as atualizações por projeto até o commit. Sem isso, editar o projeto e um processo dele
  * ao mesmo tempo deixa no índice o texto antigo de um dos dois. Cada comando depois da trava enxerga
- * o que a transação anterior gravou (READ COMMITTED).
+ * o que a transação anterior gravou (READ COMMITTED). Ordem fixa: esta trava primeiro, depois as
+ * linhas; quem escreve a pega no início da transação, para nunca esperar por ela segurando linha.
  */
 const lockProjectDocuments = (projectId: SQL) => sql`pg_advisory_xact_lock(hashtext('search-documents:' || ${projectId}))`;
+
+/** Abre a escrita de um projeto. Reentrante: os `refresh*` podem pegá-la de novo na mesma transação. */
+export async function lockProjectSearchDocuments(tx: Tx, projectId: string): Promise<void> {
+  await tx.execute(sql`select ${lockProjectDocuments(sql`${projectId}::text`)}`);
+}
 
 /** Reindexa um processo. Roda na transação da escrita, depois de gravar as tags. */
 export async function refreshSearchDocument(tx: Tx, opportunityId: string): Promise<void> {
@@ -48,12 +54,16 @@ export async function refreshSearchDocument(tx: Tx, opportunityId: string): Prom
 
 /** Reindexa todos os processos do projeto: nome, sigla e orientador estão no documento deles. */
 export async function refreshProjectSearchDocuments(tx: Tx, projectId: string): Promise<void> {
-  await tx.execute(sql`select ${lockProjectDocuments(sql`${projectId}::text`)}`);
+  await lockProjectSearchDocuments(tx, projectId);
   await upsertDocuments(tx, eq(opportunities.projectId, projectId));
 }
 
+/** Um projeto por transação, com a trava de cada um: pode rodar com o site no ar. */
 export async function rebuildSearchDocuments(institutionId: string): Promise<void> {
-  await upsertDocuments(db, eq(opportunities.institutionId, institutionId));
+  const rows = await db.select({ id: projects.id }).from(projects).where(eq(projects.institutionId, institutionId));
+  for (const { id } of rows) {
+    await db.transaction((tx) => refreshProjectSearchDocuments(tx, id));
+  }
 }
 
 const vocabularyText = concat(
@@ -80,7 +90,7 @@ export async function rebuildSearchVocabulary(institutionId: string): Promise<vo
       cross join lateral unnest(to_tsvector('simple', unaccent(${vocabularyText}))) as w(lexeme, positions, weights)
       where ${opportunities.institutionId} = ${institutionId}
         and ${publicOpportunitySql()}
-        and w.lexeme ~ '^[a-z]{3,}$'
+        and w.lexeme ~ '^[a-z]{3,40}$'
       group by w.lexeme
     `);
   });

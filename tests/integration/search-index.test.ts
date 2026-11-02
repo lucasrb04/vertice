@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { opportunities, projects, searchDocuments, searchSynonyms, searchVocabulary } from "@/db/schema";
+import { opportunities, opportunityTags, projects, searchDocuments, searchSynonyms, searchVocabulary } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { SYNONYMS } from "@/db/seed-data";
 import { runDemoSeed } from "@/db/seed-demo";
@@ -9,6 +9,7 @@ import { closeOpportunity, createOpportunity, updateOpportunity } from "@/lib/op
 import { archiveProject, createProjectWithOpportunity, updateProject } from "@/lib/projects/service";
 import { normalizeQuery } from "@/lib/public/queries";
 import {
+  lockProjectSearchDocuments,
   rebuildSearchDocuments,
   rebuildSearchVocabulary,
   refreshProjectSearchDocuments,
@@ -278,6 +279,30 @@ describe("vocabulário", () => {
     expect((await words(foreign.id)).size).toBe(0);
   });
 
+  it("palavra enorme fica de fora e não trava a reconstrução", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { owner, project } = await setup();
+    const { opportunityId } = await createOpportunity(owner, project.id, validOpportunityInput({ title: "Soldador" }));
+    const huge = "a".repeat(300);
+    const longest = "b".repeat(40);
+
+    await updateOpportunity(
+      owner,
+      project.id,
+      opportunityId,
+      validOpportunityInput({ title: "Torneiro", description: `Descrição com ${huge}, ${longest} e ${"c".repeat(41)}.` }),
+    );
+
+    const [row] = await db.select().from(opportunities).where(eq(opportunities.id, opportunityId));
+    expect(row.title).toBe("Torneiro");
+    const v = await words();
+    expect(log).not.toHaveBeenCalled();
+    expect(v.has("torneiro")).toBe(true);
+    expect(v.has("soldador")).toBe(false);
+    expect(v.has(longest)).toBe(true);
+    expect([...v.keys()].filter((w) => w.length > 40)).toEqual([]);
+  });
+
   it("rebuilds concorrentes não colidem", async () => {
     const { project } = await setup();
     await mkOpportunity(project.id, { title: "Solda" });
@@ -387,5 +412,78 @@ describe("escritas concorrentes", () => {
 
     expect(await matches(opp.id, "mantiqueira")).toBe(true);
     expect(await matches(opp.id, "torneiro")).toBe(true);
+  });
+
+  it("rebuild com edição em andamento espera o commit e não regrava o texto antigo", async () => {
+    const { project } = await setup();
+    const opp = await mkOpportunity(project.id, { title: "Antigo" });
+    await rebuildSearchDocuments(institutionId);
+
+    let edited!: () => void;
+    let commit!: () => void;
+    const editedP = new Promise<void>((r) => (edited = r));
+    const commitP = new Promise<void>((r) => (commit = r));
+    const edit = db.transaction(async (tx) => {
+      await tx.update(opportunities).set({ title: "Torneiro" }).where(eq(opportunities.id, opp.id));
+      await refreshSearchDocument(tx, opp.id);
+      edited();
+      await commitP;
+    });
+    await editedP;
+    const rebuild = rebuildSearchDocuments(institutionId);
+    await new Promise((r) => setTimeout(r, 100));
+    commit();
+    await Promise.all([edit, rebuild]);
+
+    expect(await matches(opp.id, "torneiro")).toBe(true);
+  });
+
+  /** Com a trava do projeto em posse de outra transação, a escrita não pode ter travado nenhuma linha. */
+  async function assertNoRowLockedWhileWaiting(projectId: string, opportunityId: string, write: () => Promise<unknown>) {
+    let held!: () => void;
+    let release!: () => void;
+    const heldP = new Promise<void>((r) => (held = r));
+    const releaseP = new Promise<void>((r) => (release = r));
+    const holder = db.transaction(async (tx) => {
+      await lockProjectSearchDocuments(tx, projectId);
+      held();
+      await releaseP;
+    });
+    await heldP;
+    const writing = write();
+    await new Promise((r) => setTimeout(r, 150));
+    try {
+      await db.transaction((tx) => tx.select().from(opportunities).where(eq(opportunities.id, opportunityId)).for("update", { noWait: true }));
+      await db.transaction((tx) => tx.select().from(projects).where(eq(projects.id, projectId)).for("update", { noWait: true }));
+    } finally {
+      release();
+      await Promise.all([holder, writing]);
+    }
+  }
+
+  it("updateOpportunity e closeOpportunity pegam a trava do projeto antes das linhas", async () => {
+    const { owner, project } = await setup();
+    const { opportunityId } = await createOpportunity(owner, project.id, validOpportunityInput());
+    await assertNoRowLockedWhileWaiting(project.id, opportunityId, () =>
+      updateOpportunity(owner, project.id, opportunityId, validOpportunityInput({ title: "Torneiro" })),
+    );
+    await assertNoRowLockedWhileWaiting(project.id, opportunityId, () => closeOpportunity(owner, project.id, opportunityId));
+  });
+
+  it("updateProject e archiveProject pegam a trava do projeto antes das linhas", async () => {
+    const { owner, project } = await setup();
+    const { opportunityId } = await createOpportunity(owner, project.id, validOpportunityInput());
+    await assertNoRowLockedWhileWaiting(project.id, opportunityId, () => updateProject(owner, project.id, validProjectInput()));
+    await assertNoRowLockedWhileWaiting(project.id, opportunityId, () => archiveProject(owner, project.id));
+  });
+
+  it("createOpportunity pega a trava do projeto antes de mexer nas tags", async () => {
+    const { owner, project } = await setup();
+    const tag = (await mkTag("Metrologia"))!;
+    const { opportunityId } = await createOpportunity(owner, project.id, validOpportunityInput());
+    await assertNoRowLockedWhileWaiting(project.id, opportunityId, async () => {
+      await createOpportunity(owner, project.id, validOpportunityInput({ tags: { THEME: [{ id: tag.id }], DESIRED_SKILL: [], DEVELOPED_SKILL: [] } }));
+    });
+    expect(await db.select().from(opportunityTags).where(eq(opportunityTags.tagId, tag.id))).toHaveLength(1);
   });
 });

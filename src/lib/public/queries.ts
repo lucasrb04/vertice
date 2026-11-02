@@ -30,7 +30,10 @@ export type PublicCard = {
   tags: string[];
 };
 
-/** Visível ao público: fora de revisão, em projeto ativo ou arquivado. Exige join com `projects`. */
+/**
+ * Visível ao público: fora de revisão, em projeto ativo ou arquivado. Exige join com `projects`.
+ * Moderação que mude estes status precisa reindexar os documentos e reconstruir o vocabulário de busca.
+ */
 export function publicOpportunitySql(): SQL {
   return sql`${opportunities.status} <> 'UNDER_REVIEW' AND ${projects.status} IN ('ACTIVE', 'ARCHIVED')`;
 }

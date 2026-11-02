@@ -5,6 +5,7 @@ import { courses, opportunities, projectMembers, projects } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
 import { RateLimitError, ValidationError, fromZodError } from "@/lib/domain-errors";
 import {
+  lockProjectSearchDocuments,
   refreshProjectSearchDocuments,
   refreshSearchDocument,
   scheduleVocabularyRebuild,
@@ -62,6 +63,7 @@ export async function insertOpportunity(
 ): Promise<string> {
   const { user, projectId } = ctx;
 
+  await lockProjectSearchDocuments(tx, projectId);
   await assertCoursesBelongToInstitution(tx, user.institutionId, input.targetCourseIds);
 
   const { tags, scholarshipValueCents, deadline, ...rest } = input;
@@ -144,6 +146,7 @@ export async function updateProject(user: AuthUser, projectId: string, input: un
 
   const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   await db.transaction(async (tx) => {
+    await lockProjectSearchDocuments(tx, project.id);
     // slug, institutionId e status ficam de fora de propósito.
     await tx
       .update(projects)
@@ -157,6 +160,7 @@ export async function updateProject(user: AuthUser, projectId: string, input: un
 export async function archiveProject(user: AuthUser, projectId: string): Promise<void> {
   const { project } = await loadProjectForWrite(user, projectId, OWNER_ONLY);
   await db.transaction(async (tx) => {
+    await lockProjectSearchDocuments(tx, project.id);
     await tx
       .update(projects)
       .set({ status: "ARCHIVED", updatedAt: new Date() })

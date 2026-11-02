@@ -42,6 +42,18 @@ pnpm db:seed
 `pnpm db:seed` precisa rodar antes da primeira requisição em qualquer ambiente, inclusive produção: as páginas públicas
 consultam a instituição padrão e respondem 500 enquanto ela não existir.
 
+Deploy da busca inteligente, nesta ordem:
+
+```bash
+pnpm db:migrate         # antes do deploy: o código novo grava nas tabelas de busca
+# deploy da aplicação
+pnpm db:seed            # traz os sinônimos
+pnpm db:search:rebuild  # indexa os processos que já existem
+```
+
+`pnpm db:search:rebuild` precisa rodar depois de qualquer deploy desta funcionalidade: não há backfill em SQL, e sem ele
+os processos existentes ficam fora do índice e do vocabulário. É idempotente e pode rodar com o site no ar.
+
 Dados fictícios para ver a vitrine preenchida (opcional, nunca em produção):
 
 ```bash
@@ -60,6 +72,7 @@ Roda depois de `pnpm db:seed`, é idempotente, recusa `NODE_ENV=production` e cr
 | Testes unitários e de integração (Vitest) | `pnpm test` |
 | Testes E2E (Playwright, porta 3100) | `pnpm test:e2e` |
 | Dados fictícios de demonstração | `pnpm db:seed:demo` |
+| Reconstruir índice e vocabulário de busca | `pnpm db:search:rebuild` |
 | Gerar migrations após mudar o schema | `pnpm db:generate` |
 | Build de produção | `pnpm build` |
 

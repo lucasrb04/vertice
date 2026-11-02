@@ -809,6 +809,10 @@ volumes:
   caddy_config:
 ```
 
+### 8.4. Deploy da busca inteligente
+
+Ordem: `pnpm db:migrate`, deploy da aplicação, `pnpm db:seed` (traz os sinônimos), `pnpm db:search:rebuild`. O último passo precisa rodar depois de qualquer deploy desta funcionalidade: não há backfill em SQL, e sem ele os processos existentes ficam fora do índice e do vocabulário. É idempotente e pode rodar com o site no ar.
+
 ---
 
 ## 9. Seed Inicial Obrigatório (`src/db/seed.ts`)

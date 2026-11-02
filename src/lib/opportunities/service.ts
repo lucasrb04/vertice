@@ -7,7 +7,7 @@ import type { AuthUser } from "@/lib/auth/guards";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
 import { EDITOR_ROLES, loadProjectForWrite } from "@/lib/projects/permissions";
 import { assertCoursesBelongToInstitution, insertOpportunity } from "@/lib/projects/service";
-import { refreshSearchDocument, scheduleVocabularyRebuild } from "@/lib/search/index-documents";
+import { lockProjectSearchDocuments, refreshSearchDocument, scheduleVocabularyRebuild } from "@/lib/search/index-documents";
 import { syncOpportunityTags } from "@/lib/tags/service";
 import { dayFromDeadline, deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
 import {
@@ -73,6 +73,7 @@ export async function updateOpportunity(
   const data = parseInput(input, now);
 
   await db.transaction(async (tx) => {
+    await lockProjectSearchDocuments(tx, project.id);
     const row = await lockOpenOpportunity(tx, project, opportunityId, now);
     await assertCoursesBelongToInstitution(tx, row.institutionId, data.targetCourseIds);
 
@@ -97,6 +98,7 @@ export async function closeOpportunity(
   const now = opts.now ?? new Date();
   const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   await db.transaction(async (tx) => {
+    await lockProjectSearchDocuments(tx, project.id);
     const row = await lockOpenOpportunity(tx, project, opportunityId, now);
     await tx
       .update(opportunities)
