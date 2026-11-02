@@ -96,15 +96,18 @@ Slogan e textos; "Encerrando em breve" como terceiro carrossel; rotas `/processo
 
 ## 8. Temas em aberto (para tratar depois)
 
-Registrados a pedido do autor em 2026-11-02. Nada aqui está decidido.
+Registrados a pedido do autor em 2026-11-02 e atualizados no mesmo dia.
 
-**Decisões do autor**
-- Contraste do prazo: âmbar da D25 (`amber-600`) tem 3,2:1 em texto pequeno, abaixo do AA; recomendação: `amber-700` só para texto.
-- Processo com abertura de inscrições no futuro aparece como aberto, com "Acessar edital", antes da data.
-- Textos da home, slogan e o carrossel "Encerrando em breve" foram escolha do Claude.
-- Em que momento o aluno sente vontade de criar conta. Hipótese do autor: só quando o projeto faz a seleção pela plataforma; projetos que seguem 100% pelo edital não exigem registro.
+**Decididos, ainda por implementar**
+- Contraste do prazo: `amber-700` em texto (D44).
+- Processo com abertura futura: selo "Abre em dd/mm" (D41).
+- Criar conta: só para candidatura pela plataforma (D40).
 
-**Problemas conhecidos**
+**Falta o autor revisar**
+- Textos da home, slogan e o carrossel "Encerrando em breve", que foram escolha do Claude.
+- Institutos dos cursos em `src/db/seed-data.ts`, marcados com `TODO`.
+
+**Problemas conhecidos, a corrigir**
 - No celular, o painel de filtros fecha ao desmarcar o último filtro ativo (`filters.tsx`, `<details open={active}>`).
 - Carrossel: o foco do teclado pode se perder ao chegar na ponta.
 - Ordenação: o seletor perde o foco do teclado depois de alterado.

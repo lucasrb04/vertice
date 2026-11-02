@@ -87,9 +87,12 @@ Em `/processos`, faixa acima dos resultados: **"Mostrando resultados para *casa*
 
 ## 7. Temas em aberto
 
-- Quando pedir conta do aluno. Hipótese do autor: só quando o projeto faz seleção pela plataforma. Ordem proposta: candidatura e Kanban, perfil curto na primeira candidatura, match como bônus.
-- Log de consultas sem IP ou sessão: útil para zero resultados, mas falta análise de LGPD.
-- Busca semântica: decidir com as falhas conceituais do conjunto de avaliação; exige imagem com `pgvector`.
+Atualizado em 2026-11-02.
+
+**Resolvidos:** quando pedir conta (D40); log de buscas (D42).
+
+**Continuam em aberto**
+- Busca semântica: não fazer agora; reavaliar com consultas reais. Exige imagem com `pgvector`.
 - Limiares do corretor são hipóteses até passar pela avaliação com consultas reais.
-- Repetir a checagem de extensões na imagem de produção, possivelmente ARM64.
+- Repetir a checagem de extensões na imagem de produção, possivelmente ARM64, quando ela existir.
 - Demais pendências: spec da vitrine §8.
