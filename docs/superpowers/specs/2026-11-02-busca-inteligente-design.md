@@ -50,7 +50,7 @@ Tabela `search_vocabulary` (`institution_id`, `word`, `frequency`; PK nas duas p
 Só em palavra com 4 letras ou mais que **não existe** no vocabulário nem nos sinônimos:
 
 1. Sem diminutivo (`-zinho(s)`, `-zinha(s)`, `-inho(s)`, `-inha(s)`, restaurando `a`/`o`): aceita se existir no vocabulário.
-2. `levenshtein_less_equal`, mesma primeira letra: distância 1 para 4 e 5 letras, 2 para 6 ou mais; com 5 letras, distância 2 só se as letras forem as mesmas em outra ordem (`blosa → bolsa`). Primeira letra diferente só com distância 1 em palavra de 6 ou mais letras (`oython → python`). Empate por menor distância e maior frequência. Sem isso, palavras reais fora do catálogo viravam outras: `avião → acao`, `nasa → casa`, `música → busca`.
+2. `levenshtein_less_equal`, mesma primeira letra: distância 1 para qualquer tamanho a partir de 4 letras; distância 2 livre só a partir de 8 letras; com 5 a 7 letras, distância 2 só se as letras forem as mesmas em outra ordem (`blosa → bolsa`, `pyhton → python`). Primeira letra diferente só com distância 1 em palavra de 6 ou mais letras (`oython → python`). Empate por menor distância e maior frequência. Sem isso, palavras reais fora do catálogo viravam outras: `avião → acao`, `nasa → casa`, `música → busca`.
 3. Sem candidato: mantém a palavra.
 
 Palavra entre aspas não é corrigida e busca o texto exato; as demais palavras da consulta seguem normais. `corrigir=0` na URL desliga a correção.
@@ -66,6 +66,8 @@ Termos expandidos por sinônimos e `tag_aliases`, cada termo nas duas formas (co
 5. Resultado vindo só de termo corrigido.
 
 Dentro da camada, `ts_rank_cd` com normalização, depois recentes e `id`. Sinônimos ficam em `search_synonyms` (`institution_id`, `term`, `canonical`), com carga inicial no seed.
+
+**Ajustes da revisão final.** Stopwords ficam fora do vocabulário de candidatos, filtradas antes do `unaccent`, mas contam como conhecidas. Termo só de letras no `LIKE` exige início de palavra (`arte` não casa `Duarte`); termo com símbolo segue por substring. Palavra exata no documento vem antes de colisão de radical no título. Sinônimos expandem por todo o grupo do canônico. Tokens compostos (`html/css`, `machine-learning`) também entram quebrados em palavras. Falha do corretor não derruba a busca: segue sem correção.
 
 ### 5.5. Interface
 
