@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AutoSubmit } from "@/components/vitrine/auto-submit";
+import { CorrectionNotice } from "@/components/vitrine/correction-notice";
 import { EmptyResults } from "@/components/vitrine/empty-results";
 import { Filters } from "@/components/vitrine/filters";
 import { OpportunityCard } from "@/components/vitrine/opportunity-card";
@@ -34,7 +35,7 @@ export default async function ProcessosPage({
     searchOpportunities(institution.id, params),
     listFilterOptions(institution.id),
   ]);
-  const { items, total, page, pageCount } = result;
+  const { items, total, page, pageCount, correction } = result;
 
   const sortOptions: VitrineSort[] = params.q
     ? ["relevance", "recent", "deadline", "popular"]
@@ -53,6 +54,8 @@ export default async function ProcessosPage({
   return (
     <form id={FORM_ID} method="get" action="/processos" className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
       <AutoSubmit formId={FORM_ID} />
+      {/* Filtros e ordenação preservam a escolha de buscar exatamente; o AutoSubmit a descarta ao mudar `q`. */}
+      {params.exact ? <input type="hidden" name="corrigir" value="0" /> : null}
       <h1 className="text-[1.75rem] leading-[1.15] font-bold tracking-[-0.02em] text-stone-900 [word-spacing:0.06em]">
         <span className="font-mono">{total}</span> {total === 1 ? "processo seletivo" : "processos seletivos"}
       </h1>
@@ -86,6 +89,7 @@ export default async function ProcessosPage({
             </select>
           </div>
 
+          {correction ? <CorrectionNotice params={params} correction={correction} /> : null}
           <h2 className="sr-only">Resultados</h2>
           {items.length === 0 ? (
             <EmptyResults filtered={filtered} />

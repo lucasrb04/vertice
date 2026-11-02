@@ -23,6 +23,9 @@ export function AutoSubmit({ formId }: { formId: string }) {
       for (const [key, value] of new FormData(form)) {
         if (typeof value === "string" && value !== "") query.append(key, value);
       }
+      // Uma busca nova volta a corrigir: `corrigir=0` vale só para o texto que o usuário já viu.
+      const q = form.elements.namedItem("q");
+      if (q instanceof HTMLInputElement && q.value !== q.defaultValue) query.delete("corrigir");
       const qs = query.toString();
       startTransition(() => router.replace(qs ? `/processos?${qs}` : "/processos", { scroll: false }));
     }

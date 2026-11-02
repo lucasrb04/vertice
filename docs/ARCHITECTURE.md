@@ -634,7 +634,13 @@ Quando o `SYSTEM_ADMIN` aciona a ferramenta de **Merge de Tags** (mesclando `sou
 
 ### 6.3. Query de Busca na Timeline
 `/processos` (`searchOpportunities` em `src/lib/public/queries.ts`; parâmetros validados por `parseVitrineParams`, inválidos são ignorados) combina:
-* **Busca por Texto Livre (`q`, até 100 caracteres):** normaliza com `lower(unaccent())` e casa por `LIKE %q%` (com `%`, `_` e `\` escapados) em `opportunities.title`, `opportunities.role_area`, `opportunities.description`, `projects.name`, `projects.acronym`, `projects.advisor_name` e `tags.name`. Só com 4 letras ou mais também casa por `word_similarity > 0.4` (`pg_trgm`) em título, nome do projeto e tags, e ordena por maior similaridade; termos curtos como `C++` casariam qualquer palavra com a mesma inicial.
+* **Busca por Texto Livre (`q`, até 100 caracteres), D39:** cascata no PostgreSQL, sem motor externo. `planSearch` (`src/lib/search/query.ts`) monta o plano e `searchOpportunities` aplica:
+  1. **Corretor por vocabulário** (`src/lib/search/corrector.ts`): palavra que já existe no vocabulário nunca é corrigida; as demais desfazem o diminutivo (`casinha` → `casa`) ou trocam pela palavra pública mais próxima por distância de edição (`fuzzystrmatch`, `pyhton` → `python`), com travas contra falsas correções. O vocabulário (`search_vocabulary`) vem só de processos públicos. `corrigir=0` desliga a etapa.
+  2. **Sinônimos e aliases de tag** (`search_synonyms`, `tag_aliases`): cada palavra vira um grupo de variantes; basta casar uma.
+  3. **FTS `portuguese` em duas formas** sobre `search_documents` (título, área, projeto, tags e descrição, com pesos), mais `LIKE` escapado para siglas e símbolos (`C++`) e para texto entre aspas, que é exato.
+  4. **Ranqueamento em camadas:** frase exata no cabeçalho, todas as palavras no cabeçalho, todas no documento, demais; dentro delas, `ts_rank`. Uma quinta camada de palavra corrigida desempata. Abertos sempre antes de encerrados (D36).
+  * **Índice:** `search_documents` é atualizado na mesma transação que grava o processo ou o projeto; o vocabulário é reconstruído em seguida e uma falha nisso não impede salvar. `pnpm db:search:rebuild` refaz tudo.
+  * **Interface:** quando houve correção e há resultados, a vitrine mostra "Mostrando resultados para … · buscar exatamente …" (`role="status"`); o link repete a URL com `corrigir=0`, que paginação e filtros preservam e uma nova busca descarta.
 * **Filtros Facetados (URL Search Params):**
   * `category`: Categoria do projeto (repetível: `SPECIAL_PROJECT`, `SCIENTIFIC_INIT`, `EXTENSION`, etc.)
   * `scholarship`: `PAID` | `VOLUNTARY` (`BOTH` entra nos dois)

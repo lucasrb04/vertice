@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { clearOpportunities, closeTestDb, daysFromNow, insertProcess } from "./helpers";
+import { clearOpportunities, closeTestDb, daysFromNow, insertProcess, rebuildSearchIndex } from "./helpers";
 
 test.beforeEach(clearOpportunities);
 test.afterAll(closeTestDb);
@@ -13,6 +13,7 @@ const hydrated = (page: import("@playwright/test").Page) => page.locator("form[d
 test("busca sem acento acha título com acento", async ({ page }) => {
   await insertProcess({ title: "Equipe de Robótica" });
   await insertProcess({ title: "Outro assunto" });
+  await rebuildSearchIndex();
   await page.goto("/processos");
   await page.getByRole("searchbox", { name: "Buscar processos" }).fill("robotica");
   await page.getByRole("button", { name: "Buscar", exact: true }).click();
@@ -102,6 +103,7 @@ test.describe("sem JavaScript", () => {
   test("buscar e aplicar filtro funciona", async ({ page }) => {
     await insertProcess({ title: "Robótica PET", project: { category: "PET" } });
     await insertProcess({ title: "Robótica Extensão", project: { category: "EXTENSION" } });
+    await rebuildSearchIndex();
     await page.goto("/processos");
     await page.getByRole("searchbox", { name: "Buscar processos" }).fill("robotica");
     await page.getByRole("checkbox", { name: "PET" }).first().check();

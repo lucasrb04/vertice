@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
 import { randomUUID } from "node:crypto";
@@ -112,4 +113,15 @@ export async function closeTestDb(): Promise<void> {
   pool = null;
   dbInstance = null;
   await closing?.end();
+}
+
+/**
+ * Inserções diretas não passam pelos serviços que atualizam o índice de busca: reconstrói-o antes de buscar por texto.
+ * Roda o mesmo script de operação (`db:search:rebuild`) com o ambiente do banco de teste.
+ */
+export async function rebuildSearchIndex(): Promise<void> {
+  execFileSync("pnpm", ["exec", "tsx", "src/db/search-rebuild.ts"], {
+    env: { ...process.env, ...testEnv },
+    stdio: "pipe",
+  });
 }
