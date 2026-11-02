@@ -75,9 +75,36 @@ export async function insertProcess({ project: projectOverrides, ...overrides }:
   return { project: project!, opportunity: opportunity! };
 }
 
+/** Acrescenta um processo a um projeto já criado por `insertProcess`. */
+export async function addProcess(projectId: string, overrides: Omit<ProcessInput, "project">) {
+  const instId = await institutionId();
+  const [opportunity] = await getDb()
+    .insert(opportunities)
+    .values({
+      institutionId: instId,
+      projectId,
+      slug: `processo-e2e-${randomUUID().slice(0, 8)}`,
+      description: "Descrição de teste.",
+      externalUrl: "https://unifei.edu.br/edital.pdf",
+      deadlineAt: daysFromNow(14),
+      ...overrides,
+    })
+    .returning();
+  return opportunity!;
+}
+
 /** Remove todos os processos, para testes que dependem da vitrine vazia ou de uma ordem exata. */
 export async function clearOpportunities(): Promise<void> {
   await getDb().delete(opportunities);
+}
+
+/** Contadores de telemetria de um processo. */
+export async function opportunityCounters(id: string) {
+  const [row] = await getDb()
+    .select({ views: opportunities.viewsCount, clicks: opportunities.externalClicksCount })
+    .from(opportunities)
+    .where(eq(opportunities.id, id));
+  return row!;
 }
 
 export async function closeTestDb(): Promise<void> {

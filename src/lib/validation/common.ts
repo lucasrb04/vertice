@@ -6,7 +6,7 @@ z.config(z.locales.ptBR());
 export const HTTPS_ONLY = "Use um link começando com https://";
 export const HTML_NOT_ALLOWED = "HTML não é permitido. Use a formatação Markdown.";
 
-function isHttps(value: string): boolean {
+export function isHttps(value: string): boolean {
   try {
     return new URL(value).protocol === "https:";
   } catch {

@@ -21,7 +21,9 @@ cp .env.example .env        # drizzle.config.ts e db:seed leem o arquivo .env
 
 Preencha em `.env` pelo menos `BETTER_AUTH_SECRET` (mínimo 32 caracteres, ex.: `openssl rand -base64 32`),
 `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` (veja a seção de OAuth abaixo) e, opcionalmente,
-`INITIAL_ADMIN_EMAIL` (primeiro `SYSTEM_ADMIN`).
+`INITIAL_ADMIN_EMAIL` (primeiro `SYSTEM_ADMIN`). Em produção, `VISITOR_HASH_SECRET` (mínimo 32 caracteres) é obrigatório:
+é o segredo do HMAC que anonimiza visitantes nos contadores de cliques e visualizações. Fora de produção, vazio usa um
+valor fixo de desenvolvimento.
 
 Portas no host:
 
@@ -37,6 +39,18 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
+`pnpm db:seed` precisa rodar antes da primeira requisição em qualquer ambiente, inclusive produção: as páginas públicas
+consultam a instituição padrão e respondem 500 enquanto ela não existir.
+
+Dados fictícios para ver a vitrine preenchida (opcional, nunca em produção):
+
+```bash
+pnpm db:seed:demo
+```
+
+Roda depois de `pnpm db:seed`, é idempotente, recusa `NODE_ENV=production` e cria projetos e processos com prefixo
+"Demo" (slugs `demo-*`, dono `demo@unifei.edu.br`), com datas relativas a hoje: abertos, encerrado, verificado e arquivado.
+
 ## Comandos
 
 | Ação | Comando |
@@ -45,6 +59,7 @@ pnpm db:seed
 | Lint e type-check | `pnpm lint && pnpm exec tsc --noEmit` |
 | Testes unitários e de integração (Vitest) | `pnpm test` |
 | Testes E2E (Playwright, porta 3100) | `pnpm test:e2e` |
+| Dados fictícios de demonstração | `pnpm db:seed:demo` |
 | Gerar migrations após mudar o schema | `pnpm db:generate` |
 | Build de produção | `pnpm build` |
 

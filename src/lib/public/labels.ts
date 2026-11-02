@@ -41,3 +41,32 @@ export function scholarshipSummary(card: {
       return SCHOLARSHIP_LABELS.VOLUNTARY;
   }
 }
+
+/** `R$ 700,00`. */
+export function formatCents(cents: number): string {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+/** Faixa de períodos dos requisitos, ou `null` sem restrição. */
+export function semesterRange(min: number | null, max: number | null): string | null {
+  if (min && max) return min === max ? `${min}º período` : `Do ${min}º ao ${max}º período`;
+  if (min) return `A partir do ${min}º período`;
+  if (max) return `Até o ${max}º período`;
+  return null;
+}
+
+/** Texto puro para metadados: tira os marcadores de Markdown e corta em palavra inteira. */
+export function plainTextExcerpt(source: string, max = 160): string {
+  const text = source
+    .replace(/^\s*\[[^\]]+\]:\s*\S+.*$/gm, " ")
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/!?\[([^\]]*)\]\[[^\]]*\]/g, "$1")
+    .replace(/^\s{0,3}(?:#{1,6}\s+|>\s?|[-*+]\s+|\d+[.)]\s+)/gm, "")
+    .replace(/[*_`~]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 0 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}

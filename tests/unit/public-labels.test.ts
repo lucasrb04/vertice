@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { closedChip, deadlineChip, requirementsSummary, scholarshipSummary } from "@/lib/public/labels";
+import {
+  closedChip,
+  deadlineChip,
+  plainTextExcerpt,
+  requirementsSummary,
+  scholarshipSummary,
+} from "@/lib/public/labels";
 
 const now = new Date("2026-11-02T15:00:00Z"); // 12h em Brasília
 const endOfDay = (day: string) => new Date(`${day}T23:59:59.000-03:00`);
@@ -64,5 +70,25 @@ describe("scholarshipSummary", () => {
   it("ambos não fica ambíguo fora do formulário", () => {
     expect(scholarshipSummary({ scholarshipType: "BOTH", fundingAgency: null })).toBe("Bolsa ou voluntário");
     expect(scholarshipSummary({ scholarshipType: "BOTH", fundingAgency: "CNPq" })).toBe("Bolsa CNPq ou voluntário");
+  });
+});
+
+describe("plainTextExcerpt", () => {
+  it("remove marcadores de Markdown", () => {
+    expect(
+      plainTextExcerpt("# Sobre\n\n**Forte**, *leve* e `código`.\n\n- [edital](https://a.com/x)\n- ![foto](https://a.com/y.png)"),
+    ).toBe("Sobre Forte, leve e código. edital foto");
+  });
+
+  it("remove definições de referência e citações", () => {
+    expect(plainTextExcerpt("> Citação [aqui][a]\n\n1. item\n\n[a]: https://a.com")).toBe("Citação aqui item");
+  });
+
+  it("corta em palavra inteira com reticências", () => {
+    expect(plainTextExcerpt("uma frase bem comprida para cortar", 15)).toBe("uma frase bem…");
+  });
+
+  it("mantém texto curto intacto", () => {
+    expect(plainTextExcerpt("Curto.")).toBe("Curto.");
   });
 });

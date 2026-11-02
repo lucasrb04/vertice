@@ -76,6 +76,11 @@ export function ProjectPanel({
         <Button asChild variant="outline" size="lg" className="px-4">
           <Link href={`${base}/membros`}>Membros</Link>
         </Button>
+        {(active || project.status === "ARCHIVED") && (
+          <Button asChild variant="outline" size="lg" className="px-4">
+            <Link href={`/projeto/${project.slug}`}>Ver página pública</Link>
+          </Button>
+        )}
         {canManageMembers && <ArchiveProjectButton projectId={project.id} />}
       </nav>
 

@@ -53,7 +53,7 @@ vertice-unifei/
 ├── drizzle/                      # Migrations SQL geradas pelo drizzle-kit
 ├── src/
 │   ├── app/                      # Rotas do Next.js App Router
-│   │   ├── (public)/             # Rotas públicas (Timeline, Detalhe da Vaga, Página do Projeto)
+│   │   ├── (public)/             # Rotas públicas: / (home), /processos, /processo/[slug] (+ /edital), /projeto/[slug]
 │   │   ├── (auth)/               # Login ("Entrar com Google")
 │   │   ├── (student)/            # Onboarding, Perfil Completo, Minhas Candidaturas
 │   │   ├── (organizer)/          # Wizard de Criação (Projeto + Vaga), Painel do Projeto, Kanban
@@ -64,15 +64,18 @@ vertice-unifei/
 │   │   ├── layout/               # Header, Footer, CommandBar, Navegação
 │   │   ├── opportunities/        # OpportunityCard, MatchBadge, ExplainableMatchPopover, Filters
 │   │   ├── projects/             # ProjectHeader, KanbanBoard, MemberManager
+│   │   ├── vitrine/              # OpportunityCard, Carousel, Filters, SafeMarkdown, Schedule, Requirements
 │   │   └── tags/                 # TagCombobox (Autocomplete + Criação de Tag Aberta)
 │   ├── db/
 │   │   ├── index.ts              # Instância de conexão do Drizzle (Pool pg)
 │   │   ├── schema/               # Definição modular das tabelas (institutions, users, projects, etc.)
-│   │   └── seed.ts               # Seed inicial (UNIFEI Itajubá, Cursos, Institutos, Tags Base)
+│   │   ├── seed.ts               # Seed inicial (UNIFEI Itajubá, Cursos, Institutos, Tags Base)
+│   │   └── seed-demo.ts          # Dados fictícios "Demo" (pnpm db:seed:demo; recusa produção)
 │   ├── lib/
 │   │   ├── auth/                 # Configuração do Better-Auth + Guards (requireAuth, requireAdmin)
 │   │   ├── matching/             # Motor matemático de Afinidade e Explainable Match (Puro + Testável)
-│   │   ├── search/               # Normalização de Tags e Queries de Busca Híbrida (pg_trgm)
+│   │   ├── public/               # Consultas da vitrine, parser de URL, rótulos e telemetria (sem imports de next/*)
+│   │   ├── search/               # Normalização de Tags
 │   │   ├── security/             # Validador Turnstile, Rate Limiter, Sanitizador de URLs, AuditLogger
 │   │   ├── email/                # Cliente Resend + Templates React Email
 │   │   └── tenant.ts             # Helper getDefaultInstitution() com cache em memória
@@ -630,15 +633,17 @@ Quando o `SYSTEM_ADMIN` aciona a ferramenta de **Merge de Tags** (mesclando `sou
 4. Recalcula o `usageCount` de `targetTagId`, remove `sourceTagId` e grava um registro em `audit_logs`.
 
 ### 6.3. Query de Busca na Timeline
-A Timeline combina:
-* **Busca por Texto Livre (`q`):** Utiliza `unaccent()` e operador de similaridade de trigramas (`ILIKE` + `similarity()` do `pg_trgm`) sobre `opportunities.title`, `opportunities.role_area`, `projects.name` e `tags.name` associadas.
+`/processos` (`searchOpportunities` em `src/lib/public/queries.ts`; parâmetros validados por `parseVitrineParams`, inválidos são ignorados) combina:
+* **Busca por Texto Livre (`q`, até 100 caracteres):** normaliza com `lower(unaccent())` e casa por `LIKE %q%` (com `%`, `_` e `\` escapados) em `opportunities.title`, `opportunities.role_area`, `opportunities.description`, `projects.name`, `projects.acronym`, `projects.advisor_name` e `tags.name`. Só com 4 letras ou mais também casa por `word_similarity > 0.4` (`pg_trgm`) em título, nome do projeto e tags, e ordena por maior similaridade; termos curtos como `C++` casariam qualquer palavra com a mesma inicial.
 * **Filtros Facetados (URL Search Params):**
-  * `category`: Categoria do projeto (`SPECIAL_PROJECT`, `SCIENTIFIC_INIT`, `EXTENSION`, etc.)
-  * `scholarship`: `PAID` | `VOLUNTARY`
-  * `course`: Código do curso da UNIFEI (`CCO`, `ECO`, `EME`, etc.)
-  * `tags`: Lista de slugs de tags (`?tags=python,solidworks`)
-  * `sort`: `match` (padrão para logados), `recent` (padrão para visitantes), `deadline` (encerrando em breve) ou `popular` (somente visitantes: `viewsCount + externalClicksCount + nº de candidaturas` dos últimos 30 dias).
-* A timeline exibe apenas vagas `OPEN` de projetos `ACTIVE` (oculta `UNDER_REVIEW`, `SUSPENDED` etc.).
+  * `category`: Categoria do projeto (repetível: `SPECIAL_PROJECT`, `SCIENTIFIC_INIT`, `EXTENSION`, etc.)
+  * `scholarship`: `PAID` | `VOLUNTARY` (`BOTH` entra nos dois)
+  * `course`: Código do curso da UNIFEI (`CCO`, `ECO`, `EME`, etc.); processo sem cursos definidos sempre entra
+  * `tags`: Lista de slugs de tags (`?tags=python,solidworks`), com semântica AND
+  * `encerrados=1`: inclui encerrados, sempre depois dos abertos
+  * `sort`: `relevance` (padrão com `q`), `recent` (padrão sem `q`), `deadline` (encerrando em breve) ou `popular` (`viewsCount + externalClicksCount`, D38).
+  * `page`: 12 itens por página; fora do intervalo cai na página válida mais próxima.
+* A consulta exibe apenas processos abertos de projetos `ACTIVE` (`openOpportunitySql`). Público (`publicOpportunitySql`) é `status <> 'UNDER_REVIEW'` em projeto `ACTIVE` ou `ARCHIVED`; fora disso, as páginas `/processo/[slug]` e `/projeto/[slug]` respondem 404.
 
 ---
 
