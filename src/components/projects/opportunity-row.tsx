@@ -36,7 +36,7 @@ export function OpportunityRow({
     <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 space-y-1">
         <p className="font-medium text-stone-900">{o.title}</p>
-        <p className={cn("font-mono text-xs", closingSoon ? "text-amber-600" : "text-stone-600")}>
+        <p className={cn("font-mono text-xs", closingSoon ? "text-amber-700" : "text-stone-600")}>
           {isOpen ? deadlineLabel(o.deadlineAt) : o.closedOn ? `Encerrado em ${formatDay(o.closedOn)}` : "Encerrado"}
         </p>
         <div className="flex flex-wrap items-center gap-1.5 pt-1">

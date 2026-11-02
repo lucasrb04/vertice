@@ -24,7 +24,7 @@ Este documento define a identidade visual, padrões de componentes, tipografia e
 | Cor de Destaque / Acento (Brand Primary) | Azul Institucional `#0F3D75` (token CSS `--brand`) |
 | Badge de Match (Compatibilidade Alta ≥ 80%) | Fundo `emerald-50`, Texto `emerald-700`, Borda `emerald-200` |
 | Badge de Vaga (IC / Extensão / Equipe) | Fundo `stone-100`, Texto `stone-700` |
-| Prazo Encerrando (≤ 7 dias) | Âmbar `#D97706` (`amber-600`) |
+| Prazo Encerrando (≤ 7 dias) | Âmbar `#B45309` (`amber-700`); texto de prazo usa `amber-700` para contraste AA sobre branco (D44) |
 
 ### Modo Escuro (Fora do MVP)
 

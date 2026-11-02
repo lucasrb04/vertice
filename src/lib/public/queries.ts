@@ -28,6 +28,7 @@ export type PublicCard = {
   minSemester: number | null;
   courseCount: number;
   deadlineAt: Date;
+  applicationsOpenOn: string | null;
   isOpen: boolean;
   closedOn: Date | null;
   tags: string[];
@@ -182,6 +183,7 @@ const cardColumns = {
   minSemester: opportunities.minSemester,
   courseCount: sql<number>`jsonb_array_length(${opportunities.targetCourseIds})`.mapWith(Number),
   deadlineAt: opportunities.deadlineAt,
+  applicationsOpenOn: opportunities.applicationsOpenOn,
   status: opportunities.status,
   closedAt: opportunities.closedAt,
   projectStatus: projects.status,
@@ -242,6 +244,7 @@ async function fetchCards(opts: {
       minSemester: r.minSemester,
       courseCount: r.courseCount,
       deadlineAt: r.deadlineAt,
+      applicationsOpenOn: r.applicationsOpenOn,
       isOpen,
       closedOn,
       tags: byOpp.get(r.id) ?? [],

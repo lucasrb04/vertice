@@ -1,6 +1,7 @@
 import { BadgeCheck } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { opensInFuture, opensOnLabel } from "@/lib/opportunities/status";
 import {
   CATEGORY_LABELS,
   closedChip,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
  */
 export function OpportunityCard({ card }: { card: PublicCard }) {
   const deadline = card.isOpen ? deadlineChip(card.deadlineAt) : closedChip(card.closedOn);
+  const opensLater = card.isOpen && card.applicationsOpenOn !== null && opensInFuture(card.applicationsOpenOn);
   const details = [scholarshipSummary(card), card.weeklyHours ? `${card.weeklyHours}h/sem` : null]
     .filter(Boolean)
     .join(" · ");
@@ -61,9 +63,13 @@ export function OpportunityCard({ card }: { card: PublicCard }) {
       <div className="mt-auto pt-4">
         <div className="space-y-0.5 border-t border-stone-100 pt-3 text-xs">
           <p className="text-stone-600">{requirementsSummary(card)}</p>
-          <p className={cn("font-mono", deadline.urgent ? "font-medium text-amber-600" : "text-stone-600")}>
-            {deadline.text}
-          </p>
+          {opensLater ? (
+            <p className="font-mono text-stone-600">{opensOnLabel(card.applicationsOpenOn!)}</p>
+          ) : (
+            <p className={cn("font-mono", deadline.urgent ? "font-medium text-amber-700" : "text-stone-600")}>
+              {deadline.text}
+            </p>
+          )}
         </div>
       </div>
     </Link>

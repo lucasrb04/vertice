@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Requirements } from "@/components/vitrine/requirements";
 import { SafeMarkdown } from "@/components/vitrine/safe-markdown";
 import { Schedule } from "@/components/vitrine/schedule";
+import { opensInFuture, opensOnLabel } from "@/lib/opportunities/status";
 import { deadlineLabel } from "@/lib/projects/labels";
 import {
   CATEGORY_LABELS,
@@ -75,6 +76,7 @@ export default async function ProcessoPage({ params }: Props) {
   }
 
   const editalHref = opportunity.externalUrl && isHttps(opportunity.externalUrl) ? `/processo/${slug}/edital` : null;
+  const opensLater = isOpen && opensInFuture(opportunity.applicationsOpenOn);
   const urgency = isOpen ? deadlineChip(opportunity.deadlineAt) : null;
   const facts: [string, string][] = [["Modalidade", scholarshipSummary(opportunity)]];
   if (opportunity.scholarshipValueCents) facts.push(["Valor", formatCents(opportunity.scholarshipValueCents)]);
@@ -111,7 +113,10 @@ export default async function ProcessoPage({ params }: Props) {
         <aside aria-label="Inscrição" className="space-y-5 lg:col-start-2 lg:row-start-1">
           {isOpen ? (
             <div className="space-y-3 rounded-lg border border-stone-200 bg-white p-4">
-              <p className={cn("font-mono text-sm font-medium", urgency!.urgent ? "text-amber-600" : "text-stone-900")}>
+              {opensLater && (
+                <p className="font-mono text-sm font-medium text-stone-900">{opensOnLabel(opportunity.applicationsOpenOn!)}</p>
+              )}
+              <p className={cn("font-mono text-sm font-medium", urgency!.urgent ? "text-amber-700" : "text-stone-900")}>
                 {urgency!.text}
               </p>
               <p className="font-mono text-xs leading-relaxed text-stone-600">{deadlineLabel(opportunity.deadlineAt)}</p>

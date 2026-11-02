@@ -77,6 +77,26 @@ test.describe("/processo/[slug]", () => {
     await expect(page.getByText("Encerra em 3 dias")).toHaveClass(/text-amber/);
   });
 
+  test("abertura futura: selo na lista e na página, com o edital disponível", async ({ page }) => {
+    const opens = formatDay(daysFromNow(10)).slice(0, 5);
+    const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(daysFromNow(10));
+    const { opportunity } = await insertProcess({
+      title: "Processo que abre em breve",
+      externalUrl: EDITAL,
+      applicationsOpenOn: day,
+      deadlineAt: daysFromNow(30),
+    });
+
+    await page.goto(`/processo/${opportunity.slug}`);
+    await expect(page.getByText(`Abre em ${opens}`)).toBeVisible();
+    await expect(page.getByRole("link", { name: "Acessar edital" })).toBeVisible();
+
+    await page.goto("/processos");
+    const card = page.getByRole("link", { name: /Processo que abre em breve/ });
+    await expect(card).toContainText(`Abre em ${opens}`);
+    await expect(card).not.toContainText("Encerra em");
+  });
+
   test("clique abre o destino e conta 1 mesmo clicando duas vezes; visualização conta 1", async ({ page, context }) => {
     const { opportunity } = await insertProcess({ title: "Processo com edital", externalUrl: EDITAL });
 

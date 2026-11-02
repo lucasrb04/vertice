@@ -1,6 +1,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import { opportunities, projects } from "@/db/schema";
 import type { OpportunityStatus, ProjectStatus } from "@/db/schema";
+import { todayInSaoPaulo } from "@/lib/time";
 
 /** Regra única de "processo aberto": status OPEN, prazo não vencido e projeto ACTIVE. */
 export function isOpportunityOpen(
@@ -27,4 +28,15 @@ export function closedOnDate(
   if (o.closedAt) return o.closedAt;
   if (o.deadlineAt.getTime() <= now.getTime()) return o.deadlineAt;
   return null;
+}
+
+/** Abertura das inscrições em dia posterior a hoje (Brasília). O processo segue aberto; só o selo muda. */
+export function opensInFuture(applicationsOpenOn: string | null, now: Date = new Date()): boolean {
+  return applicationsOpenOn !== null && applicationsOpenOn > todayInSaoPaulo(now);
+}
+
+/** `Abre em dd/mm`, a partir de um dia `YYYY-MM-DD`. */
+export function opensOnLabel(day: string): string {
+  const [, m, d] = day.split("-");
+  return `Abre em ${d}/${m}`;
 }

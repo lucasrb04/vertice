@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { deadlineFromDay } from "@/lib/time";
-import { closedOnDate, isOpportunityOpen } from "@/lib/opportunities/status";
+import { closedOnDate, isOpportunityOpen, opensInFuture, opensOnLabel } from "@/lib/opportunities/status";
 
 const now = new Date("2026-10-27T12:00:00Z");
 const future = new Date("2026-11-01T02:59:59Z");
@@ -31,5 +31,29 @@ describe("virada do dia em Brasília", () => {
     const deadlineAt = deadlineFromDay("2026-10-27");
     expect(isOpportunityOpen({ status: "OPEN", deadlineAt }, "ACTIVE", new Date("2026-10-28T02:30:00Z"))).toBe(true);
     expect(isOpportunityOpen({ status: "OPEN", deadlineAt }, "ACTIVE", deadlineAt)).toBe(false);
+  });
+});
+
+describe("opensInFuture", () => {
+  it("sem abertura não há selo", () => {
+    expect(opensInFuture(null, now)).toBe(false);
+  });
+
+  it("só o dia seguinte em diante é futuro; o próprio dia não", () => {
+    expect(opensInFuture("2026-10-28", now)).toBe(true);
+    expect(opensInFuture("2026-10-27", now)).toBe(false);
+    expect(opensInFuture("2026-10-26", now)).toBe(false);
+  });
+
+  it("usa o dia de São Paulo, não o de UTC", () => {
+    const lateNight = new Date("2026-11-03T01:00:00Z"); // ainda dia 2 em São Paulo
+    expect(opensInFuture("2026-11-02", lateNight)).toBe(false);
+    expect(opensInFuture("2026-11-03", lateNight)).toBe(true);
+  });
+});
+
+describe("opensOnLabel", () => {
+  it("formata dd/mm", () => {
+    expect(opensOnLabel("2026-11-20")).toBe("Abre em 20/11");
   });
 });
