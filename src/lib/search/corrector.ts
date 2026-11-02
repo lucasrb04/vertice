@@ -6,7 +6,20 @@ const MIN_LETTERS = 4;
 const MAX_LETTERS = 40; // Mesmo teto do vocabulário: acima disso não há candidato.
 const MAX_TOKENS = 12;
 const MIN_STEM = 3;
-const LONG_WORD = 6; // A partir daqui valem distância 2 e primeira letra diferente.
+const OTHER_FIRST_LETTER = 6; // A partir daqui a primeira letra pode ser a errada.
+const FREE_DISTANCE_2 = 8; // A partir daqui distância 2 não exige as mesmas letras.
+const MIN_CANDIDATE_STEM = 4; // Sigla curta tem radical que colide com palavras: `ner`, `nerais`.
+
+/**
+ * Stopwords do Postgres que só são stopwords com acento, já sem ele. O texto digitado sem acento
+ * (`voce`) escapa do dicionário e viraria outra palavra, e o texto do catálogo sem acento viraria
+ * candidato (`arte -> ate`). `portuguese.stop` não é legível por SQL, daí a lista.
+ */
+export const UNACCENTED_STOPWORDS = [
+  "ate", "nao", "tambem", "voce", "voces", "estao", "estavamos", "estiveramos", "estivessemos", "hao",
+  "houveramos", "houvessemos", "houvera", "houverao", "houveriamos", "sao", "eramos", "foramos", "fossemos",
+  "sera", "serao", "seriamos", "tinhamos", "tiveramos", "tivessemos", "tera", "terao", "teriamos",
+];
 
 /** Mesma normalização do SQL (sem acentos, minúsculas), usada para o termo do usuário. */
 export function normalizeQuery(q: string): string {
@@ -25,24 +38,40 @@ export type QueryToken = {
   raw: string;
   quoted: boolean;
   corrected: boolean;
+  /** Token composto de onde a palavra saiu (`html/css`), normalizado: casa inteiro por LIKE. */
+  whole?: string;
 };
 
-const SENTENCE_EDGES = /^[,.;:!?()"]+|[,.;:!?()"]+$/g;
+const SENTENCE_EDGES = /^[,.;:!?()"']+|[,.;:!?()"']+$/g;
+/** Uma palavra dentro de um token. `+`, `#` e `%` são parte dela: `C++`, `C#`, `100%`. */
+const WORD = /[\p{L}\p{M}\p{N}+#%]+/gu;
 
-/** Um trecho entre aspas é um token só, distinto da mesma palavra fora delas. Repetidos saem, e o total é limitado. */
+/** Palavras de `html/css`. Número e letra solta nada dizem sozinhos: `20/11`, `i/o` ficam inteiros. */
+function splitCompound(raw: string): string[] {
+  const words = (raw.match(WORD) ?? []).filter((w) => w.length >= 2 && /\p{L}/u.test(w));
+  return words.length ? words : [raw];
+}
+
+/**
+ * Um trecho entre aspas é um token só, distinto da mesma palavra fora delas. Token sem letra nem dígito
+ * sai, composto vira suas palavras. Repetidos saem, e o total é limitado.
+ */
 export function tokenize(q: string): QueryToken[] {
   const tokens = new Map<string, QueryToken>();
   const text = q.normalize("NFC").replace(/[“”]/g, '"');
   for (const m of text.matchAll(/"([^"]*)"|\S+/g)) {
     const quoted = m[1] !== undefined;
     const raw = (m[1] ?? m[0]).replace(SENTENCE_EDGES, "").trim();
-    const normalized = normalizeQuery(raw);
-    const key = `${quoted}:${normalized}`;
-    if (!normalized || tokens.has(key)) continue;
-    if (tokens.size === MAX_TOKENS) break;
-    tokens.set(key, { text: raw.toLowerCase(), normalized, raw, quoted, corrected: false });
+    if (!normalizeQuery(raw) || (!quoted && !/[\p{L}\p{N}]/u.test(raw))) continue;
+    for (const word of quoted ? [raw] : splitCompound(raw)) {
+      const normalized = normalizeQuery(word);
+      const key = `${quoted}:${normalized}`;
+      if (tokens.has(key)) continue;
+      const whole = word === raw ? {} : { whole: normalizeQuery(raw) };
+      tokens.set(key, { text: word.toLowerCase(), normalized, raw: word, quoted, corrected: false, ...whole });
+    }
   }
-  return [...tokens.values()];
+  return [...tokens.values()].slice(0, MAX_TOKENS);
 }
 
 const SUFFIX = /^(.+?)(z?)inh([ao])(s?)$/;
@@ -86,6 +115,7 @@ async function unknownWords(institutionId: string, words: string[]): Promise<str
       .where(eq(tagAliases.institutionId, institutionId)),
   ]);
   const known = new Set([
+    ...UNACCENTED_STOPWORDS,
     ...vocabulary.map((v) => v.word),
     ...synonyms.flatMap((s) => [...s.term.split(" "), ...s.canonical.split(" ")]),
     ...aliases.flatMap((a) => a.slug.split("-")),
@@ -106,6 +136,7 @@ async function isStopwordOrDerivation(institutionId: string, token: QueryToken):
     select ${stemmed(text)} = 0 or ${stemmed(normalized)} = 0 or exists (
       select 1 from search_vocabulary v
       where v.institution_id = ${institutionId}
+        and length(v.word) >= ${MIN_CANDIDATE_STEM}::int
         and ts_lexize('portuguese_stem', v.word) && (${stems(text)} || ${stems(normalized)})
     ) as skip
   `);
@@ -125,10 +156,10 @@ async function undoDiminutive(institutionId: string, word: string): Promise<stri
 
 const sortedLetters = (word: string) => [...word].sort().join("");
 
-/** Sem a primeira letra e o limite curto, palavra real fora do catálogo viraria outra: `nasa -> casa`. */
+/** Regra da spec §5.3. Sem ela, palavra real fora do catálogo viraria outra: `nasa -> casa`, `teatro -> texto`. */
 function isPlausibleTypo(word: string, candidate: string, edits: number): boolean {
-  if (word[0] !== candidate[0]) return edits === 1 && word.length >= LONG_WORD;
-  if (word.length >= LONG_WORD || edits === 1) return true;
+  if (word[0] !== candidate[0]) return edits === 1 && word.length >= OTHER_FIRST_LETTER;
+  if (edits === 1 || word.length >= FREE_DISTANCE_2) return true;
   return sortedLetters(word) === sortedLetters(candidate);
 }
 
@@ -143,7 +174,6 @@ async function nearestWord(institutionId: string, word: string): Promise<string 
         eq(searchVocabulary.institutionId, institutionId),
         sql`length(${searchVocabulary.word}) between ${word.length - distance}::int and ${word.length + distance}::int`,
         sql`${edits} <= ${distance}::int`,
-        sql`numnode(plainto_tsquery('portuguese'::regconfig, ${searchVocabulary.word})) > 0`,
       ),
     )
     .orderBy(edits, sql`${searchVocabulary.frequency} desc`, searchVocabulary.word);
@@ -155,13 +185,11 @@ async function correctWord(institutionId: string, token: QueryToken): Promise<st
   return (await undoDiminutive(institutionId, token.normalized)) ?? (await nearestWord(institutionId, token.normalized));
 }
 
-/** Reescreve a consulta como digitada: trechos entre aspas e tokens com símbolo ficam como estão. */
+/** Reescreve a consulta como digitada: trechos entre aspas e palavras com símbolo ficam como estão. */
 function rewrite(q: string, fixes: Map<string, string>): string {
-  return q.replace(/"[^"]*"|“[^”]*”|\S+/g, (chunk) => {
-    const word = chunk.replace(SENTENCE_EDGES, "");
-    const fix = fixes.get(normalizeQuery(word));
-    return fix && !/^["“]/.test(chunk) ? chunk.replace(word, fix) : chunk;
-  });
+  return q.replace(/"[^"]*"|“[^”]*”|\S+/g, (chunk) =>
+    /^["“]/.test(chunk) ? chunk : chunk.replace(WORD, (word) => fixes.get(normalizeQuery(word)) ?? word),
+  );
 }
 
 export type CorrectedQuery = {

@@ -30,6 +30,7 @@ function groupOf(token: QueryToken): TermGroup {
   // Entre aspas é texto exato: sem radical, e no FTS a última palavra de uma forma do vetor fica colada à primeira da outra.
   if (token.quoted) group.like.push(token.normalized);
   else addVariant(group, token.text);
+  if (token.whole) group.like.push(token.whole);
   return group;
 }
 
@@ -46,9 +47,16 @@ async function loadStems(words: string[]): Promise<Map<string, string>> {
   return new Map(rows.map((r) => [r.word, r.stem ?? r.word]));
 }
 
+/** Termos que partilham um canônico, com ele: cada um vale por todos os outros. */
+function synonymGroups(pairs: { term: string; canonical: string }[]): string[][] {
+  const groups = new Map<string, string[]>();
+  for (const { term, canonical } of pairs) groups.set(canonical, [...(groups.get(canonical) ?? [canonical]), term]);
+  return [...groups.values()];
+}
+
 /**
- * Sinônimos nos dois sentidos. Uma expressão vale inteira para cada uma de suas palavras. Palavra solta
- * casa pelo radical, para o plural valer como o singular cadastrado: `robos` como `robo`.
+ * Sinônimos em todas as direções do grupo. Uma expressão vale inteira para cada uma de suas palavras.
+ * Palavra solta casa pelo radical, para o plural valer como o singular cadastrado: `robos` como `robo`.
  */
 async function addSynonyms(institutionId: string, tokens: QueryToken[], groups: TermGroup[]) {
   const pairs = await loadSynonyms(institutionId);
@@ -58,12 +66,12 @@ async function addSynonyms(institutionId: string, tokens: QueryToken[], groups: 
   const stems = await loadStems([...new Set([...words, ...pairs.flatMap((p) => [p.term, p.canonical])])]);
   const sameStem = (a: string, b: string) => stems.get(a) === stems.get(b);
 
-  for (const { term, canonical } of pairs) {
-    for (const [from, to] of [[term, canonical], [canonical, term]]) {
+  for (const members of synonymGroups(pairs)) {
+    for (const from of members) {
       const fromWords = from.split(" ");
       words.forEach((w, i) => {
         const hit = fromWords.length > 1 ? fromWords.includes(w) && sentence.includes(` ${from} `) : w !== "|" && sameStem(w, from);
-        if (hit) addVariant(groups[i], to);
+        if (hit) members.filter((to) => to !== from).forEach((to) => addVariant(groups[i], to));
       });
     }
   }
@@ -86,14 +94,24 @@ async function addTagAliases(institutionId: string, tokens: QueryToken[], groups
   }
 }
 
+/** O corretor é um extra: se falhar, a busca segue com a consulta como digitada. */
+async function correctedOrPlain(institutionId: string, q: string, exact: boolean) {
+  const plain = () => ({ tokens: tokenize(q), corrected: null });
+  if (exact) return plain();
+  try {
+    return await correctQuery(institutionId, q);
+  } catch (err) {
+    console.error("Falha ao corrigir a busca:", err);
+    return plain();
+  }
+}
+
 /** Devolve `null` quando `q` normaliza para vazio (sem busca). */
 export async function planSearch(institutionId: string, q: string, opts: { exact: boolean }): Promise<SearchPlan | null> {
   const literal = normalizeQuery(q.replace(/["“”]/g, " ")).replace(/\s+/g, " ");
   if (!literal) return null;
 
-  const { tokens, corrected } = opts.exact
-    ? { tokens: tokenize(q), corrected: null }
-    : await correctQuery(institutionId, q);
+  const { tokens, corrected } = await correctedOrPlain(institutionId, q, opts.exact);
 
   // Uma palavra corrigida pode repetir outra da consulta.
   const distinct = tokens.filter((t, i) => tokens.findIndex((o) => o.normalized === t.normalized && o.quoted === t.quoted) === i);
@@ -117,8 +135,14 @@ export function groupTsQuery(group: TermGroup): SQL {
 }
 
 const REGEX_META = /[.*+?^${}()|[\]\\]/g;
+const escapeRegex = (text: string) => text.replace(REGEX_META, "\\$&");
 
 /** Regex de palavra completa, para texto já normalizado. Não usa `\y`: `C++` termina em símbolo. */
 export function wholeWordRegex(text: string): string {
-  return `(^|[^[:alnum:]])${text.replace(REGEX_META, "\\$&")}($|[^[:alnum:]])`;
+  return `(^|[^[:alnum:]])${escapeRegex(text)}($|[^[:alnum:]])`;
+}
+
+/** Regex de início de palavra, para texto já normalizado: `arte` não casa `Duarte`, `eng` casa `engenharia`. */
+export function wordStartRegex(text: string): string {
+  return `(^|[^[:alnum:]])${escapeRegex(text)}`;
 }

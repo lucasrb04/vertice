@@ -67,7 +67,7 @@ Termos expandidos por sinônimos e `tag_aliases`, cada termo nas duas formas (co
 
 Dentro da camada, `ts_rank_cd` com normalização, depois recentes e `id`. Sinônimos ficam em `search_synonyms` (`institution_id`, `term`, `canonical`), com carga inicial no seed.
 
-**Ajustes da revisão final.** Stopwords ficam fora do vocabulário de candidatos, filtradas antes do `unaccent`, mas contam como conhecidas. Termo só de letras no `LIKE` exige início de palavra (`arte` não casa `Duarte`); termo com símbolo segue por substring. Palavra exata no documento vem antes de colisão de radical no título. Sinônimos expandem por todo o grupo do canônico. Tokens compostos (`html/css`, `machine-learning`) também entram quebrados em palavras. Falha do corretor não derruba a busca: segue sem correção.
+**Ajustes da revisão final.** Stopwords ficam fora do vocabulário de candidatos, filtradas antes do `unaccent`, mas contam como conhecidas. Termo só de letras no `LIKE` exige início de palavra (`arte` não casa `Duarte`); termo com símbolo segue por substring. Palavra exata no documento vem antes de colisão de radical no título, mas depois de título com todas as palavras inteiras (`energia solar` em "Solar e energia"). Sinônimos expandem por todo o grupo do canônico. Tokens compostos (`html/css`, `machine-learning`) também entram quebrados em palavras. Falha do corretor não derruba a busca: segue sem correção.
 
 ### 5.5. Interface
 

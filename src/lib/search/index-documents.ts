@@ -2,6 +2,7 @@ import { eq, sql, type SQL } from "drizzle-orm";
 import { db, type Tx } from "@/db";
 import { opportunities, projects, searchVocabulary } from "@/db/schema";
 import { publicOpportunitySql } from "@/lib/public/queries";
+import { UNACCENTED_STOPWORDS } from "./corrector";
 
 const tagNames = sql`(
   select string_agg(distinct t.name, ' ' order by t.name)
@@ -76,7 +77,10 @@ const vocabularyText = concat(
   tagNames,
 );
 
-/** Refaz as palavras da instituição; `frequency` é o número de processos públicos com a palavra. */
+/**
+ * Refaz as palavras da instituição; `frequency` é o número de processos públicos com a palavra.
+ * A stopword sai antes do `unaccent`, que tira dela o que o dicionário reconhece: `até` viraria `ate`.
+ */
 export async function rebuildSearchVocabulary(institutionId: string): Promise<void> {
   await db.transaction(async (tx) => {
     // Quem espera a trava lê depois do commit do anterior: a última reconstrução vê a última escrita.
@@ -84,14 +88,17 @@ export async function rebuildSearchVocabulary(institutionId: string): Promise<vo
     await tx.delete(searchVocabulary).where(eq(searchVocabulary.institutionId, institutionId));
     await tx.execute(sql`
       insert into search_vocabulary (institution_id, word, frequency)
-      select ${institutionId}::uuid, w.lexeme, count(*)::int
+      select ${institutionId}::uuid, n.word, count(distinct ${opportunities.id})::int
       from ${opportunities}
       join ${projects} on ${projects.id} = ${opportunities.projectId}
-      cross join lateral unnest(to_tsvector('simple', unaccent(${vocabularyText}))) as w(lexeme, positions, weights)
+      cross join lateral unnest(to_tsvector('simple', ${vocabularyText})) as w(lexeme, positions, weights)
+      cross join lateral (select unaccent(w.lexeme) as word) as n
       where ${opportunities.institutionId} = ${institutionId}
         and ${publicOpportunitySql()}
-        and w.lexeme ~ '^[a-z]{3,40}$'
-      group by w.lexeme
+        and ts_lexize('portuguese_stem', w.lexeme) <> '{}'::text[]
+        and n.word ~ '^[a-z]{3,40}$'
+        and n.word not in ${UNACCENTED_STOPWORDS}
+      group by n.word
     `);
   });
 }

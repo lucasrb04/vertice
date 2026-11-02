@@ -236,6 +236,62 @@ describe("busca em camadas", () => {
     expect(await titles({ q: "ic" })).not.toContain("Física aplicada");
   });
 
+  it("termo só de letras exige início de palavra; prefixo e símbolo seguem", async () => {
+    const p = await mkProject({ advisorName: "Profa. Helena Duarte", acronym: null });
+    await mkOpportunity(p.id, { title: "Apoio à secretaria", description: "Traga a carteira e outra parte." });
+    const q = await mkProject({ name: "Núcleo", advisorName: "Prof. Siqueira", acronym: null });
+    await mkOpportunity(q.id, { title: "Engenharia aeronáutica", description: "Aerodinâmica." });
+    await mkOpportunity(q.id, { title: "Programação C++", description: "Texto." });
+    await mkOpportunity(q.id, { title: "Bolsa integral", description: "Cobertura de 100% das horas." });
+    await reindex();
+    expect(await titles({ q: "arte" })).toEqual([]);
+    expect(await titles({ q: "duarte" })).toEqual(["Apoio à secretaria"]);
+    expect(await titles({ q: "eng" })).toEqual(["Engenharia aeronáutica"]);
+    expect(await titles({ q: "aero" })).toEqual(["Engenharia aeronáutica"]);
+    expect(await titles({ q: "siqu" })).toHaveLength(3);
+    expect(await titles({ q: "C++" })).toEqual(["Programação C++"]);
+    expect(await titles({ q: "0%" })).toEqual(["Bolsa integral"]);
+    expect(await titles({ q: '"arte"' })).toEqual(["Apoio à secretaria"]);
+  });
+
+  it("palavra exata na descrição vem antes de colisão de radical no título", async () => {
+    const p = await mkProject({ acronym: null });
+    await mkOpportunity(p.id, { title: "Estudo de caso", description: "Texto." });
+    await mkOpportunity(p.id, { title: "Acolhimento", description: "Atendimento na casa de apoio." });
+    await mkOpportunity(p.id, { title: "Casa inteligente", description: "Texto." });
+    await reindex();
+    expect(await titles({ q: "casa" })).toEqual(["Casa inteligente", "Acolhimento", "Estudo de caso"]);
+  });
+
+  it("token composto vale inteiro e em palavras", async () => {
+    const p = await mkProject({ acronym: null });
+    await mkOpportunity(p.id, { title: "Oficina de HTML e CSS" });
+    await mkOpportunity(p.id, { title: "Portal", description: "Stack HTML/CSS." });
+    await mkOpportunity(p.id, { title: "Só CSS" });
+    await mkOpportunity(p.id, { title: "Machine learning aplicado" });
+    await mkOpportunity(p.id, { title: "Python e Java" });
+    await reindex();
+    const html = await titles({ q: "html/css" });
+    expect(html.slice(0, 2).sort()).toEqual(["Oficina de HTML e CSS", "Portal"]);
+    expect(html[2]).toBe("Só CSS");
+    expect(await titles({ q: "machine-learning" })).toContain("Machine learning aplicado");
+    expect(await titles({ q: "python,java" })).toEqual(["Python e Java"]);
+    expect(await titles({ q: "'python'" })).toEqual(["Python e Java"]);
+    expect((await search({ q: "--- python" })).total).toBe(1);
+  });
+
+  it("sinônimos expandem por todo o grupo do canônico", async () => {
+    const p = await mkProject({ acronym: null });
+    await mkOpportunity(p.id, { title: "Bolsa PIBIC" });
+    await mkOpportunity(p.id, { title: "Vaga PIVIC" });
+    await mkOpportunity(p.id, { title: "Vaga remunerada" });
+    await reindex();
+    expect((await titles({ q: "ic" })).sort()).toEqual(["Bolsa PIBIC", "Vaga PIVIC"]);
+    expect((await titles({ q: "ics" })).sort()).toEqual(["Bolsa PIBIC", "Vaga PIVIC"]);
+    expect((await titles({ q: "pibiti" })).sort()).toEqual(["Bolsa PIBIC", "Vaga PIVIC"]);
+    expect((await titles({ q: "bolsa" })).sort()).toEqual(["Bolsa PIBIC", "Vaga remunerada"]);
+  });
+
   it("sinônimos nos dois sentidos, frase inclusive", async () => {
     const p = await mkProject();
     await mkOpportunity(p.id, { title: "Vaga de IC" });

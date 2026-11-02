@@ -48,10 +48,17 @@ export const TAGS: SeedTag[] = [
   ...skills.map((name) => ({ name, category: "SKILL" as const })),
 ];
 
-/** Sinônimos curados, valem nos dois sentidos. Sempre em minúsculas e sem acentos. */
+/** Sinônimos curados: quem partilha o canônico vale por todos do grupo. Sempre em minúsculas e sem acentos. */
 export const SYNONYMS: { term: string; canonical: string }[] = [
   { term: "ic", canonical: "iniciacao cientifica" },
+  { term: "ics", canonical: "iniciacao cientifica" },
   { term: "pibic", canonical: "iniciacao cientifica" },
+  { term: "pivic", canonical: "iniciacao cientifica" },
+  { term: "pibiti", canonical: "iniciacao cientifica" },
+  { term: "ia", canonical: "inteligencia artificial" },
+  { term: "ml", canonical: "aprendizado de maquina" },
+  { term: "machine learning", canonical: "aprendizado de maquina" },
+  { term: "remunerada", canonical: "bolsa" },
   { term: "engenheiro", canonical: "engenharia" },
   { term: "robo", canonical: "robotica" },
   { term: "programador", canonical: "programacao" },

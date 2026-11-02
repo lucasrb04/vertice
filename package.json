@@ -12,9 +12,9 @@
     "test:integration": "vitest run --project integration",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx --env-file=.env src/db/seed.ts",
-    "db:seed:demo": "tsx --env-file=.env src/db/seed-demo.ts",
-    "db:search:rebuild": "tsx --env-file=.env src/db/search-rebuild.ts",
+    "db:seed": "tsx --env-file-if-exists=.env src/db/seed.ts",
+    "db:seed:demo": "tsx --env-file-if-exists=.env src/db/seed-demo.ts",
+    "db:search:rebuild": "tsx --env-file-if-exists=.env src/db/search-rebuild.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {

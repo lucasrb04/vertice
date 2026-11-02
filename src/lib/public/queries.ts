@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { courses, opportunities, opportunityTags, projects, searchDocuments, tags } from "@/db/schema";
 import type { ProjectCategory, ScholarshipType } from "@/lib/projects/labels";
 import { closedOnDate, isOpportunityOpen, openOpportunitySql } from "@/lib/opportunities/status";
-import { groupTsQuery, planSearch, wholeWordRegex, type SearchPlan, type TermGroup } from "@/lib/search/query";
+import { groupTsQuery, planSearch, wholeWordRegex, wordStartRegex, type SearchPlan, type TermGroup } from "@/lib/search/query";
 import { defaultSort, type VitrineParams } from "./search-params";
 
 export { normalizeQuery } from "@/lib/search/corrector";
@@ -75,6 +75,9 @@ function searchSql(plan: SearchPlan): { where: SQL; order: SQL[] } {
   // Uma ou duas letras por LIKE casariam quase tudo: `ic` em "científica", `de` em "desenvolvimento".
   const contains = (text: string) => (col: SQL) =>
     /^[a-z]{1,2}$/.test(text) ? sql`${col} ~ ${wholeWordRegex(text)}` : sql`${col} LIKE ${`%${escapeLike(text)}%`}`;
+  // A consulta digitada, só de letras, exige início de palavra (`arte` não casa `Duarte`). Entre aspas vale `contains`.
+  const typedText = (text: string) => (col: SQL) =>
+    /^[a-z ]{3,}$/.test(text) ? sql`${col} ~ ${wordStartRegex(text)}` : contains(text)(col);
   const inHead = (test: (col: SQL) => SQL) =>
     anyOf([test(norm(opportunities.title)), test(norm(projects.acronym)), hasTag(test)]);
   const inDocument = (test: (col: SQL) => SQL) =>
@@ -100,25 +103,34 @@ function searchSql(plan: SearchPlan): { where: SQL; order: SQL[] } {
   };
   const someTerm = (list: TermGroup[]) => list.map((g) => matches(g, document, inDocument, false));
 
-  const literalMatch = inDocument(contains(literal));
+  const literalMatch = inDocument(typedText(literal));
   const where = anyOf([
     literalMatch,
-    ...(phrase === literal ? [] : [inDocument(contains(phrase))]),
+    ...(phrase === literal ? [] : [inDocument(typedText(phrase))]),
     ...someTerm(groups),
     ...unindexedSimilarity(literal),
   ]);
 
-  const exact = inHead((col) => sql`${col} ~ ${wholeWordRegex(phrase)}`);
+  const whole = [...new Set([phrase, literal])].map(wholeWordRegex);
+  const wholeText = (col: SQL) => anyOf(whole.map((regex) => sql`${col} ~ ${regex}`));
+  // Mais de uma palavra: todas inteiras no título seguem antes da expressão achada só na descrição.
+  const wordsInHead = allOf(phrase.split(" ").map((word) => inHead((col) => sql`${col} ~ ${wholeWordRegex(word)}`)));
   const allInHead = allOf(groups.map((g) => matches(g, titleAndTags, inHead, true)));
   const allInDocument = allOf(groups.map((g) => matches(g, document, inDocument, true)));
-  const tier = sql`case when ${exact} then 1 when ${allInHead} then 2 when ${allInDocument} then 3 else 4 end`;
+  const tier = sql`case
+    when ${inHead(wholeText)} then 1
+    when ${wordsInHead} then 2
+    when ${inDocument(wholeText)} then 3
+    when ${allInHead} then 4
+    when ${allInDocument} then 5
+    else 6 end`;
 
   const queries = groups.filter((g) => g.fts.length).map(groupTsQuery);
   const rank = queries.length
     ? [sql`coalesce(ts_rank_cd(${document}, ${sql.join(queries, sql` || `)}, 1), 0) desc`]
     : [];
 
-  // Quinta camada da spec: fica fora das quatro para que `casinha`, toda corrigida, ainda ponha `casa` antes de `caso`.
+  // Última camada da spec: fica fora das demais para que `casinha`, toda corrigida, ainda ponha `casa` antes de `caso`.
   const typed = [literalMatch, ...someTerm(groups.filter((g) => !g.corrected))];
   const onlyCorrected = plan.corrected ? [sql`case when ${anyOf(typed)} then 0 else 1 end`] : [];
 

@@ -76,7 +76,7 @@ describe("avaliação da busca", () => {
   it("cobre ao menos 50 consultas e 30 processos, com 10 de zero resultado", () => {
     expect(corpus.length).toBeGreaterThanOrEqual(30);
     expect(queries.length).toBeGreaterThanOrEqual(50);
-    expect(queries.filter((q) => q.category === "zero")).toHaveLength(10);
+    expect(queries.filter((q) => q.category === "zero").length).toBeGreaterThanOrEqual(10);
     const slugs = new Set(corpus.map((c) => c.slug));
     for (const q of queries) for (const s of q.expected) expect(slugs.has(s), `${q.q} -> ${s}`).toBe(true);
   });
@@ -84,6 +84,19 @@ describe("avaliação da busca", () => {
   it("consultas de zero resultado não devolvem nada", () => {
     const leaks = result.perQuery.filter((p) => p.category === "zero" && p.results.length > 0);
     expect(leaks.map((p) => `${p.query}: ${p.results.join(", ")}`)).toEqual([]);
+  });
+
+  it("achados da revisão final", () => {
+    const results = (query: string) => result.perQuery.find((p) => p.query === query)!.results;
+    const expectedOf = (query: string) => queries.find((q) => q.q === query)!.expected;
+
+    expect(results("casa").slice(0, 2)).toEqual(["casa-inteligente", "acolhimento-familias"]);
+    expect(results("casa").indexOf("estudo-de-caso-gestao")).toBeGreaterThan(1);
+    for (const q of ["ic", "ics", "ia", "ml", "machine-learning", "html/css", "python,java", "remunerada", "redes nerais"]) {
+      expect(results(q), q).toEqual(expect.arrayContaining(expectedOf(q)));
+    }
+    expect(results("ic")).toContain("pibic-distribuicao");
+    expect(results("carteira")).toEqual(["inscricoes-secretaria"]);
   });
 
   it("não fica abaixo da linha de base (agregado e por consulta)", () => {

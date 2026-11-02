@@ -175,6 +175,16 @@ describe("documento de busca", () => {
 });
 
 describe("vocabulário", () => {
+  it("stopwords saem antes do unaccent e a frequência conta processos", async () => {
+    const p = await mkProject({ name: "Grupo", acronym: null, advisorName: null });
+    await mkOpportunity(p.id, { title: "Até você", description: "Não ate pais país." });
+    await rebuildSearchVocabulary(institutionId);
+    const rows = await db.select().from(searchVocabulary).where(eq(searchVocabulary.institutionId, institutionId));
+    const words = new Map(rows.map((r) => [r.word, r.frequency]));
+    for (const w of ["ate", "voce", "nao"]) expect(words.has(w), w).toBe(false);
+    expect(words.get("pais")).toBe(1);
+  });
+
   it("reúne título, área, descrição, projeto, sigla, orientador e tags, normalizados", async () => {
     const { project } = await setup({ name: "Hidráulica Aplicada", acronym: "HIDRA", advisorName: "Profa. Conceição" });
     const opp = await mkOpportunity(project.id, {

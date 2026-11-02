@@ -69,6 +69,12 @@ export const corpus: EvalProcess[] = [
   { slug: "web-react", project: "tec", title: "Desenvolvimento web com React", roleArea: "Interfaces", description: "Painéis para projetos de extensão.", tags: ["Web", "JavaScript"] },
   { slug: "redes-servidores", project: "tec", title: "Infraestrutura de redes e servidores", roleArea: "Infraestrutura", description: "Administração de máquinas virtuais.", tags: ["Redes", "Linux"] },
   { slug: "comunicacao-design", project: "cafe", title: "Design para divulgação científica", roleArea: "Design", description: "Cartazes e vídeos curtos.", tags: ["Design", "Comunicação"] },
+  // Prosa de edital: palavras comuns e nomes que a busca não pode confundir com outra coisa.
+  { slug: "inscricoes-secretaria", project: "bairro", title: "Apoio administrativo às inscrições", roleArea: "Secretaria", description: "Inscrições até 20 de novembro; você não precisa de experiência prévia. Apresente a carteira de estudante no laboratório de informática.", tags: ["Secretaria"] },
+  { slug: "acolhimento-familias", project: "bairro", title: "Acolhimento de famílias no hospital", roleArea: "Assistência", description: "Recepção de acompanhantes na casa de apoio ao lado do hospital.", tags: ["Saúde"] },
+  { slug: "pibic-distribuicao", project: "ic", title: "Bolsa PIBIC em geração distribuída", roleArea: "Sistemas elétricos", description: "Modelos de redes de distribuição.", tags: ["Elétrica"] },
+  { slug: "oficina-html", project: "tec", title: "Oficina de HTML e CSS", roleArea: "Ensino", description: "Páginas estáticas para iniciantes.", tags: ["Web"] },
+  { slug: "portal-extensao", project: "tec", title: "Manutenção do portal de extensão", roleArea: "Sistemas", description: "Stack HTML/CSS com serviços em Java.", tags: ["Java"] },
   // Ruído: processos que a busca pública não pode devolver.
   { slug: "python-lab-encerrado", project: "dados", title: "Python para automação de laboratório", roleArea: "Automação", description: "Processo já encerrado.", tags: ["Python"], state: "closed" },
   { slug: "colheita-encerrada", project: "cafe", title: "Auxiliar de colheita", roleArea: "Campo", description: "Processo já encerrado.", tags: ["Campo"], state: "closed" },

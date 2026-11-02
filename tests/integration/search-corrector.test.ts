@@ -63,6 +63,50 @@ describe("correctQuery", () => {
     for (const [q, want] of cases) expect(await corrected(q), q).toBe(want);
   });
 
+  it("distância 2 entre 5 e 7 letras só com as mesmas letras: palavra real fica", async () => {
+    await catalog("Tetra", "Cinta", "Plano", "Jornada", "Camada");
+    for (const q of ["teatro", "cinema", "planta", "jornal", "camisa"]) expect(await corrected(q), q).toBeNull();
+  });
+
+  it("erros reais continuam corrigidos pela regra da spec", async () => {
+    await catalog("Python", "Estágio", "Marketing", "Iniciação", "Dados", "Hidrologia", "Robótica", "Algoritmo", "Engenharia", "Bolsa");
+    const cases: [string, string][] = [
+      ["pyhton", "python"],
+      ["pyton", "python"],
+      ["phyton", "python"],
+      ["estaigo", "estagio"],
+      ["marqueting", "marketing"],
+      ["iniciasao", "iniciacao"],
+      ["dadso", "dados"],
+      ["hydrologia", "hidrologia"],
+      ["robotcia", "robotica"],
+      ["algoritimo", "algoritmo"],
+      ["engeharia", "engenharia"],
+      ["blosa", "bolsa"],
+      ["oython", "python"],
+    ];
+    for (const [q, want] of cases) expect(await corrected(q), q).toBe(want);
+  });
+
+  it("stopword acentuada não é candidata, mas conta como conhecida", async () => {
+    await catalog("Inscrições até amanhã; você não precisa", "Vice-diretoria");
+    expect(await corrected("arte")).toBeNull();
+    expect(await corrected("voce")).toBeNull();
+    expect(await corrected("até")).toBeNull();
+    expect(await corrected("tambem")).toBeNull();
+  });
+
+  it("sigla curta do catálogo não impede corrigir pelo radical (redes nerais)", async () => {
+    await catalog("Redes neurais", "Núcleo NER");
+    expect(await corrected("redes nerais")).toBe("redes neurais");
+  });
+
+  it("corrige dentro de token composto e preserva a pontuação", async () => {
+    await catalog("Bolsa de Python", "Java");
+    expect(await corrected("pyhton/java")).toBe("python/java");
+    expect((await correctQuery(inst, "pyhton/java")).terms).toEqual(["python", "java"]);
+  });
+
   it("5 letras: distância 2 só com as mesmas letras; primeira letra diferente só com distância 1 em 6+", async () => {
     await catalog("Bolsa", "Python", "Tecnologia");
     expect(await corrected("bulsu")).toBeNull();

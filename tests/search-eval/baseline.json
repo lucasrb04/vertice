@@ -1,13 +1,13 @@
 {
   "p1": 1,
-  "p3": 0.6170212765957447,
-  "ndcg10": 0.9950076731274176,
+  "p3": 0.6333333333333332,
+  "ndcg10": 0.9960893439498104,
   "zeroRate": 1,
   "perCategory": {
     "exata": {
-      "n": 15,
+      "n": 20,
       "p1": 1,
-      "p3": 0.6666666666666667,
+      "p3": 0.7166666666666668,
       "np3": 1,
       "ndcg10": 1,
       "zeroRate": 0
@@ -21,9 +21,9 @@
       "zeroRate": 0
     },
     "erro": {
-      "n": 11,
+      "n": 12,
       "p1": 1,
-      "p3": 0.6666666666666665,
+      "p3": 0.6388888888888887,
       "np3": 1,
       "ndcg10": 1,
       "zeroRate": 0
@@ -37,15 +37,15 @@
       "zeroRate": 0
     },
     "sinonimo": {
-      "n": 7,
+      "n": 14,
       "p1": 1,
       "p3": 0.619047619047619,
-      "np3": 0.9523809523809524,
-      "ndcg10": 0.9664800909983745,
+      "np3": 0.9761904761904763,
+      "ndcg10": 0.9832400454991872,
       "zeroRate": 0
     },
     "zero": {
-      "n": 10,
+      "n": 13,
       "p1": 0,
       "p3": 0,
       "np3": 0,
@@ -58,11 +58,12 @@
       "query": "casa",
       "category": "exata",
       "p1": 1,
-      "p3": 0.3333333333333333,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
         "casa-inteligente",
+        "acolhimento-familias",
         "estudo-de-caso-gestao"
       ]
     },
@@ -168,8 +169,10 @@
         "ic-quimica",
         "python-ic",
         "ic-visao",
+        "pibic-distribuicao",
         "comunicacao-design",
-        "cafe-ciencia"
+        "cafe-ciencia",
+        "oficina-html"
       ]
     },
     {
@@ -183,6 +186,7 @@
         "programacao-competitiva",
         "programacao-embarcada",
         "ic-fisica",
+        "pibic-distribuicao",
         "ic-quimica",
         "python-ic",
         "ic-visao"
@@ -246,6 +250,74 @@
       ]
     },
     {
+      "query": "duarte",
+      "category": "exata",
+      "p1": 1,
+      "p3": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "robotica-educacional",
+        "horta-comunitaria",
+        "carinho-hospital",
+        "acolhimento-familias",
+        "vizinho-solidario",
+        "caminho-trilhas",
+        "oficinas-idosos",
+        "inscricoes-secretaria"
+      ]
+    },
+    {
+      "query": "carteira",
+      "category": "exata",
+      "p1": 1,
+      "p3": 0.3333333333333333,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "inscricoes-secretaria"
+      ]
+    },
+    {
+      "query": "laboratório",
+      "category": "exata",
+      "p1": 1,
+      "p3": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "eng-biomedica",
+        "robotica-movel",
+        "casa-inteligente",
+        "inscricoes-secretaria"
+      ]
+    },
+    {
+      "query": "html/css",
+      "category": "exata",
+      "p1": 1,
+      "p3": 0.6666666666666666,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "oficina-html",
+        "portal-extensao"
+      ]
+    },
+    {
+      "query": "python,java",
+      "category": "exata",
+      "p1": 1,
+      "p3": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-bolsa",
+        "portal-extensao",
+        "python-ic"
+      ]
+    },
+    {
       "query": "algoritmo",
       "category": "derivacao",
       "p1": 1,
@@ -269,6 +341,7 @@
         "programacao-competitiva",
         "programacao-embarcada",
         "ic-fisica",
+        "pibic-distribuicao",
         "ic-quimica",
         "python-ic",
         "ic-visao"
@@ -376,6 +449,7 @@
       "ok": true,
       "results": [
         "python-bolsa",
+        "pibic-distribuicao",
         "python-ic"
       ]
     },
@@ -416,6 +490,7 @@
         "programacao-competitiva",
         "programacao-embarcada",
         "ic-fisica",
+        "pibic-distribuicao",
         "ic-quimica",
         "python-ic",
         "ic-visao"
@@ -446,6 +521,7 @@
         "ic-quimica",
         "python-ic",
         "ic-visao",
+        "pibic-distribuicao",
         "comunicacao-design",
         "cafe-ciencia"
       ]
@@ -497,6 +573,20 @@
       ]
     },
     {
+      "query": "redes nerais",
+      "category": "erro",
+      "p1": 1,
+      "p3": 0.3333333333333333,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-ic",
+        "redes-servidores",
+        "pibic-distribuicao",
+        "algoritmos-grafos"
+      ]
+    },
+    {
       "query": "casinha",
       "category": "diminutivo",
       "p1": 1,
@@ -505,6 +595,7 @@
       "ok": true,
       "results": [
         "casa-inteligente",
+        "acolhimento-familias",
         "estudo-de-caso-gestao"
       ]
     },
@@ -519,7 +610,8 @@
         "casa-inteligente",
         "ic-visao",
         "python-ic",
-        "estudo-de-caso-gestao"
+        "estudo-de-caso-gestao",
+        "acolhimento-familias"
       ]
     },
     {
@@ -608,9 +700,7 @@
       "ok": true,
       "results": [
         "energia-solar",
-        "eng-fotovoltaica",
-        "web-react",
-        "dados-abertos"
+        "eng-fotovoltaica"
       ]
     },
     {
@@ -645,7 +735,99 @@
       "ok": true,
       "results": [
         "programacao-competitiva",
-        "programacao-embarcada"
+        "programacao-embarcada",
+        "ic-fisica",
+        "pibic-distribuicao",
+        "ic-quimica",
+        "python-ic",
+        "ic-visao"
+      ]
+    },
+    {
+      "query": "ic",
+      "category": "sinonimo",
+      "p1": 1,
+      "p3": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "pibic-distribuicao",
+        "ic-fisica",
+        "ic-quimica",
+        "python-ic",
+        "ic-visao"
+      ]
+    },
+    {
+      "query": "ics",
+      "category": "sinonimo",
+      "p1": 1,
+      "p3": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "pibic-distribuicao",
+        "ic-fisica",
+        "ic-quimica",
+        "python-ic",
+        "ic-visao"
+      ]
+    },
+    {
+      "query": "ia",
+      "category": "sinonimo",
+      "p1": 1,
+      "p3": 0.6666666666666666,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "ic-visao",
+        "python-ic"
+      ]
+    },
+    {
+      "query": "ml",
+      "category": "sinonimo",
+      "p1": 1,
+      "p3": 0.3333333333333333,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-ic"
+      ]
+    },
+    {
+      "query": "machine learning",
+      "category": "sinonimo",
+      "p1": 1,
+      "p3": 0.3333333333333333,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-ic"
+      ]
+    },
+    {
+      "query": "machine-learning",
+      "category": "sinonimo",
+      "p1": 1,
+      "p3": 0.3333333333333333,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-ic"
+      ]
+    },
+    {
+      "query": "remunerada",
+      "category": "sinonimo",
+      "p1": 1,
+      "p3": 0.6666666666666666,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "pibic-distribuicao",
+        "python-bolsa"
       ]
     },
     {
@@ -731,6 +913,33 @@
     },
     {
       "query": "xqzwvk",
+      "category": "zero",
+      "p1": 0,
+      "p3": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "arte",
+      "category": "zero",
+      "p1": 0,
+      "p3": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "teatro",
+      "category": "zero",
+      "p1": 0,
+      "p3": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "cinema",
       "category": "zero",
       "p1": 0,
       "p3": 0,
