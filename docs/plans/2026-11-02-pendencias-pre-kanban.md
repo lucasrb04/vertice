@@ -158,7 +158,7 @@ Expected: PASS, com `proxy` listado na saída do build.
 
 `recordZeroResult(id, "  Robótica  Quântica ")` grava o termo normalizado com `count = 1`; repetir no mesmo dia dá `count = 2`; em outro dia cria nova linha. Linhas com `day` mais antigo que 90 dias são apagadas ao gravar, e a de exatamente 90 dias fica.
 
-Não grava: termo com `@`, termo com 6 ou mais dígitos seguidos, termo normalizado vazio, termo com mais de 120 caracteres.
+Não grava: termo com `@`, termo com 6 ou mais dígitos no total (CPF e telefone formatados incluídos), termo normalizado vazio, termo com mais de 120 caracteres.
 
 `shouldLogZeroResult` é `true` só com `total === 0`, `q` não vazio, página 1 e nenhum filtro ativo. `corrigir=0` não impede o registro.
 

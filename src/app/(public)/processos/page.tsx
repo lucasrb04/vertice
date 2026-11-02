@@ -46,7 +46,9 @@ export default async function ProcessosPage({
       try {
         await recordZeroResult(institution.id, params.q);
       } catch (error) {
-        console.error("[busca] falha ao registrar busca sem resultado", error);
+        // Erros do Drizzle trazem os parâmetros (o termo): registra só o código do Postgres.
+        const code = (error as { cause?: { code?: string } } | null)?.cause?.code;
+        console.error("[busca] falha ao registrar busca sem resultado", code ?? "");
       }
     });
   }

@@ -39,8 +39,20 @@ describe("recordZeroResult", () => {
     expect((await rows()).map((r) => r.term).sort()).toEqual(["limite", "novo"]);
   });
 
+  it("teto diário: termo novo é descartado, termo existente continua somando", async () => {
+    await recordZeroResult(instId, "existente", NOW);
+    await db.insert(searchZeroResults).values(
+      Array.from({ length: 999 }, (_, i) => ({ institutionId: instId, term: `t${i}`, day: "2026-11-02" })),
+    );
+    await recordZeroResult(instId, "novo", NOW);
+    expect(await rows()).toHaveLength(1000);
+    await recordZeroResult(instId, "existente", NOW);
+    expect((await rows()).find((r) => r.term === "existente")?.count).toBe(2);
+    expect((await rows()).some((r) => r.term === "novo")).toBe(false);
+  });
+
   it("não grava e-mail, 6+ dígitos seguidos, vazio nem termo longo", async () => {
-    for (const q of ["fulano@unifei.edu.br", "matricula 2021001234", "123456", "   ", "a".repeat(121)]) {
+    for (const q of ["fulano@unifei.edu.br", "matricula 2021001234", "123456", "123.456.789-00", "(35) 99999-1234", "   ", "a".repeat(121)]) {
       await recordZeroResult(instId, q, NOW);
     }
     expect(await rows()).toHaveLength(0);
