@@ -7,10 +7,10 @@ import { resetDb } from "../helpers/db";
 describe("schema", () => {
   beforeEach(resetDb);
 
-  it("tem as extensões pg_trgm, unaccent e uuid-ossp", async () => {
+  it("tem as extensões pg_trgm, unaccent, fuzzystrmatch e uuid-ossp", async () => {
     const rows = await db.execute(sql`select extname from pg_extension`);
     const names = rows.rows.map((r) => r.extname);
-    expect(names).toEqual(expect.arrayContaining(["pg_trgm", "unaccent", "uuid-ossp"]));
+    expect(names).toEqual(expect.arrayContaining(["pg_trgm", "unaccent", "fuzzystrmatch", "uuid-ossp"]));
   });
 
   async function setup(suffix: string) {

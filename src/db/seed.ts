@@ -1,15 +1,16 @@
 import { pathToFileURL } from "node:url";
 import { and, eq, sql } from "drizzle-orm";
 import { closeDb, db } from "@/db";
-import { courses, institutions, tags, users } from "@/db/schema";
-import { COURSES, INSTITUTION, TAGS } from "@/db/seed-data";
+import { courses, institutions, searchSynonyms, tags, users } from "@/db/schema";
+import { COURSES, INSTITUTION, SYNONYMS, TAGS } from "@/db/seed-data";
+import { rebuildSearch } from "@/db/search-rebuild";
 import { getEnv } from "@/env";
 import { normalizeTagSlug } from "@/lib/search/tags";
 
 export async function runSeed(options: { initialAdminEmail?: string } = {}): Promise<void> {
   const adminEmail = (options.initialAdminEmail ?? getEnv().INITIAL_ADMIN_EMAIL)?.trim().toLowerCase();
 
-  await db.transaction(async (tx) => {
+  const institutionId = await db.transaction(async (tx) => {
     const [inst] = await tx
       .insert(institutions)
       .values(INSTITUTION)
@@ -47,13 +48,21 @@ export async function runSeed(options: { initialAdminEmail?: string } = {}): Pro
         set: { name: sql`excluded.name`, category: sql`excluded.category`, isVerified: true },
       });
 
+    await tx
+      .insert(searchSynonyms)
+      .values(SYNONYMS.map((s) => ({ ...s, institutionId: inst.id })))
+      .onConflictDoNothing();
+
     if (adminEmail) {
       await tx
         .update(users)
         .set({ systemRole: "SYSTEM_ADMIN", updatedAt: new Date() })
         .where(and(eq(users.email, adminEmail), eq(users.institutionId, inst.id)));
     }
+    return inst.id;
   });
+
+  await rebuildSearch(institutionId);
 }
 
 const isDirectRun =

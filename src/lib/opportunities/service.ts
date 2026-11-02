@@ -7,6 +7,7 @@ import type { AuthUser } from "@/lib/auth/guards";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
 import { EDITOR_ROLES, loadProjectForWrite } from "@/lib/projects/permissions";
 import { assertCoursesBelongToInstitution, insertOpportunity } from "@/lib/projects/service";
+import { refreshSearchDocument, scheduleVocabularyRebuild } from "@/lib/search/index-documents";
 import { syncOpportunityTags } from "@/lib/tags/service";
 import { dayFromDeadline, deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
 import {
@@ -56,6 +57,7 @@ export async function createOpportunity(
   const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   const data = parseInput(input, opts.now ?? new Date());
   const opportunityId = await db.transaction((tx) => insertOpportunity(tx, { user, projectId: project.id }, data));
+  await scheduleVocabularyRebuild(project.institutionId);
   return { opportunityId };
 }
 
@@ -81,7 +83,9 @@ export async function updateOpportunity(
       .set({ ...rest, scholarshipValueCents, deadlineAt: deadlineFromDay(deadline), updatedAt: now })
       .where(and(eq(opportunities.id, row.id), eq(opportunities.projectId, project.id)));
     await syncOpportunityTags(tx, { institutionId: row.institutionId, userId: user.id, opportunityId: row.id }, tags);
+    await refreshSearchDocument(tx, row.id);
   });
+  await scheduleVocabularyRebuild(project.institutionId);
 }
 
 export async function closeOpportunity(
@@ -98,7 +102,9 @@ export async function closeOpportunity(
       .update(opportunities)
       .set({ status: "CLOSED", closedAt: now, updatedAt: now })
       .where(and(eq(opportunities.id, row.id), eq(opportunities.projectId, project.id)));
+    await refreshSearchDocument(tx, row.id);
   });
+  await scheduleVocabularyRebuild(project.institutionId);
 }
 
 function formatCents(cents: number): string {

@@ -4,6 +4,11 @@ import { isUniqueViolation } from "@/lib/db-errors";
 import { courses, opportunities, projectMembers, projects } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
 import { RateLimitError, ValidationError, fromZodError } from "@/lib/domain-errors";
+import {
+  refreshProjectSearchDocuments,
+  refreshSearchDocument,
+  scheduleVocabularyRebuild,
+} from "@/lib/search/index-documents";
 import { logAudit } from "@/lib/security/audit";
 import { opportunitySlug, projectSlugBase } from "@/lib/slug";
 import { syncOpportunityTags } from "@/lib/tags/service";
@@ -73,6 +78,7 @@ export async function insertOpportunity(
     .returning({ id: opportunities.id });
 
   await syncOpportunityTags(tx, { institutionId: user.institutionId, userId: user.id, opportunityId: row.id }, tags);
+  await refreshSearchDocument(tx, row.id);
   return row.id;
 }
 
@@ -86,7 +92,7 @@ export async function createProjectWithOpportunity(
   if (!parsed.success) throw fromZodError(parsed.error);
   const { project: projectInput, opportunity } = parsed.data;
 
-  return db.transaction(async (tx) => {
+  const created = await db.transaction(async (tx) => {
     // Serializa criações do mesmo usuário para o limite diário não ser furado por corrida.
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${"project-create:" + user.id}))`);
 
@@ -127,6 +133,8 @@ export async function createProjectWithOpportunity(
     const opportunityId = await insertOpportunity(tx, { user, projectId }, opportunity);
     return { projectId, opportunityId };
   });
+  await scheduleVocabularyRebuild(user.institutionId);
+  return created;
 }
 
 export async function updateProject(user: AuthUser, projectId: string, input: unknown): Promise<void> {
@@ -135,11 +143,15 @@ export async function updateProject(user: AuthUser, projectId: string, input: un
   const data: ProjectInput = parsed.data;
 
   const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
-  // slug, institutionId e status ficam de fora de propósito.
-  await db
-    .update(projects)
-    .set({ ...data, updatedAt: new Date() })
-    .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId)));
+  await db.transaction(async (tx) => {
+    // slug, institutionId e status ficam de fora de propósito.
+    await tx
+      .update(projects)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId)));
+    await refreshProjectSearchDocuments(tx, project.id);
+  });
+  await scheduleVocabularyRebuild(project.institutionId);
 }
 
 export async function archiveProject(user: AuthUser, projectId: string): Promise<void> {
@@ -149,6 +161,7 @@ export async function archiveProject(user: AuthUser, projectId: string): Promise
       .update(projects)
       .set({ status: "ARCHIVED", updatedAt: new Date() })
       .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId)));
+    await refreshProjectSearchDocuments(tx, project.id);
     await logAudit(
       {
         institutionId: project.institutionId,
@@ -160,4 +173,5 @@ export async function archiveProject(user: AuthUser, projectId: string): Promise
       tx,
     );
   });
+  await scheduleVocabularyRebuild(project.institutionId);
 }

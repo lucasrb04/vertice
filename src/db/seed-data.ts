@@ -47,3 +47,13 @@ export const TAGS: SeedTag[] = [
   ...areas.map((name) => ({ name, category: "AREA" as const })),
   ...skills.map((name) => ({ name, category: "SKILL" as const })),
 ];
+
+/** Sinônimos curados, valem nos dois sentidos. Sempre em minúsculas e sem acentos. */
+export const SYNONYMS: { term: string; canonical: string }[] = [
+  { term: "ic", canonical: "iniciacao cientifica" },
+  { term: "pibic", canonical: "iniciacao cientifica" },
+  { term: "engenheiro", canonical: "engenharia" },
+  { term: "robo", canonical: "robotica" },
+  { term: "programador", canonical: "programacao" },
+  { term: "empresa jr", canonical: "empresa junior" },
+];

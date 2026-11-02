@@ -2,6 +2,7 @@ import { pathToFileURL } from "node:url";
 import { eq, inArray, sql } from "drizzle-orm";
 import { closeDb, db } from "@/db";
 import { courses, opportunities, opportunityTags, projectMembers, projects, tags, users } from "@/db/schema";
+import { rebuildSearch } from "@/db/search-rebuild";
 import { normalizeTagSlug } from "@/lib/search/tags";
 import { getDefaultInstitution } from "@/lib/tenant";
 import { deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
@@ -250,6 +251,8 @@ export async function runDemoSeed(now: Date = new Date()): Promise<void> {
         .where(inArray(tags.id, [...usedTagIds]));
     }
   });
+
+  await rebuildSearch(institutionId);
 }
 
 const isDirectRun =

@@ -8,6 +8,7 @@ export * from "./opportunities";
 export * from "./applications";
 export * from "./moderation";
 export * from "./audit";
+export * from "./search";
 
 import type {
   opportunityStatusEnum,

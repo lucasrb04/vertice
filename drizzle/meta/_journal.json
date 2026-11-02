@@ -36,6 +36,20 @@
       "when": 1793151385521,
       "tag": "0004_bumpy_microbe",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793600258491,
+      "tag": "0005_fuzzystrmatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793600260529,
+      "tag": "0006_late_mulholland_black",
+      "breakpoints": true
     }
   ]
 }

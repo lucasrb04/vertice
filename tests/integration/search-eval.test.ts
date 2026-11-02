@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
+import { rebuildSearch } from "@/db/search-rebuild";
 import { runSeed } from "@/db/seed";
 import { searchOpportunities } from "@/lib/public/queries";
 import { parseVitrineParams } from "@/lib/public/search-params";
@@ -51,6 +52,7 @@ beforeAll(async () => {
     });
     for (const name of c.tags) await tagOpportunity(opp.id, (await mkTag(name))!.id);
   }
+  await rebuildSearch(inst);
 
   const run: EvalRun[] = [];
   for (const q of queries) {
