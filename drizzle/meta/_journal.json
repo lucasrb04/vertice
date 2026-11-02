@@ -57,6 +57,13 @@
       "when": 1793629922450,
       "tag": "0007_first_the_captain",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793635578645,
+      "tag": "0008_happy_enchantress",
+      "breakpoints": true
     }
   ]
 }

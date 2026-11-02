@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { opportunities, opportunityTags, tags } from "@/db/schema";
+import { applications, opportunities, opportunityTags, tags } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError } from "@/lib/domain-errors";
@@ -176,5 +176,29 @@ describe("getOpportunityFormValues", () => {
     const { owner, project } = await setup();
     const other = await mkOpportunity((await mkProject()).id);
     await expect(getOpportunityFormValues(owner, project.id, other.id, "edit")).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
+describe("updateOpportunity: seleção pela plataforma", () => {
+  it("desligar com candidatura existente é recusado; sem candidaturas funciona", async () => {
+    const { owner, project } = await setup();
+    const input = validOpportunityInput({ externalUrl: "", internalSelectionEnabled: true, customQuestion: "Por quê?" });
+    const { opportunityId } = await createOpportunity(owner, project.id, input);
+    expect((await get(opportunityId)).customQuestion).toBe("Por quê?");
+
+    const student = await mkUser("aluno@unifei.edu.br");
+    await db.insert(applications).values({ opportunityId, userId: student.id });
+    const off = validOpportunityInput({ externalUrl: "https://unifei.edu.br/edital.pdf", internalSelectionEnabled: false });
+    const err = await updateOpportunity(owner, project.id, opportunityId, off).catch((e) => e);
+    expect(err).toBeInstanceOf(DomainError);
+    expect(err.code).toBe("HAS_APPLICATIONS");
+    expect(err.userMessage).toBe("Este processo já tem candidaturas.");
+    expect((await get(opportunityId)).internalSelectionEnabled).toBe(true);
+
+    await db.delete(applications).where(eq(applications.opportunityId, opportunityId));
+    await updateOpportunity(owner, project.id, opportunityId, off);
+    const row = await get(opportunityId);
+    expect(row.internalSelectionEnabled).toBe(false);
+    expect(row.customQuestion).toBeNull();
   });
 });

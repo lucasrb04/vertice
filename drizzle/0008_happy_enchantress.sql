@@ -1,0 +1,1 @@
+ALTER TABLE "applications" ALTER COLUMN "match_score_snapshot" DROP NOT NULL;

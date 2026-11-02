@@ -5,13 +5,11 @@ import { useRouter } from "next/navigation";
 import { createOpportunityAction, updateOpportunityAction } from "@/actions/opportunity.actions";
 import type { ActionResult } from "@/actions/result";
 import { TagCombobox } from "@/components/tags/tag-combobox";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { INTERNAL_SELECTION_AVAILABLE } from "@/lib/opportunities/features";
 import { deadlineLabel, SCHOLARSHIP_LABELS, type ProjectCategory, type ScholarshipType } from "@/lib/projects/labels";
 import { todayInSaoPaulo } from "@/lib/time";
 import { TAG_GROUPS, type OpportunityFormValues, type TagGroup, type TagRef } from "@/lib/validation/opportunity";
@@ -43,6 +41,7 @@ type OpportunityDraft = {
   vacanciesCount: string;
   externalUrl: string;
   internalSelectionEnabled: boolean;
+  customQuestion: string;
   scholarshipType: ScholarshipType;
   fundingAgency: string;
   scholarshipValue: string;
@@ -65,6 +64,7 @@ function toDraft(v: OpportunityFormValues | undefined): OpportunityDraft {
     deadline: str(v?.deadline),
     externalUrl: str(v?.externalUrl),
     internalSelectionEnabled: v?.internalSelectionEnabled ?? false,
+    customQuestion: str(v?.customQuestion),
     scholarshipType: v?.scholarshipType ?? "VOLUNTARY",
     fundingAgency: str(v?.fundingAgency),
     scholarshipValue: str(v?.scholarshipValue),
@@ -339,18 +339,12 @@ export function OpportunityForm({
               id="internal-selection"
               checked={draft.internalSelectionEnabled}
               onCheckedChange={(c) => set("internalSelectionEnabled", c === true)}
-              disabled={!INTERNAL_SELECTION_AVAILABLE}
               aria-invalid={hasErr("internalSelectionEnabled") || undefined}
               aria-describedby={hasErr("internalSelectionEnabled") ? "internal-selection-error" : undefined}
             />
             <Label htmlFor="internal-selection" className="text-stone-800">
               Seleção pela plataforma
             </Label>
-            {!INTERNAL_SELECTION_AVAILABLE && (
-              <Badge variant="outline" className="rounded-md border-stone-200 bg-stone-100 font-mono text-stone-700">
-                Em breve
-              </Badge>
-            )}
           </div>
           {hasErr("internalSelectionEnabled") && (
             <p id="internal-selection-error" className="text-sm text-red-700">
@@ -358,6 +352,11 @@ export function OpportunityForm({
             </p>
           )}
         </div>
+        {draft.internalSelectionEnabled && (
+          <Field label="Pergunta para os candidatos" optional errors={err("customQuestion")} className="sm:col-span-6">
+            {(p) => <Input {...p} value={draft.customQuestion} onChange={text("customQuestion")} maxLength={280} />}
+          </Field>
+        )}
       </Block>
 
       <Block title="Bolsa e dedicação">

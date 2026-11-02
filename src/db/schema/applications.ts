@@ -16,7 +16,7 @@ export const applications = pgTable(
     status: applicationStatusEnum("status").notNull().default("APPLIED"),
     answerText: text("answer_text"),
     externalProfileLink: varchar("external_profile_link", { length: 255 }),
-    matchScoreSnapshot: integer("match_score_snapshot").notNull(), // Score 0-100 no momento da inscrição
+    matchScoreSnapshot: integer("match_score_snapshot"), // Score 0-100 no momento da inscrição; nulo até existir o motor de match (D45)
     organizerFeedback: text("organizer_feedback"), // Mensagem enviada por e-mail ao mudar status
     updatedByUserId: uuid("updated_by_user_id").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

@@ -81,13 +81,22 @@ test("link http é recusado com mensagem", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "Projeto Http" })).toBeVisible();
 });
 
-test("seleção pela plataforma aparece como Em breve e desabilitada", async ({ page }) => {
-  await loginAs(page, "embreve@unifei.edu.br", "Em Breve");
+test("publica processo só com seleção pela plataforma e pergunta", async ({ page }) => {
+  await loginAs(page, "plataforma@unifei.edu.br", "Plataforma");
   await page.goto("/publicar");
-  await fillProjectStep(page, "Projeto Em Breve");
+  await fillProjectStep(page, "Projeto Plataforma");
+  await fillOpportunityRequired(page, "Processo pela plataforma", "");
   const toggle = page.getByRole("checkbox", { name: /Seleção pela plataforma/ });
-  await expect(toggle).toBeDisabled();
-  await expect(page.getByRole("main").getByText("Em breve", { exact: true })).toBeVisible();
+  await expect(toggle).toBeEnabled();
+  await expect(page.getByText("Em breve", { exact: true })).toHaveCount(0);
+  await toggle.check();
+  await page.getByLabel("Pergunta para os candidatos").fill("Qual sua experiência com CAD?");
+  await page.getByRole("button", { name: "Publicar" }).click();
+
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  const abertos = page.getByRole("region", { name: "Abertos" });
+  await expect(abertos.getByText("Processo pela plataforma")).toBeVisible();
+  await expect(abertos.getByText("Plataforma", { exact: true })).toBeVisible();
 });
 
 test("tag nova criada com Enter aparece como badge", async ({ page }) => {

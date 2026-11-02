@@ -1,7 +1,7 @@
-import { and, eq } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, type Tx } from "@/db";
-import { opportunities, opportunityTags, tags as tagsTable, type ProjectStatus } from "@/db/schema";
+import { applications, opportunities, opportunityTags, tags as tagsTable, type ProjectStatus } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
 import type { AuthUser } from "@/lib/auth/guards";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
@@ -19,6 +19,8 @@ import {
 import { isOpportunityOpen } from "./status";
 
 export const OPPORTUNITY_CLOSED = "Este processo já foi encerrado e não pode ser alterado. Duplique-o para abrir um novo ciclo.";
+
+export const HAS_APPLICATIONS = "Este processo já tem candidaturas.";
 
 type Opts = { now?: Date };
 
@@ -76,6 +78,14 @@ export async function updateOpportunity(
     await lockProjectSearchDocuments(tx, project.id);
     const row = await lockOpenOpportunity(tx, project, opportunityId, now);
     await assertCoursesBelongToInstitution(tx, row.institutionId, data.targetCourseIds);
+
+    if (row.internalSelectionEnabled && !data.internalSelectionEnabled) {
+      const [{ n }] = await tx
+        .select({ n: count() })
+        .from(applications)
+        .where(eq(applications.opportunityId, row.id));
+      if (n > 0) throw new DomainError("HAS_APPLICATIONS", HAS_APPLICATIONS);
+    }
 
     // slug, projectId, institutionId, status, contadores e closedAt ficam de fora de propósito.
     const { tags, scholarshipValueCents, deadline, ...rest } = data;
@@ -154,6 +164,7 @@ export async function getOpportunityFormValues(
     deadline: dup ? "" : dayFromDeadline(o.deadlineAt),
     externalUrl: o.externalUrl ?? "",
     internalSelectionEnabled: o.internalSelectionEnabled,
+    customQuestion: o.customQuestion ?? "",
     scholarshipType: o.scholarshipType,
     fundingAgency: o.fundingAgency ?? "",
     scholarshipValue: o.scholarshipValueCents === null ? "" : formatCents(o.scholarshipValueCents),

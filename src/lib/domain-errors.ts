@@ -31,7 +31,7 @@ export class RateLimitError extends Error {
   }
 }
 
-export type DomainErrorCode = "OPPORTUNITY_CLOSED" | "MEMBER_NO_ACCOUNT" | "OWNER_IMMUTABLE" | "ALREADY_MEMBER";
+export type DomainErrorCode = "OPPORTUNITY_CLOSED" | "MEMBER_NO_ACCOUNT" | "OWNER_IMMUTABLE" | "ALREADY_MEMBER" | "HAS_APPLICATIONS";
 
 /** Violação de regra de negócio, com mensagem pt-BR pronta para a UI. */
 export class DomainError extends Error {

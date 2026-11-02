@@ -1,10 +1,8 @@
 import { z } from "zod";
-import { INTERNAL_SELECTION_AVAILABLE } from "@/lib/opportunities/features";
 import { optionalDay, optionalHttpsUrl, optionalText, parseBrlToCents, restrictedMarkdown, dayString } from "./common";
 import { projectInputSchema } from "./project";
 
 export const NO_CHANNEL = "Informe o link do edital ou ative a seleção pela plataforma.";
-export const INTERNAL_SELECTION_UNAVAILABLE = "A seleção pela plataforma ainda não está disponível.";
 
 export const tagRefSchema = z.union([
   z.object({ id: z.uuid() }),
@@ -36,6 +34,7 @@ export function makeOpportunitySchema(opts: { today: string }) {
       deadline: dayString,
       externalUrl: optionalHttpsUrl(500),
       internalSelectionEnabled: z.boolean().default(false),
+      customQuestion: optionalText(280),
       scholarshipType: z.enum(["VOLUNTARY", "PAID", "BOTH"]).default("VOLUNTARY"),
       fundingAgency: optionalText(64),
       scholarshipValue: z
@@ -67,8 +66,6 @@ export function makeOpportunitySchema(opts: { today: string }) {
         ctx.addIssue({ code: "custom", path: [path], message });
 
       if (!o.externalUrl && !o.internalSelectionEnabled) issue("externalUrl", NO_CHANNEL);
-      if (o.internalSelectionEnabled && !INTERNAL_SELECTION_AVAILABLE)
-        issue("internalSelectionEnabled", INTERNAL_SELECTION_UNAVAILABLE);
 
       if (o.deadline < opts.today) issue("deadline", "O prazo não pode ser anterior a hoje.");
       if (o.applicationsOpenOn && o.applicationsOpenOn > o.deadline)
@@ -84,6 +81,8 @@ export function makeOpportunitySchema(opts: { today: string }) {
     })
     .transform(({ scholarshipValue, ...rest }) => ({
       ...rest,
+      // A pergunta só vale com a seleção pela plataforma ligada.
+      customQuestion: rest.internalSelectionEnabled ? rest.customQuestion : null,
       scholarshipValueCents: scholarshipValue === null ? null : parseBrlToCents(scholarshipValue),
     }));
 }

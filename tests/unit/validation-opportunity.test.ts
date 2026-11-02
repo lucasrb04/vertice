@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  INTERNAL_SELECTION_UNAVAILABLE,
   NO_CHANNEL,
   makeOpportunitySchema,
   makeWizardSchema,
@@ -26,8 +25,16 @@ describe("makeOpportunitySchema", () => {
   it("exige ao menos um canal", () => {
     expect(issueMessages(s, v({ externalUrl: "" }))).toContain(NO_CHANNEL);
   });
-  it("recusa seleção pela plataforma enquanto indisponível", () => {
-    expect(issueMessages(s, v({ internalSelectionEnabled: true }))).toContain(INTERNAL_SELECTION_UNAVAILABLE);
+  it("aceita seleção pela plataforma sem link do edital", () => {
+    expect(s.safeParse(v({ externalUrl: "", internalSelectionEnabled: true })).success).toBe(true);
+  });
+  it("pergunta: até 280 caracteres, descartada com a seleção desligada", () => {
+    const on = { externalUrl: "", internalSelectionEnabled: true };
+    expect(s.safeParse(v({ ...on, customQuestion: "a".repeat(280) })).success).toBe(true);
+    expect(s.safeParse(v({ ...on, customQuestion: "a".repeat(281) })).success).toBe(false);
+    expect(s.parse(v({ ...on, customQuestion: "  Por que você?  " })).customQuestion).toBe("Por que você?");
+    expect(s.parse(v({ ...on, customQuestion: "" })).customQuestion).toBeNull();
+    expect(s.parse(v({ internalSelectionEnabled: false, customQuestion: "Por que você?" })).customQuestion).toBeNull();
   });
   it("regras de data do cronograma", () => {
     expect(s.safeParse(v({ applicationsOpenOn: "2026-11-11" })).success).toBe(false);
