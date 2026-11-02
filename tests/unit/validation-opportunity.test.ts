@@ -97,17 +97,17 @@ describe("mensagens em português (locale Zod)", () => {
     for (const weeklyHours of [2, 21]) {
       const m = msgs(v({ weeklyHours }));
       noEnglish(m);
-      expect(m).toMatch(/Demasiado (pequeno|grande)/);
+      expect(m).toMatch(/(Pequeno|Grande) demais/);
     }
   });
   it("vagas 0", () => {
     const m = msgs(v({ vacanciesCount: 0 }));
     noEnglish(m);
-    expect(m).toContain("Demasiado pequeno");
+    expect(m).toContain("Pequeno demais");
   });
   it("tag com 1 caractere", () => {
     const m = msgs(v({ tags: { THEME: [{ name: "a" }], DESIRED_SKILL: [], DEVELOPED_SKILL: [] } }));
     noEnglish(m);
-    expect(m).toContain("Demasiado pequeno");
+    expect(m).toContain("Pequeno demais");
   });
 });

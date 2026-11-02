@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { institutions, opportunities, projectMembers, projects, users } from "@/db/schema";
+import { courses, institutions, opportunities, opportunityTags, projectMembers, projects, tags, users } from "@/db/schema";
 import { getDefaultInstitution } from "@/lib/tenant";
 
 type SystemRole = typeof users.$inferInsert.systemRole;
@@ -29,7 +29,17 @@ export async function mkUser(
   return user;
 }
 
-export async function mkProject(opts: { status?: ProjectStatus; institutionId?: string; name?: string } = {}) {
+export async function mkProject(
+  opts: {
+    status?: ProjectStatus;
+    institutionId?: string;
+    name?: string;
+    acronym?: string | null;
+    advisorName?: string | null;
+    category?: typeof projects.$inferInsert.category;
+    hasInstitutionalBadge?: boolean;
+  } = {},
+) {
   const institutionId = opts.institutionId ?? (await getDefaultInstitution()).id;
   const name = opts.name ?? `Projeto ${uniq()}`;
   const [project] = await db
@@ -42,6 +52,10 @@ export async function mkProject(opts: { status?: ProjectStatus; institutionId?: 
       category: "LAB_GROUP",
       contactEmail: "contato@unifei.edu.br",
       status: opts.status ?? "ACTIVE",
+      acronym: opts.acronym ?? null,
+      advisorName: opts.advisorName ?? null,
+      hasInstitutionalBadge: opts.hasInstitutionalBadge ?? false,
+      ...(opts.category ? { category: opts.category } : {}),
     })
     .returning();
   return project;
@@ -76,4 +90,32 @@ export async function mkForeignInstitution() {
     .values({ slug: `outra-${uniq()}`, name: "Outra Instituição", shortName: "OUTRA", allowedEmailDomains: ["outra.edu.br"] })
     .returning();
   return inst;
+}
+
+export async function mkTag(name: string, opts: { institutionId?: string; usageCount?: number } = {}) {
+  const institutionId = opts.institutionId ?? (await getDefaultInstitution()).id;
+  const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-");
+  const [existing] = await db.select().from(tags).where(and(eq(tags.institutionId, institutionId), eq(tags.normalizedSlug, slug)));
+  if (existing) return existing;
+  const [tag] = await db
+    .insert(tags)
+    .values({ institutionId, name, normalizedSlug: slug, usageCount: opts.usageCount ?? 1 })
+    .returning();
+  return tag;
+}
+
+export async function tagOpportunity(
+  opportunityId: string,
+  tagId: string,
+  relationType: typeof opportunityTags.$inferInsert.relationType = "THEME",
+) {
+  await db.insert(opportunityTags).values({ opportunityId, tagId, relationType });
+}
+
+export async function mkCourse(code: string, name = `Curso ${code}`, institutionId?: string) {
+  const inst = institutionId ?? (await getDefaultInstitution()).id;
+  const [existing] = await db.select().from(courses).where(and(eq(courses.institutionId, inst), eq(courses.code, code)));
+  if (existing) return existing;
+  const [course] = await db.insert(courses).values({ institutionId: inst, code, name, institute: "TESTE" }).returning();
+  return course;
 }

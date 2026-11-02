@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Mensagens padrão do Zod em português para regras sem mensagem explícita.
-z.config(z.locales.pt());
+z.config(z.locales.ptBR());
 
 export const HTTPS_ONLY = "Use um link começando com https://";
 export const HTML_NOT_ALLOWED = "HTML não é permitido. Use a formatação Markdown.";
