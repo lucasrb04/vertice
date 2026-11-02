@@ -11,7 +11,11 @@ export default async function PainelPage() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-16">
       <h1 className="font-heading text-3xl font-bold tracking-tight text-stone-900">Olá, {user.name}</h1>
-      <p className="mt-3 max-w-prose text-stone-600">Suas candidaturas e seu perfil aparecerão aqui.</p>
+      <p className="mt-3 max-w-prose text-stone-600">
+        <Link href="/minhas-candidaturas" className="font-medium text-brand underline-offset-4 hover:underline">
+          Minhas candidaturas
+        </Link>
+      </p>
 
       <section aria-labelledby="meus-projetos" className="mt-10 max-w-3xl">
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Requirements } from "@/components/vitrine/requirements";
 import { SafeMarkdown } from "@/components/vitrine/safe-markdown";
 import { Schedule } from "@/components/vitrine/schedule";
+import { getMyApplicationId } from "@/lib/applications/queries";
+import { getSessionUser } from "@/lib/auth/session";
 import { opensInFuture, opensOnLabel } from "@/lib/opportunities/status";
 import { deadlineLabel } from "@/lib/projects/labels";
 import {
@@ -31,6 +33,17 @@ import { isHttps } from "@/lib/validation/common";
 export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
+
+/** Candidatura do visitante logado a este processo; sem sessão ou com sessão inválida, nulo. */
+async function findMyApplicationId(opportunityId: string): Promise<string | null> {
+  try {
+    const sessionUser = await getSessionUser();
+    return sessionUser ? await getMyApplicationId(sessionUser.id, opportunityId) : null;
+  } catch (error) {
+    console.error("[processo] falha ao consultar a sessão", error);
+    return null;
+  }
+}
 
 /** `cache` para metadados e página dividirem a mesma leitura na requisição. */
 const loadOpportunity = cache(async (slug: string) => {
@@ -74,6 +87,9 @@ export default async function ProcessoPage({ params }: Props) {
       }
     });
   }
+
+  // Página pública: a sessão é só consultada, nunca exigida; os dados públicos acima não dependem dela.
+  const myApplicationId = opportunity.internalSelectionEnabled ? await findMyApplicationId(opportunity.id) : null;
 
   const editalHref = opportunity.externalUrl && isHttps(opportunity.externalUrl) ? `/processo/${slug}/edital` : null;
   const opensLater = isOpen && opensInFuture(opportunity.applicationsOpenOn);
@@ -121,7 +137,11 @@ export default async function ProcessoPage({ params }: Props) {
               </p>
               <p className="font-mono text-xs leading-relaxed text-stone-600">{deadlineLabel(opportunity.deadlineAt)}</p>
               {opportunity.internalSelectionEnabled &&
-                (opensLater ? (
+                (myApplicationId ? (
+                  <Button asChild size="lg" className="w-full">
+                    <Link href="/minhas-candidaturas">Ver minha candidatura</Link>
+                  </Button>
+                ) : opensLater ? (
                   <Button size="lg" className="w-full" disabled>
                     Candidaturas abrem em {opportunity.applicationsOpenOn!.slice(8, 10)}/
                     {opportunity.applicationsOpenOn!.slice(5, 7)}
@@ -157,6 +177,14 @@ export default async function ProcessoPage({ params }: Props) {
               >
                 Ver outros processos do projeto
               </Link>
+              {myApplicationId && (
+                <Link
+                  href="/minhas-candidaturas"
+                  className="block font-medium text-brand underline-offset-4 hover:underline"
+                >
+                  Ver minha candidatura
+                </Link>
+              )}
               {editalHref && (
                 <a
                   href={editalHref}

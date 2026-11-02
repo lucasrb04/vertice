@@ -42,8 +42,15 @@ test("com sessão, preenche o perfil, responde e envia", async ({ page }) => {
 
   await page.getByLabel("Por que você quer entrar?").fill("Quero aprender na prática.");
   await page.getByRole("button", { name: "Enviar candidatura" }).click();
-  // A rota /minhas-candidaturas nasce na Task 3: até lá basta conferir o redirecionamento.
   await page.waitForURL(/\/minhas-candidaturas/);
+  await expect(page.getByRole("heading", { name: "Minhas candidaturas" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Processo com pergunta" })).toBeVisible();
+  await expect(page.getByText("Inscrito")).toBeVisible();
+
+  // Na página do processo, o botão vira "Ver minha candidatura".
+  await page.goto(`/processo/${opportunity.slug}`);
+  await expect(page.getByRole("link", { name: "Ver minha candidatura" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Candidatar-se" })).toHaveCount(0);
 
   await page.goto(`/processo/${opportunity.slug}/candidatar`);
   await expect(page.getByText("Você já se candidatou a este processo.")).toBeVisible();
