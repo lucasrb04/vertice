@@ -18,20 +18,25 @@ export async function SiteHeader() {
   const user = await getHeaderUser();
   return (
     <header className="border-b border-stone-200 bg-white">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="font-heading text-lg font-bold tracking-tight text-brand">
-          Vértice
-        </Link>
+      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4">
+        <div className="flex items-center gap-3 sm:gap-6">
+          <Link href="/" className="font-heading text-lg font-bold tracking-tight text-brand">
+            Vértice
+          </Link>
+          <Link href="/processos" className="text-sm font-medium text-stone-800 hover:text-brand">
+            Processos
+          </Link>
+        </div>
         {user ? (
-          <div className="flex items-center gap-4">
-            <Link href="/publicar" className="text-sm font-medium text-stone-800 hover:text-brand">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+            <Link href="/publicar" className="text-sm font-medium whitespace-nowrap text-stone-800 hover:text-brand">
               Publicar processo
             </Link>
-            <span className="text-sm text-stone-600">{user.name}</span>
+            <span className="hidden max-w-48 truncate text-sm text-stone-600 md:inline">{user.name}</span>
             <SignOutButton />
           </div>
         ) : (
-          <Link href="/entrar" className="text-sm font-medium text-stone-800 hover:text-brand">
+          <Link href="/entrar" className="text-sm font-medium whitespace-nowrap text-stone-800 hover:text-brand">
             Entrar com Google
           </Link>
         )}

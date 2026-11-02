@@ -16,7 +16,10 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
     command: `pnpm dev --port ${PORT}`,
-    url: BASE_URL,
+    // "/" consulta a instituição, e o servidor sobe antes do globalSetup zerar e semear o banco: pingar a
+    // home guardaria o id antigo no cache de tenant (ou daria 500 num banco vazio). /entrar não toca o banco
+    // sem sessão e já compila o layout raiz, evitando recargas do dev server durante o primeiro teste.
+    url: `${BASE_URL}/entrar`,
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
