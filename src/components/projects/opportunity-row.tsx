@@ -15,22 +15,28 @@ function ChannelBadge({ children }: { children: string }) {
   );
 }
 
-/** Linha de processo no painel (spec §6.9). Ações só quando `canEdit` (OWNER/ADMIN em projeto ACTIVE). */
+/**
+ * Linha de processo no painel (spec §6.9). Ações só quando `canEdit` (OWNER/ADMIN em projeto ACTIVE);
+ * "Candidatos" para quem tem membership real, inclusive em processo encerrado ou projeto arquivado.
+ */
 export function OpportunityRow({
   projectId,
   opportunity: o,
   isOpen,
   canEdit,
+  isMember,
   now = new Date(),
 }: {
   projectId: string;
   opportunity: PanelOpportunity;
   isOpen: boolean;
   canEdit: boolean;
+  isMember: boolean;
   now?: Date;
 }) {
   const closingSoon = isOpen && daysUntil(o.deadlineAt, now) <= 7;
   const base = `/projetos/${projectId}/processos`;
+  const showApplicants = isMember && o.internalSelectionEnabled;
 
   return (
     <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
@@ -47,9 +53,14 @@ export function OpportunityRow({
           {o.internalSelectionEnabled && <ChannelBadge>Plataforma</ChannelBadge>}
         </div>
       </div>
-      {canEdit && (
+      {(canEdit || showApplicants) && (
         <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {isOpen && (
+          {showApplicants && (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`${base}/${o.id}/candidatos`}>Candidatos ({o.applicationsCount})</Link>
+            </Button>
+          )}
+          {canEdit && isOpen && (
             <>
               <Button asChild variant="outline" size="sm">
                 <Link href={`${base}/${o.id}/editar`}>Editar</Link>
@@ -63,9 +74,11 @@ export function OpportunityRow({
               />
             </>
           )}
-          <Button asChild variant="outline" size="sm">
-            <Link href={`${base}/novo?duplicar=${o.id}`}>Duplicar</Link>
-          </Button>
+          {canEdit && (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`${base}/novo?duplicar=${o.id}`}>Duplicar</Link>
+            </Button>
+          )}
         </div>
       )}
     </li>

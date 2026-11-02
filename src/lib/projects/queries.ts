@@ -1,6 +1,6 @@
-import { and, asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { courses, opportunities, projectMembers, projects, users } from "@/db/schema";
+import { applications, courses, opportunities, projectMembers, projects, users } from "@/db/schema";
 import type { ProjectCategory, ProjectRole, ProjectStatus } from "@/db/schema";
 import type { AuthUser, ProjectAccess } from "@/lib/auth/guards";
 import { closedOnDate, isOpportunityOpen } from "@/lib/opportunities/status";
@@ -54,6 +54,8 @@ export type PanelOpportunity = {
   vacanciesCount: number;
   hasExternalUrl: boolean;
   internalSelectionEnabled: boolean;
+  /** Zero para quem não tem membership real: a contagem é dado da equipe. */
+  applicationsCount: number;
 };
 
 export async function getProjectPanel(
@@ -64,6 +66,16 @@ export async function getProjectPanel(
     .select()
     .from(opportunities)
     .where(and(eq(opportunities.projectId, access.project.id), eq(opportunities.institutionId, access.project.institutionId)));
+
+  const counts = access.membership
+    ? await db
+        .select({ opportunityId: applications.opportunityId, total: count() })
+        .from(applications)
+        .innerJoin(opportunities, eq(opportunities.id, applications.opportunityId))
+        .where(eq(opportunities.projectId, access.project.id))
+        .groupBy(applications.opportunityId)
+    : [];
+  const countByOpportunity = new Map(counts.map((c) => [c.opportunityId, c.total]));
 
   const open: PanelOpportunity[] = [];
   const closed: PanelOpportunity[] = [];
@@ -78,6 +90,7 @@ export async function getProjectPanel(
       vacanciesCount: o.vacanciesCount ?? 1,
       hasExternalUrl: o.externalUrl !== null,
       internalSelectionEnabled: o.internalSelectionEnabled,
+      applicationsCount: countByOpportunity.get(o.id) ?? 0,
     };
     (isOpen ? open : closed).push(item);
   }

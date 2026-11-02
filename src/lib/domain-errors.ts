@@ -40,7 +40,8 @@ export type DomainErrorCode =
   | "NOT_OPEN_YET"
   | "NO_INTERNAL_SELECTION"
   | "ALREADY_APPLIED"
-  | "PROJECT_MEMBER";
+  | "PROJECT_MEMBER"
+  | "PROJECT_READ_ONLY";
 
 /** Violação de regra de negócio, com mensagem pt-BR pronta para a UI. */
 export class DomainError extends Error {

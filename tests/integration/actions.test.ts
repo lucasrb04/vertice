@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
-import { opportunities, projects } from "@/db/schema";
+import { applications, opportunities, projects } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { resetDb } from "../helpers/db";
-import { addMember, mkProject, mkUser } from "../helpers/fixtures";
+import { addMember, mkOpportunity, mkProject, mkUser } from "../helpers/fixtures";
 import { validOpportunityInput, validProjectInput } from "../helpers/inputs";
 
 const state = vi.hoisted(() => ({
@@ -24,6 +24,7 @@ vi.mock("@/lib/security/turnstile", async (importOriginal) => ({
 
 const { createProjectWithOpportunityAction, updateProjectAction } = await import("@/actions/project.actions");
 const { searchTagsAction } = await import("@/actions/tag.actions");
+const { moveApplicationsAction } = await import("@/actions/application.actions");
 
 describe("Server Actions", () => {
   beforeEach(async () => {
@@ -99,6 +100,30 @@ describe("Server Actions", () => {
     await addMember(p.id, user.id, "OWNER");
     state.sessionUserId = user.id;
     expect(await updateProjectAction(p.id, validProjectInput({ name: "Novo Nome" }))).toMatchObject({ ok: true });
+  });
+
+  it("moveApplicationsAction: sem sessão, não-membro e membro", async () => {
+    const project = (await mkProject())!;
+    const opp = (await mkOpportunity(project.id, { internalSelectionEnabled: true }))!;
+    const student = (await mkUser("aluno@unifei.edu.br"))!;
+    const [app] = await db.insert(applications).values({ opportunityId: opp.id, userId: student.id }).returning();
+    const input = {
+      projectId: project.id,
+      opportunityId: opp.id,
+      items: [{ applicationId: app!.id, fromStatus: "APPLIED" }],
+      toStatus: "IN_REVIEW",
+    };
+
+    expect(await moveApplicationsAction(input)).toMatchObject({ ok: false, error: "UNAUTHORIZED" });
+
+    const outsider = (await mkUser("fora@unifei.edu.br"))!;
+    state.sessionUserId = outsider.id;
+    expect(await moveApplicationsAction(input)).toEqual({ ok: false, error: "NOT_FOUND", message: "Não encontrado." });
+
+    const reviewer = (await mkUser("rev@unifei.edu.br"))!;
+    await addMember(project.id, reviewer.id, "REVIEWER");
+    state.sessionUserId = reviewer.id;
+    expect(await moveApplicationsAction(input)).toEqual({ ok: true, data: { moved: 1, skipped: 0 } });
   });
 
   it("searchTagsAction exige sessão e valida o tamanho", async () => {

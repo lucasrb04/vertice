@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { getProjectPanel, listCourses, listMembers, listMyProjects, listProjectsUserCanPublishIn } from "@/lib/projects/queries";
 import { authorizeProjectRole, type AuthUser } from "@/lib/auth/guards";
+import { db } from "@/db";
+import { applications } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { resetDb } from "../helpers/db";
 import { addMember, mkOpportunity, mkProject, mkUser } from "../helpers/fixtures";
@@ -39,6 +41,25 @@ describe("consultas do painel", () => {
     expect(panel.closed[0]!.closedOn).toEqual(closedAt);
     expect(panel.closed[1]!.closedOn).toEqual(expiredDeadline);
     expect(panel.open[0]).toMatchObject({ vacanciesCount: 1, hasExternalUrl: true, internalSelectionEnabled: false });
+  });
+
+  it("getProjectPanel conta candidaturas só para quem tem membership real", async () => {
+    const user = (await mkUser("o@unifei.edu.br"))!;
+    const admin = (await mkUser("adm@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" }))!;
+    const student = (await mkUser("aluno@unifei.edu.br"))!;
+    const project = (await mkProject())!;
+    await addMember(project.id, user.id, "REVIEWER");
+    const withApp = (await mkOpportunity(project.id, { internalSelectionEnabled: true }))!;
+    const empty = (await mkOpportunity(project.id, { internalSelectionEnabled: true }))!;
+    await db.insert(applications).values({ opportunityId: withApp.id, userId: student.id });
+
+    const panel = await getProjectPanel(await authorizeProjectRole(user as AuthUser, project.id, ["REVIEWER"]));
+    const byId = new Map(panel.open.map((o) => [o.id, o.applicationsCount]));
+    expect(byId.get(withApp.id)).toBe(1);
+    expect(byId.get(empty.id)).toBe(0);
+
+    const adminPanel = await getProjectPanel(await authorizeProjectRole(admin as AuthUser, project.id, ["OWNER"]));
+    expect(adminPanel.open.every((o) => o.applicationsCount === 0)).toBe(true);
   });
 
   it("projeto arquivado: todos os processos caem em encerrados", async () => {

@@ -93,7 +93,15 @@ export function ProjectPanel({
         ) : (
           <ul className="mt-3 divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
             {open.map((o) => (
-              <OpportunityRow key={o.id} projectId={project.id} opportunity={o} isOpen canEdit={canEdit} now={now} />
+              <OpportunityRow
+                key={o.id}
+                projectId={project.id}
+                opportunity={o}
+                isOpen
+                canEdit={canEdit}
+                isMember={role !== null}
+                now={now}
+              />
             ))}
           </ul>
         )}
@@ -124,6 +132,7 @@ export function ProjectPanel({
                   opportunity={o}
                   isOpen={false}
                   canEdit={canEdit}
+                  isMember={role !== null}
                   now={now}
                 />
               ))}

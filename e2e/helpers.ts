@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { institutions, opportunities, projects } from "../src/db/schema";
+import { applicationEvents, applications, institutions, opportunities, projectMembers, projects, users } from "../src/db/schema";
 import { assertTestDatabase } from "../src/db/test-db-guard";
 
 // O processo do Playwright não tem o ambiente do servidor: conecta direto no banco de .env.test.
@@ -92,6 +92,25 @@ export async function addProcess(projectId: string, overrides: Omit<ProcessInput
     })
     .returning();
   return opportunity!;
+}
+
+/** Dá a um usuário já logado um papel no projeto. */
+export async function addProjectMember(projectId: string, email: string, role: "OWNER" | "ADMIN" | "REVIEWER") {
+  const [user] = await getDb().select({ id: users.id }).from(users).where(eq(users.email, email));
+  await getDb().insert(projectMembers).values({ projectId, userId: user!.id, role });
+}
+
+/** Candidatura de um usuário já logado, como `applyToOpportunity` grava. */
+export async function insertApplication(opportunityId: string, email: string) {
+  const [user] = await getDb().select({ id: users.id }).from(users).where(eq(users.email, email));
+  const [app] = await getDb().insert(applications).values({ opportunityId, userId: user!.id }).returning();
+  await getDb()
+    .insert(applicationEvents)
+    .values({ applicationId: app!.id, fromStatus: null, toStatus: "APPLIED", actorUserId: user!.id });
+}
+
+export async function updateProjectStatus(projectId: string, status: ProjectValues["status"]) {
+  await getDb().update(projects).set({ status }).where(eq(projects.id, projectId));
 }
 
 /** Remove todos os processos, para testes que dependem da vitrine vazia ou de uma ordem exata. */
