@@ -38,6 +38,17 @@ describe("parseVitrineParams", () => {
   });
 });
 
+describe("byte nulo", () => {
+  it("é removido de q, course e tags", () => {
+    const p = parseVitrineParams({ q: "a\0b", course: "\0", tags: "\0,py\0thon" });
+    expect(p.q).toBe("ab");
+    expect(p.course).toBeNull();
+    expect(p.tags).toEqual(["python"]);
+    expect(parseVitrineParams({ q: "\0" }).q).toBe("");
+    expect(parseVitrineParams({ tags: "\0" }).tags).toEqual([]);
+  });
+});
+
 describe("vitrineHref", () => {
   const base = parseVitrineParams({});
   it("omite padrões", () => {

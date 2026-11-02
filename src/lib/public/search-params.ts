@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { PROJECT_CATEGORIES } from "@/lib/validation/project";
 import type { ProjectCategory } from "@/lib/projects/labels";
 
@@ -34,37 +35,56 @@ export function defaultSort(q: string): VitrineSort {
   return q ? "relevance" : "recent";
 }
 
+// Postgres rejeita \0 em texto (22021); removemos antes de qualquer validação.
+const clean = (s: string) => s.replace(/\u0000/g, "");
+
+const qSchema = z.string().transform((s) => clean(s).trim().slice(0, MAX_Q).trim()).catch("");
+const categorySchema = z.enum(PROJECT_CATEGORIES);
+const scholarshipSchema = z.enum(["PAID", "VOLUNTARY"]).nullable().catch(null);
+const courseSchema = z
+  .string()
+  .transform((s) => clean(s).trim())
+  .pipe(z.string().min(1).max(16))
+  .nullable()
+  .catch(null);
+const tagSlugSchema = z.string().min(1).max(64);
+const sortSchema = z.enum(VITRINE_SORTS);
+const pageSchema = z
+  .string()
+  .regex(/^\d{1,5}$/)
+  .transform(Number)
+  .pipe(z.number().int().min(1).max(MAX_PAGE))
+  .catch(1);
+
 /** Lê os parâmetros da URL; valores inválidos são ignorados, nunca lançam erro. */
 export function parseVitrineParams(raw: RawParams): VitrineParams {
-  const q = (first(raw.q) ?? "").trim().slice(0, MAX_Q).trim();
+  const q = qSchema.parse(first(raw.q) ?? "");
 
-  const categories = [...new Set(all(raw.category))].filter((c): c is ProjectCategory =>
-    (PROJECT_CATEGORIES as readonly string[]).includes(c),
-  );
+  const categories = [
+    ...new Set(
+      all(raw.category).flatMap((c) => {
+        const r = categorySchema.safeParse(c);
+        return r.success ? [r.data] : [];
+      }),
+    ),
+  ];
 
-  const sch = first(raw.scholarship);
-  const scholarship = sch === "PAID" || sch === "VOLUNTARY" ? sch : null;
-
-  const courseRaw = (first(raw.course) ?? "").trim();
-  const course = courseRaw && courseRaw.length <= 16 ? courseRaw : null;
+  const scholarship = scholarshipSchema.parse(first(raw.scholarship) ?? null);
+  const course = courseSchema.parse(first(raw.course) ?? null);
 
   const tags = [
     ...new Set(
-      (first(raw.tags) ?? "")
+      clean(first(raw.tags) ?? "")
         .split(",")
         .map((t) => t.trim().toLowerCase())
-        .filter((t) => t.length > 0 && t.length <= 64),
+        .filter((t) => tagSlugSchema.safeParse(t).success),
     ),
   ].slice(0, MAX_TAGS);
 
-  const sortRaw = first(raw.sort);
-  const sort = (VITRINE_SORTS as readonly string[]).includes(sortRaw ?? "")
-    ? (sortRaw as VitrineSort)
-    : defaultSort(q);
+  const sortParsed = sortSchema.safeParse(first(raw.sort));
+  const sort = sortParsed.success ? sortParsed.data : defaultSort(q);
 
-  const pageRaw = first(raw.page) ?? "";
-  const pageNum = /^\d{1,5}$/.test(pageRaw) ? Number(pageRaw) : 1;
-  const page = Math.min(Math.max(pageNum, 1), MAX_PAGE);
+  const page = pageSchema.parse(first(raw.page) ?? "");
 
   return { q, categories, scholarship, course, tags, includeClosed: first(raw.encerrados) === "1", sort, page };
 }

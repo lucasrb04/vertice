@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, ne, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { courses, opportunities, opportunityTags, projects, tags } from "@/db/schema";
 import type { ProjectCategory, ScholarshipType } from "@/lib/projects/labels";
@@ -74,13 +74,18 @@ function searchSql(rawQ: string): { where: SQL; score: SQL } | null {
   const simTitle = sql`word_similarity(${q}::text, ${norm(opportunities.title)})`;
   const simProject = sql`word_similarity(${q}::text, ${norm(projects.name)})`;
   const simTag = tagSimilarity(q);
+  // Similaridade só vale com 4+ letras: termos curtos casam quase tudo (spec §5.4).
+  const useSimilarity = (q.match(/[a-z]/g)?.length ?? 0) >= 4;
+  const simClauses = useSimilarity
+    ? sql`OR ${simTitle} > ${SIMILARITY_THRESHOLD} OR ${simProject} > ${SIMILARITY_THRESHOLD} OR ${simTag} > ${SIMILARITY_THRESHOLD}`
+    : sql``;
   const where = sql`(
     ${ilike(opportunities.title)} OR ${ilike(opportunities.roleArea)} OR ${ilike(projects.name)}
     OR ${ilike(projects.acronym)} OR ${ilike(projects.advisorName)} OR ${ilike(opportunities.description)}
     OR ${tagLike}
-    OR ${simTitle} > ${SIMILARITY_THRESHOLD} OR ${simProject} > ${SIMILARITY_THRESHOLD} OR ${simTag} > ${SIMILARITY_THRESHOLD}
+    ${simClauses}
   )`;
-  return { where, score: sql`greatest(${simTitle}, ${simProject}, ${simTag})` };
+  return { where, score: useSimilarity ? sql`greatest(${simTitle}, ${simProject}, ${simTag})` : sql`0::float8` };
 }
 
 function filtersSql(institutionId: string, p: VitrineParams, now: Date, search: ReturnType<typeof searchSql>): SQL {
@@ -131,7 +136,6 @@ const cardColumns = {
   status: opportunities.status,
   closedAt: opportunities.closedAt,
   projectStatus: projects.status,
-  projectUpdatedAt: projects.updatedAt,
 };
 
 const RELATION_ORDER = sql`case ot.relation_type when 'THEME' then 0 when 'DESIRED_SKILL' then 1 else 2 end`;
@@ -170,7 +174,7 @@ async function fetchCards(opts: {
 
   return rows.map((r) => {
     const isOpen = isOpportunityOpen(r, r.projectStatus, opts.now);
-    const closedOn = isOpen ? null : (closedOnDate(r, opts.now) ?? r.projectUpdatedAt);
+    const closedOn = isOpen ? null : closedOnDate(r, opts.now);
     return {
       slug: r.slug,
       title: r.title,
@@ -371,7 +375,7 @@ export async function getPublicProject(institutionId: string, slug: string, now:
       status: projects.status,
     })
     .from(projects)
-    .where(and(eq(projects.institutionId, institutionId), eq(projects.slug, slug), ne(projects.status, "SUSPENDED"), ne(projects.status, "UNDER_REVIEW")));
+    .where(and(eq(projects.institutionId, institutionId), eq(projects.slug, slug), inArray(projects.status, ["ACTIVE", "ARCHIVED"])));
   if (!project) return null;
 
   const where = and(

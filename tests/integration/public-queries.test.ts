@@ -50,6 +50,8 @@ describe("busca", () => {
     await mkOpportunity(p.id, { title: "Desconto de 100% real" });
     await mkOpportunity(p.id, { title: "Programação C++" });
     await mkOpportunity(p.id, { title: "Vaga qualquer" });
+    await mkOpportunity(p.id, { title: "Engenharia de Computação" });
+    await mkOpportunity(p.id, { title: "1000 vagas" });
     await mkOpportunity(p.id, { title: "O'Brien lab" });
     expect(await titles({ q: "100%" })).toEqual(["Desconto de 100% real"]);
     expect(await titles({ q: "_" })).toEqual([]);
@@ -103,7 +105,7 @@ describe("visibilidade e filtros", () => {
     expect(r.total).toBe(4);
     const archived = r.items.find((i) => i.title === "Do arquivo")!;
     expect(archived.isOpen).toBe(false);
-    expect(archived.closedOn).toBeInstanceOf(Date);
+    expect(archived.closedOn).toBeNull();
     expect(r.items.find((i) => i.title === "Vencido")!.closedOn).toEqual(old.deadlineAt);
     for (const it of r.items.slice(1)) expect(it.isOpen).toBe(false);
   });
