@@ -1,4 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { db } from "@/db";
+import { searchSynonyms, tagAliases } from "@/db/schema";
+import { rebuildSearch } from "@/db/search-rebuild";
 import { runSeed } from "@/db/seed";
 import {
   getPublicOpportunity,
@@ -84,6 +87,192 @@ describe("relevância com acerto exato", () => {
     // Criado depois (desempate por recência o poria primeiro) e com título quase igual.
     await mkOpportunity(fuzzy.id, { title: "Robotca" });
     expect(await titles({ q: "robotica" })).toEqual(["Vaga de apoio", "Robotca"]);
+  });
+});
+
+describe("busca em camadas", () => {
+  const reindex = () => rebuildSearch(inst);
+
+  it("derivação, plural e acento pelo índice, nas duas formas", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Monitor de programação" });
+    await mkOpportunity(p.id, { title: "Oficina de robôs" });
+    await reindex();
+    for (const q of ["programador", "programacao", "programação", "programar"]) {
+      expect(await titles({ q }), q).toEqual(["Monitor de programação"]);
+    }
+    for (const q of ["robo", "robô", "robos"]) expect(await titles({ q }), q).toEqual(["Oficina de robôs"]);
+  });
+
+  it("título exato antes de todos os termos no título, depois no corpo, depois algum termo", async () => {
+    const p = await mkProject();
+    const some = await mkOpportunity(p.id, { title: "Só energia aqui", description: "Texto." });
+    const body = await mkOpportunity(p.id, { title: "Vaga geral", description: "Fala de energia solar." });
+    const all = await mkOpportunity(p.id, { title: "Solar e energia", description: "Texto." });
+    const exact = await mkOpportunity(p.id, { title: "Energia solar", description: "Texto." });
+    await reindex();
+    const { items } = await search({ q: "energia solar" });
+    expect(items.map((i) => i.slug)).toEqual([exact.slug, all.slug, body.slug, some.slug]);
+  });
+
+  it("palavra inteira vence radical: casa antes de caso", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Casa inteligente", createdAt: new Date(Date.now() - 2 * H) });
+    await mkOpportunity(p.id, { title: "Estudo de caso", createdAt: new Date(Date.now() - H) });
+    await reindex();
+    expect(await titles({ q: "casa" })).toEqual(["Casa inteligente", "Estudo de caso"]);
+  });
+
+  it("resultado só de termo corrigido vem depois de todo resultado do termo digitado", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Python avançado", createdAt: new Date(Date.now() - H) });
+    await mkOpportunity(p.id, { title: "Bolsa qualquer", createdAt: new Date(Date.now() - 2 * H) });
+    await mkOpportunity(p.id, { title: "Bolsa de python", createdAt: new Date(Date.now() - 3 * H) });
+    await reindex();
+    expect(await titles({ q: "bolsa pyhton" })).toEqual(["Bolsa de python", "Bolsa qualquer", "Python avançado"]);
+  });
+
+  it("texto literal digitado vem antes do que só casa pela correção", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Bolsa de Python", createdAt: new Date(Date.now() - H) });
+    await reindex();
+    // Fora do vocabulário: criado depois da reconstrução.
+    await mkOpportunity(p.id, { title: "Grupo pyhton", createdAt: new Date(Date.now() - 2 * H) });
+    expect(await titles({ q: "pyhton" })).toEqual(["Grupo pyhton", "Bolsa de Python"]);
+  });
+
+  it("aberto antes de encerrado mesmo quando o encerrado é exato", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Robótica", deadlineAt: new Date(Date.now() - D) });
+    await mkOpportunity(p.id, { title: "Vaga", description: "Fala de robótica." });
+    await reindex();
+    expect(await titles({ q: "robotica", encerrados: "1" })).toEqual(["Vaga", "Robótica"]);
+  });
+
+  it("devolve a correção e corrigir=0 a desliga", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Casa inteligente" });
+    await reindex();
+    const r = await search({ q: "casinha" });
+    expect(r.items.map((i) => i.title)).toEqual(["Casa inteligente"]);
+    expect(r.total).toBe(1);
+    expect(r.correction).toEqual({ original: "casinha", corrected: "casa" });
+
+    const exact = await search({ q: "casinha", corrigir: "0" });
+    expect(exact.items).toEqual([]);
+    expect(exact.correction).toBeNull();
+
+    expect((await search({ q: "casa" })).correction).toBeNull();
+    expect((await search({})).correction).toBeNull();
+    expect((await search({ q: "xqzwvk" })).correction).toBeNull();
+  });
+
+  it("aspas: não corrige e busca a expressão", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Casa inteligente" });
+    await mkOpportunity(p.id, { title: "Inteligente é a casa" });
+    await reindex();
+    const r = await search({ q: '"casa inteligente"' });
+    expect(r.items.map((i) => i.title)).toEqual(["Casa inteligente"]);
+    expect(r.correction).toBeNull();
+    expect((await search({ q: '"casinha"' })).items).toEqual([]);
+  });
+
+  it("só sinais ou palavras comuns não dão erro e seguem no LIKE", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Grito!!! na sala", description: "Texto." });
+    await mkOpportunity(p.id, { title: "Estudo de grafos", description: "Texto." });
+    await mkOpportunity(p.id, { title: "Sala a b", description: "Texto." });
+    await reindex();
+    expect(await titles({ q: "!!!" })).toEqual(["Grito!!! na sala"]);
+    expect(await titles({ q: "de" })).toContain("Estudo de grafos");
+    expect(await titles({ q: "a" })).toContain("Sala a b");
+    expect((await search({ q: "de a" })).total).toBe(0);
+  });
+
+  it("sintaxe de tsquery no texto do usuário é só texto", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Bolsa de Python" });
+    await reindex();
+    for (const q of ["python & | ! ( ) : * ' \\", "a:*", "<->", "python:A", "'", "&", "!python", "(python"]) {
+      await expect(search({ q }), q).resolves.toBeDefined();
+    }
+    expect(await titles({ q: "python & bolsa" })).toEqual(["Bolsa de Python"]);
+  });
+
+  it("C++ não vira a letra C no índice; termo com símbolo entra por LIKE, sigla curta inteira", async () => {
+    const p = await mkProject();
+    const c = await mkOpportunity(p.id, { title: "Firmware em C" });
+    await mkOpportunity(p.id, { title: "Programação C++" });
+    await mkOpportunity(p.id, { title: "Física aplicada", description: "Científica." });
+    const ic = await mkOpportunity(p.id, { title: "Vaga de IC" });
+    await reindex();
+    expect(c.title).toBe("Firmware em C");
+    expect(await titles({ q: "C++" })).toEqual(["Programação C++"]);
+    expect(await titles({ q: "programação c++" })).toEqual(["Programação C++"]);
+    expect((await titles({ q: "ic" }))[0]).toBe(ic.title);
+    expect(await titles({ q: "ic" })).not.toContain("Física aplicada");
+  });
+
+  it("sinônimos nos dois sentidos, frase inclusive", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Vaga de IC" });
+    await mkOpportunity(p.id, { title: "Iniciação científica em física" });
+    await mkOpportunity(p.id, { title: "Curso de engenharia" });
+    await reindex();
+    const both = ["Iniciação científica em física", "Vaga de IC"].sort();
+    expect((await titles({ q: "ic" })).sort()).toEqual(both);
+    expect((await titles({ q: "iniciação científica" })).sort()).toEqual(both);
+    expect(await titles({ q: "engenheiro" })).toEqual(["Curso de engenharia"]);
+    expect(await titles({ q: "engenheiros" })).toEqual(["Curso de engenharia"]);
+    await db.insert(searchSynonyms).values({ institutionId: inst, term: "aviao", canonical: "curso" });
+    expect(await titles({ q: "avião" })).toEqual(["Curso de engenharia"]);
+    expect(await titles({ q: "cursos" })).toEqual(["Curso de engenharia"]);
+  });
+
+  it("aspas não expandem sinônimos", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Iniciação científica em física" });
+    await reindex();
+    expect(await titles({ q: '"ic"' })).toEqual([]);
+  });
+
+  it("tag_aliases: slug leva ao nome canônico da tag", async () => {
+    const p = await mkProject();
+    const o = await mkOpportunity(p.id, { title: "Vaga" });
+    const tag = await mkTag("Aprendizado de máquina");
+    await tagOpportunity(o.id, tag!.id);
+    await db.insert(tagAliases).values([
+      { institutionId: inst, aliasSlug: "ml", canonicalTagId: tag!.id },
+      { institutionId: inst, aliasSlug: "machine-learning", canonicalTagId: tag!.id },
+    ]);
+    await reindex();
+    expect(await titles({ q: "ml" })).toEqual(["Vaga"]);
+    expect(await titles({ q: "machine learning" })).toEqual(["Vaga"]);
+  });
+
+  it("processo sem documento continua achável por LIKE, com total igual", async () => {
+    const p = await mkProject();
+    await reindex();
+    await mkOpportunity(p.id, { title: "Sem índice ainda" });
+    const r = await search({ q: "indice" });
+    expect(r.items.map((i) => i.title)).toEqual(["Sem índice ainda"]);
+    expect(r.total).toBe(1);
+  });
+
+  it("similaridade de trigramas não vale para processo indexado", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Coletivo de Tecnologia", description: "Agroecologia." });
+    await reindex();
+    expect(await titles({ q: "astrologia" })).toEqual([]);
+  });
+
+  it("consulta muito longa é limitada e não quebra", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Python" });
+    await reindex();
+    expect(await titles({ q: Array.from({ length: 50 }, () => "python").join(" ") })).toEqual(["Python"]);
+    await expect(search({ q: Array.from({ length: 50 }, (_, i) => `a${i}`).join(" ") })).resolves.toBeDefined();
   });
 });
 

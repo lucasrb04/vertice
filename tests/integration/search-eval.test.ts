@@ -24,7 +24,7 @@ type Baseline = {
   ndcg10: number;
   zeroRate: number;
   perCategory: EvalResult["perCategory"];
-  perQuery: { query: string; category: string; p1: number; ndcg10: number; ok: boolean; results: string[] }[];
+  perQuery: { query: string; category: string; p1: number; p3: number; ndcg10: number; ok: boolean; results: string[] }[];
 };
 
 let result: EvalResult;
@@ -66,9 +66,9 @@ const f = (n: number) => n.toFixed(3);
 
 function printTable(r: EvalResult) {
   const rows = Object.entries(r.perCategory).map(
-    ([c, a]) => `${c.padEnd(11)} n=${String(a.n).padStart(2)}  P@1=${f(a.p1)}  P@3=${f(a.p3)}  NDCG@10=${f(a.ndcg10)}  zeroRate=${c === "zero" ? f(a.zeroRate) : "-"}`,
+    ([c, a]) => `${c.padEnd(11)} n=${String(a.n).padStart(2)}  P@1=${f(a.p1)}  P@3=${f(a.p3)}  nP@3=${f(a.np3)}  NDCG@10=${f(a.ndcg10)}  zeroRate=${c === "zero" ? f(a.zeroRate) : "-"}`,
   );
-  rows.push(`${"TOTAL".padEnd(11)} n=${String(r.n).padStart(2)}  P@1=${f(r.p1)}  P@3=${f(r.p3)}  NDCG@10=${f(r.ndcg10)}  zeroRate=${f(r.zeroRate)}`);
+  rows.push(`${"TOTAL".padEnd(11)} n=${String(r.n).padStart(2)}  P@1=${f(r.p1)}  P@3=${f(r.p3)}  nP@3=${f(r.np3)}  NDCG@10=${f(r.ndcg10)}  zeroRate=${f(r.zeroRate)}`);
   console.info(`\n${rows.join("\n")}\n`);
 }
 
@@ -79,6 +79,11 @@ describe("avaliação da busca", () => {
     expect(queries.filter((q) => q.category === "zero")).toHaveLength(10);
     const slugs = new Set(corpus.map((c) => c.slug));
     for (const q of queries) for (const s of q.expected) expect(slugs.has(s), `${q.q} -> ${s}`).toBe(true);
+  });
+
+  it("consultas de zero resultado não devolvem nada", () => {
+    const leaks = result.perQuery.filter((p) => p.category === "zero" && p.results.length > 0);
+    expect(leaks.map((p) => `${p.query}: ${p.results.join(", ")}`)).toEqual([]);
   });
 
   it("não fica abaixo da linha de base (agregado e por consulta)", () => {
@@ -93,7 +98,7 @@ describe("avaliação da busca", () => {
         ndcg10: result.ndcg10,
         zeroRate: result.zeroRate,
         perCategory: result.perCategory,
-        perQuery: result.perQuery.map((p) => ({ query: p.query, category: p.category, p1: p.p1, ndcg10: p.ndcg10, ok: p.ok, results: p.results })),
+        perQuery: result.perQuery.map((p) => ({ query: p.query, category: p.category, p1: p.p1, p3: p.p3, ndcg10: p.ndcg10, ok: p.ok, results: p.results })),
       };
       writeFileSync(BASELINE, `${JSON.stringify(baseline, null, 2)}\n`);
       return;
@@ -110,7 +115,7 @@ describe("avaliação da busca", () => {
     for (const b of base.perQuery) {
       const cur = result.perQuery.find((p) => p.query === b.query);
       if (!cur) regressions.push(`${b.query}: consulta removida`);
-      else if (cur.p1 < b.p1 - EPS || cur.ndcg10 < b.ndcg10 - EPS || (b.ok && !cur.ok)) regressions.push(`${b.query}: regrediu`);
+      else if (cur.p1 < b.p1 - EPS || cur.p3 < b.p3 - EPS || cur.ndcg10 < b.ndcg10 - EPS || (b.ok && !cur.ok)) regressions.push(`${b.query}: regrediu`);
     }
     expect(regressions).toEqual([]);
   });

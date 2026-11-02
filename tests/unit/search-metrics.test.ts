@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluate, ndcgAt, precisionAt, type EvalRun } from "../search-eval/metrics";
+import { evaluate, ndcgAt, normalizedPrecisionAt, precisionAt, type EvalRun } from "../search-eval/metrics";
 
 describe("precisionAt", () => {
   it("conta acertos no topo k dividido por k", () => {
@@ -12,6 +12,15 @@ describe("precisionAt", () => {
   });
   it("sem resultados dá zero", () => {
     expect(precisionAt(3, [], ["a"])).toBe(0);
+  });
+});
+
+describe("normalizedPrecisionAt", () => {
+  it("divide por min(k, esperados)", () => {
+    expect(normalizedPrecisionAt(3, ["a"], ["a"])).toBe(1);
+    expect(normalizedPrecisionAt(3, ["a", "b", "x"], ["a", "b"])).toBe(1);
+    expect(normalizedPrecisionAt(3, ["a", "x", "b"], ["a", "b", "c", "d"])).toBeCloseTo(2 / 3, 10);
+    expect(normalizedPrecisionAt(3, ["x"], [])).toBe(0);
   });
 });
 

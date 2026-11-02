@@ -1,41 +1,46 @@
 {
-  "p1": 0.8297872340425532,
-  "p3": 0.5390070921985816,
-  "ndcg10": 0.8445409873110057,
-  "zeroRate": 0.9,
+  "p1": 0.9148936170212766,
+  "p3": 0.574468085106383,
+  "ndcg10": 0.9148936170212766,
+  "zeroRate": 1,
   "perCategory": {
     "exata": {
       "n": 15,
       "p1": 1,
       "p3": 0.6666666666666667,
+      "np3": 1,
       "ndcg10": 1,
       "zeroRate": 0
     },
     "derivacao": {
       "n": 9,
-      "p1": 0.8888888888888888,
+      "p1": 1,
       "p3": 0.5925925925925924,
-      "ndcg10": 0.9659362670685856,
+      "np3": 1,
+      "ndcg10": 1,
       "zeroRate": 0
     },
     "erro": {
       "n": 11,
-      "p1": 0.9090909090909091,
-      "p3": 0.606060606060606,
-      "ndcg10": 0.9090909090909091,
+      "p1": 1,
+      "p3": 0.6666666666666665,
+      "np3": 1,
+      "ndcg10": 1,
       "zeroRate": 0
     },
     "diminutivo": {
       "n": 5,
-      "p1": 0.6,
-      "p3": 0.2,
-      "ndcg10": 0.6,
+      "p1": 1,
+      "p3": 0.39999999999999997,
+      "np3": 1,
+      "ndcg10": 1,
       "zeroRate": 0
     },
     "sinonimo": {
       "n": 7,
       "p1": 0.42857142857142855,
       "p3": 0.3333333333333333,
+      "np3": 0.42857142857142855,
       "ndcg10": 0.42857142857142855,
       "zeroRate": 0
     },
@@ -43,8 +48,9 @@
       "n": 10,
       "p1": 0,
       "p3": 0,
+      "np3": 0,
       "ndcg10": 0,
-      "zeroRate": 0.9
+      "zeroRate": 1
     }
   },
   "perQuery": [
@@ -52,6 +58,7 @@
       "query": "casa",
       "category": "exata",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -63,6 +70,7 @@
       "query": "python",
       "category": "exata",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -74,11 +82,12 @@
       "query": "robótica",
       "category": "exata",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "robotica-competicao",
         "robotica-movel",
+        "robotica-competicao",
         "robotica-educacional"
       ]
     },
@@ -86,11 +95,12 @@
       "query": "robotica",
       "category": "exata",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "robotica-competicao",
         "robotica-movel",
+        "robotica-competicao",
         "robotica-educacional"
       ]
     },
@@ -98,18 +108,20 @@
       "query": "algoritmos",
       "category": "exata",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "programacao-competitiva",
+        "algoritmos-otimizacao",
         "algoritmos-grafos",
-        "algoritmos-otimizacao"
+        "programacao-competitiva"
       ]
     },
     {
       "query": "café",
       "category": "exata",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -122,6 +134,7 @@
       "query": "cafe",
       "category": "exata",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -134,40 +147,44 @@
       "query": "engenharia",
       "category": "exata",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
+        "eng-aeronautica",
         "eng-biomedica",
-        "eng-fotovoltaica",
-        "eng-aeronautica"
+        "eng-fotovoltaica"
       ]
     },
     {
       "query": "iniciação científica",
       "category": "exata",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "python-ic",
         "ic-fisica",
         "ic-quimica",
+        "python-ic",
         "ic-visao",
-        "comunicacao-design"
+        "comunicacao-design",
+        "cafe-ciencia"
       ]
     },
     {
       "query": "programação",
       "category": "exata",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
         "programacao-competitiva",
         "programacao-embarcada",
-        "python-ic",
         "ic-fisica",
         "ic-quimica",
+        "python-ic",
         "ic-visao"
       ]
     },
@@ -175,6 +192,7 @@
       "query": "vizinho",
       "category": "exata",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -185,11 +203,11 @@
       "query": "caminho",
       "category": "exata",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
         "caminho-trilhas",
-        "carinho-hospital",
         "algoritmos-grafos"
       ]
     },
@@ -197,17 +215,18 @@
       "query": "carinho",
       "category": "exata",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "carinho-hospital",
-        "caminho-trilhas"
+        "carinho-hospital"
       ]
     },
     {
       "query": "horta",
       "category": "exata",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -218,6 +237,7 @@
       "query": "taurus",
       "category": "exata",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -229,26 +249,28 @@
       "query": "algoritmo",
       "category": "derivacao",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "programacao-competitiva",
+        "algoritmos-otimizacao",
         "algoritmos-grafos",
-        "algoritmos-otimizacao"
+        "programacao-competitiva"
       ]
     },
     {
       "query": "programar",
       "category": "derivacao",
-      "p1": 0,
-      "ndcg10": 0.6934264036172708,
-      "ok": false,
+      "p1": 1,
+      "p3": 0.6666666666666666,
+      "ndcg10": 1,
+      "ok": true,
       "results": [
-        "python-ic",
         "programacao-competitiva",
         "programacao-embarcada",
         "ic-fisica",
         "ic-quimica",
+        "python-ic",
         "ic-visao"
       ]
     },
@@ -256,41 +278,44 @@
       "query": "bolsistas",
       "category": "derivacao",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "casa-inteligente",
+        "estatistica",
         "robotica-movel",
-        "estatistica"
+        "casa-inteligente"
       ]
     },
     {
       "query": "monitores",
       "category": "derivacao",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
         "programacao-competitiva",
-        "horta-comunitaria",
-        "energia-solar"
+        "energia-solar",
+        "horta-comunitaria"
       ]
     },
     {
       "query": "desenvolvedores",
       "category": "derivacao",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "jogos-educacionais",
-        "web-react"
+        "jogos-educacionais"
       ]
     },
     {
       "query": "jogo",
       "category": "derivacao",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -301,18 +326,18 @@
       "query": "bateria",
       "category": "derivacao",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "baterias",
-        "ic-fisica",
-        "aero-materiais"
+        "baterias"
       ]
     },
     {
       "query": "fotovoltaicos",
       "category": "derivacao",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -323,6 +348,7 @@
       "query": "trilha",
       "category": "derivacao",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -332,30 +358,37 @@
     {
       "query": "pyhton",
       "category": "erro",
-      "p1": 0,
-      "ndcg10": 0,
-      "ok": false,
-      "results": []
+      "p1": 1,
+      "p3": 0.6666666666666666,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-bolsa",
+        "python-ic"
+      ]
     },
     {
       "query": "bolsa pyhton",
       "category": "erro",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "python-bolsa"
+        "python-bolsa",
+        "python-ic"
       ]
     },
     {
       "query": "robotcia",
       "category": "erro",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "robotica-competicao",
         "robotica-movel",
+        "robotica-competicao",
         "robotica-educacional"
       ]
     },
@@ -363,55 +396,65 @@
       "query": "algoritimo",
       "category": "erro",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "programacao-competitiva",
+        "algoritmos-otimizacao",
         "algoritmos-grafos",
-        "algoritmos-otimizacao"
+        "programacao-competitiva"
       ]
     },
     {
       "query": "progamação",
       "category": "erro",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
         "programacao-competitiva",
-        "programacao-embarcada"
+        "programacao-embarcada",
+        "ic-fisica",
+        "ic-quimica",
+        "python-ic",
+        "ic-visao"
       ]
     },
     {
       "query": "enginharia",
       "category": "erro",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
+        "eng-aeronautica",
         "eng-biomedica",
-        "eng-fotovoltaica",
-        "eng-aeronautica"
+        "eng-fotovoltaica"
       ]
     },
     {
       "query": "inciação científica",
       "category": "erro",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "python-ic",
         "ic-fisica",
         "ic-quimica",
+        "python-ic",
         "ic-visao",
-        "comunicacao-design"
+        "comunicacao-design",
+        "cafe-ciencia"
       ]
     },
     {
       "query": "cafee",
       "category": "erro",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -424,6 +467,7 @@
       "query": "biomédca",
       "category": "erro",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -434,6 +478,7 @@
       "query": "fotovoltaca",
       "category": "erro",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -444,6 +489,7 @@
       "query": "estatitica",
       "category": "erro",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -453,45 +499,63 @@
     {
       "query": "casinha",
       "category": "diminutivo",
-      "p1": 0,
-      "ndcg10": 0,
-      "ok": false,
-      "results": []
+      "p1": 1,
+      "p3": 0.3333333333333333,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "casa-inteligente",
+        "estudo-de-caso-gestao"
+      ]
     },
     {
       "query": "casinha inteligente",
       "category": "diminutivo",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
         "casa-inteligente",
-        "ic-visao"
+        "ic-visao",
+        "python-ic",
+        "estudo-de-caso-gestao"
       ]
     },
     {
       "query": "cafezinho",
       "category": "diminutivo",
-      "p1": 0,
-      "ndcg10": 0,
-      "ok": false,
-      "results": []
+      "p1": 1,
+      "p3": 0.6666666666666666,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "cafe-ciencia",
+        "cafe-qualidade",
+        "comunicacao-design"
+      ]
     },
     {
       "query": "cafezinho com ciência",
       "category": "diminutivo",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
         "cafe-ciencia",
-        "comunicacao-design"
+        "comunicacao-design",
+        "python-bolsa",
+        "estatistica",
+        "dados-abertos",
+        "cafe-qualidade"
       ]
     },
     {
       "query": "hortinha",
       "category": "diminutivo",
       "p1": 1,
+      "p3": 0.3333333333333333,
       "ndcg10": 1,
       "ok": true,
       "results": [
@@ -502,22 +566,25 @@
       "query": "inteligência artificial",
       "category": "sinonimo",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
         "ic-visao",
-        "python-ic"
+        "python-ic",
+        "casa-inteligente"
       ]
     },
     {
       "query": "domótica",
       "category": "sinonimo",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": false,
       "results": [
-        "robotica-competicao",
         "robotica-movel",
+        "robotica-competicao",
         "robotica-educacional"
       ]
     },
@@ -525,11 +592,12 @@
       "query": "robôs",
       "category": "sinonimo",
       "p1": 1,
+      "p3": 1,
       "ndcg10": 1,
       "ok": true,
       "results": [
-        "robotica-competicao",
         "robotica-movel",
+        "robotica-competicao",
         "robotica-educacional"
       ]
     },
@@ -537,25 +605,41 @@
       "query": "painel solar",
       "category": "sinonimo",
       "p1": 1,
+      "p3": 0.6666666666666666,
       "ndcg10": 1,
       "ok": true,
       "results": [
+        "energia-solar",
         "eng-fotovoltaica",
-        "energia-solar"
+        "web-react",
+        "dados-abertos"
       ]
     },
     {
       "query": "avião",
       "category": "sinonimo",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": false,
-      "results": []
+      "results": [
+        "robotica-educacional",
+        "horta-comunitaria",
+        "carinho-hospital",
+        "vizinho-solidario",
+        "caminho-trilhas",
+        "oficinas-idosos",
+        "casa-inteligente",
+        "python-ic",
+        "programacao-competitiva",
+        "programacao-embarcada"
+      ]
     },
     {
       "query": "internet das coisas",
       "category": "sinonimo",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": false,
       "results": []
@@ -564,6 +648,7 @@
       "query": "coding",
       "category": "sinonimo",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": false,
       "results": []
@@ -572,6 +657,7 @@
       "query": "xadrez",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []
@@ -580,6 +666,7 @@
       "query": "zzzzzz",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []
@@ -588,6 +675,7 @@
       "query": "culinária",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []
@@ -596,6 +684,7 @@
       "query": "futebol",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []
@@ -604,19 +693,16 @@
       "query": "astrologia",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
-      "ok": false,
-      "results": [
-        "jogos-educacionais",
-        "web-react",
-        "redes-servidores",
-        "horta-comunitaria"
-      ]
+      "ok": true,
+      "results": []
     },
     {
       "query": "hieróglifos",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []
@@ -625,6 +711,7 @@
       "query": "dermatologia",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []
@@ -633,6 +720,7 @@
       "query": "colheita",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []
@@ -641,6 +729,7 @@
       "query": "criptografia",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []
@@ -649,6 +738,7 @@
       "query": "xqzwvk",
       "category": "zero",
       "p1": 0,
+      "p3": 0,
       "ndcg10": 0,
       "ok": true,
       "results": []

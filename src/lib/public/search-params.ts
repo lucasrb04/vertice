@@ -14,6 +14,8 @@ export type VitrineParams = {
   includeClosed: boolean;
   sort: VitrineSort;
   page: number;
+  /** `corrigir=0`: busca sem corrigir nenhuma palavra. */
+  exact: boolean;
 };
 
 type RawParams = Record<string, string | string[] | undefined>;
@@ -86,7 +88,7 @@ export function parseVitrineParams(raw: RawParams): VitrineParams {
 
   const page = pageSchema.parse(first(raw.page) ?? "");
 
-  return { q, categories, scholarship, course, tags, includeClosed: first(raw.encerrados) === "1", sort, page };
+  return { q, categories, scholarship, course, tags, includeClosed: first(raw.encerrados) === "1", sort, page, exact: first(raw.corrigir) === "0" };
 }
 
 /** Monta o link de `/processos` omitindo padrões. Mudar qualquer filtro volta à página 1. */
@@ -102,6 +104,7 @@ export function vitrineHref(params: VitrineParams, overrides: Partial<VitrinePar
   if (p.tags.length) parts.push(`tags=${p.tags.map(encodeURIComponent).join(",")}`);
   if (p.includeClosed) add("encerrados", "1");
   if (p.sort !== defaultSort(p.q)) add("sort", p.sort);
+  if (p.exact) add("corrigir", "0");
   if (p.page > 1) add("page", String(p.page));
   return parts.length ? `/processos?${parts.join("&")}` : "/processos";
 }

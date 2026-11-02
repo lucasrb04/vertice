@@ -1,9 +1,12 @@
 import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { courses, opportunities, opportunityTags, projects, tags } from "@/db/schema";
+import { courses, opportunities, opportunityTags, projects, searchDocuments, tags } from "@/db/schema";
 import type { ProjectCategory, ScholarshipType } from "@/lib/projects/labels";
 import { closedOnDate, isOpportunityOpen, openOpportunitySql } from "@/lib/opportunities/status";
+import { groupTsQuery, planSearch, wholeWordRegex, type SearchPlan, type TermGroup } from "@/lib/search/query";
 import { defaultSort, type VitrineParams } from "./search-params";
+
+export { normalizeQuery } from "@/lib/search/corrector";
 
 export const PAGE_SIZE = 12;
 export const ROW_LIMIT = 10;
@@ -42,60 +45,87 @@ export function publicOpportunitySql(): SQL {
 
 const norm = (col: SQL | unknown) => sql`lower(unaccent(${col}))`;
 
-/** Mesma normalização do SQL (sem acentos, minúsculas), usada para o termo do usuário. */
-export function normalizeQuery(q: string): string {
-  return q
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
 function escapeLike(s: string): string {
   return s.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
-const tagSimilarity = (q: string) => sql`coalesce((
-  select max(word_similarity(${q}::text, lower(unaccent(t.name))))
-  from opportunity_tags ot join tags t on t.id = ot.tag_id
-  where ot.opportunity_id = ${opportunities.id}
-), 0)`;
+const anyOf = (parts: SQL[]) => sql`(${sql.join(parts, sql` OR `)})`;
+const allOf = (parts: SQL[]) => (parts.length ? sql`(${sql.join(parts, sql` AND `)})` : sql`false`);
 
-/**
- * Único ponto de verdade do predicado e da pontuação de busca; usado em itens e total.
- * Devolve `null` quando `q` normaliza para vazio (sem busca).
- */
-function searchSql(rawQ: string): { where: SQL; score: SQL } | null {
-  const q = normalizeQuery(rawQ);
-  if (!q) return null;
-  const like = `%${escapeLike(q)}%`;
-  const ilike = (col: unknown) => sql`${norm(col)} LIKE ${like}`;
-  const tagLike = sql`exists (
-    select 1 from opportunity_tags ot join tags t on t.id = ot.tag_id
-    where ot.opportunity_id = ${opportunities.id} and lower(unaccent(t.name)) LIKE ${like}
-  )`;
-  const simTitle = sql`word_similarity(${q}::text, ${norm(opportunities.title)})`;
-  const simProject = sql`word_similarity(${q}::text, ${norm(projects.name)})`;
-  const simTag = tagSimilarity(q);
+const hasTag = (test: (name: SQL) => SQL) => sql`exists (
+  select 1 from opportunity_tags ot join tags t on t.id = ot.tag_id
+  where ot.opportunity_id = ${opportunities.id} and ${test(norm(sql`t.name`))}
+)`;
+
+/** Só para processo ainda sem documento: depois de indexado, quem trata erro é o corretor. */
+function unindexedSimilarity(q: string): SQL[] {
   // Similaridade só vale com 4+ letras: termos curtos casam quase tudo (spec §5.4).
-  const useSimilarity = (q.match(/[a-z]/g)?.length ?? 0) >= 4;
-  const simClauses = useSimilarity
-    ? sql`OR ${simTitle} > ${SIMILARITY_THRESHOLD} OR ${simProject} > ${SIMILARITY_THRESHOLD} OR ${simTag} > ${SIMILARITY_THRESHOLD}`
-    : sql``;
-  const where = sql`(
-    ${ilike(opportunities.title)} OR ${ilike(opportunities.roleArea)} OR ${ilike(projects.name)}
-    OR ${ilike(projects.acronym)} OR ${ilike(projects.advisorName)} OR ${ilike(opportunities.description)}
-    OR ${tagLike}
-    ${simClauses}
-  )`;
-  // Acerto exato (LIKE) vale mais que qualquer similaridade (máx. 1): sigla, área e orientador não têm similaridade.
-  const exactBonus = sql`(case when ${ilike(opportunities.title)} OR ${ilike(opportunities.roleArea)} OR ${ilike(projects.name)}
-    OR ${ilike(projects.acronym)} OR ${ilike(projects.advisorName)} OR ${tagLike} then 2 else 0 end)::float8`;
-  const sim = useSimilarity ? sql`greatest(${simTitle}, ${simProject}, ${simTag})` : sql`0::float8`;
-  return { where, score: sql`(${exactBonus} + ${sim})` };
+  if ((q.match(/[a-z]/g)?.length ?? 0) < 4) return [];
+  const similar = (col: unknown) => sql`word_similarity(${q}::text, ${norm(col)}) > ${SIMILARITY_THRESHOLD}`;
+  const similarTag = hasTag((name) => sql`word_similarity(${q}::text, ${name}) > ${SIMILARITY_THRESHOLD}`);
+  return [sql`(${searchDocuments.opportunityId} IS NULL AND ${anyOf([similar(opportunities.title), similar(projects.name), similarTag])})`];
 }
 
-function filtersSql(institutionId: string, p: VitrineParams, now: Date, search: ReturnType<typeof searchSql>): SQL {
+/**
+ * Único ponto de verdade do predicado e da ordem de relevância; usado em itens e total.
+ * Exige left join com `search_documents`: processo sem documento segue achável por LIKE.
+ */
+function searchSql(plan: SearchPlan): { where: SQL; order: SQL[] } {
+  const { groups, literal, phrase } = plan;
+  // Uma ou duas letras por LIKE casariam quase tudo: `ic` em "científica", `de` em "desenvolvimento".
+  const contains = (text: string) => (col: SQL) =>
+    /^[a-z]{1,2}$/.test(text) ? sql`${col} ~ ${wholeWordRegex(text)}` : sql`${col} LIKE ${`%${escapeLike(text)}%`}`;
+  const inHead = (test: (col: SQL) => SQL) =>
+    anyOf([test(norm(opportunities.title)), test(norm(projects.acronym)), hasTag(test)]);
+  const inDocument = (test: (col: SQL) => SQL) =>
+    anyOf([
+      inHead(test),
+      test(norm(opportunities.roleArea)),
+      test(norm(projects.name)),
+      test(norm(projects.advisorName)),
+      test(norm(opportunities.description)),
+    ]);
+
+  const document = sql`${searchDocuments.document}`;
+  const titleAndTags = sql`ts_filter(${document}, '{a}')`;
+  /** Stopword é tsquery vazio: não exige nada, nem ao pedir todos os termos. */
+  const matches = (g: TermGroup, vector: SQL, like: (test: (col: SQL) => SQL) => SQL, stopwordPasses: boolean) => {
+    const parts = g.like.map((text) => like(contains(text)));
+    if (g.fts.length) {
+      const query = groupTsQuery(g);
+      parts.push(sql`${vector} @@ ${query}`);
+      if (stopwordPasses) parts.push(sql`numnode(${query}) = 0`);
+    }
+    return anyOf(parts);
+  };
+  const someTerm = (list: TermGroup[]) => list.map((g) => matches(g, document, inDocument, false));
+
+  const literalMatch = inDocument(contains(literal));
+  const where = anyOf([
+    literalMatch,
+    ...(phrase === literal ? [] : [inDocument(contains(phrase))]),
+    ...someTerm(groups),
+    ...unindexedSimilarity(literal),
+  ]);
+
+  const exact = inHead((col) => sql`${col} ~ ${wholeWordRegex(phrase)}`);
+  const allInHead = allOf(groups.map((g) => matches(g, titleAndTags, inHead, true)));
+  const allInDocument = allOf(groups.map((g) => matches(g, document, inDocument, true)));
+  const tier = sql`case when ${exact} then 1 when ${allInHead} then 2 when ${allInDocument} then 3 else 4 end`;
+
+  const queries = groups.filter((g) => g.fts.length).map(groupTsQuery);
+  const rank = queries.length
+    ? [sql`coalesce(ts_rank_cd(${document}, ${sql.join(queries, sql` || `)}, 1), 0) desc`]
+    : [];
+
+  // Quinta camada da spec: fica fora das quatro para que `casinha`, toda corrigida, ainda ponha `casa` antes de `caso`.
+  const typed = [literalMatch, ...someTerm(groups.filter((g) => !g.corrected))];
+  const onlyCorrected = plan.corrected ? [sql`case when ${anyOf(typed)} then 0 else 1 end`] : [];
+
+  return { where, order: [...onlyCorrected, tier, ...rank] };
+}
+
+function filtersSql(institutionId: string, p: VitrineParams, now: Date, search: ReturnType<typeof searchSql> | null): SQL {
   const conds: SQL[] = [eq(opportunities.institutionId, institutionId), publicOpportunitySql()];
   if (!p.includeClosed) conds.push(openOpportunitySql(now));
   if (search) conds.push(search.where);
@@ -153,6 +183,8 @@ async function fetchCards(opts: {
   limit?: number;
   offset?: number;
   now: Date;
+  /** `where` ou `orderBy` vindos de `searchSql`. */
+  searching?: boolean;
 }): Promise<PublicCard[]> {
   let q = db
     .select(cardColumns)
@@ -161,6 +193,7 @@ async function fetchCards(opts: {
     .where(opts.where)
     .orderBy(...opts.orderBy)
     .$dynamic();
+  if (opts.searching) q = q.leftJoin(searchDocuments, eq(searchDocuments.opportunityId, opportunities.id));
   if (opts.limit !== undefined) q = q.limit(opts.limit);
   if (opts.offset) q = q.offset(opts.offset);
   const rows = await q;
@@ -210,15 +243,26 @@ export async function searchOpportunities(
   institutionId: string,
   params: VitrineParams,
   now: Date = new Date(),
-): Promise<{ items: PublicCard[]; total: number; page: number; pageCount: number }> {
-  const search = searchSql(params.q);
+): Promise<{
+  items: PublicCard[];
+  total: number;
+  page: number;
+  pageCount: number;
+  correction: { original: string; corrected: string } | null;
+}> {
+  const plan = await planSearch(institutionId, params.q, { exact: params.exact });
+  const search = plan ? searchSql(plan) : null;
   const where = filtersSql(institutionId, params, now, search);
 
-  const [{ total }] = await db
+  const countQuery = db
     .select({ total: sql<number>`count(*)`.mapWith(Number) })
     .from(opportunities)
     .innerJoin(projects, eq(projects.id, opportunities.projectId))
-    .where(where);
+    .where(where)
+    .$dynamic();
+  const [{ total }] = await (search
+    ? countQuery.leftJoin(searchDocuments, eq(searchDocuments.opportunityId, opportunities.id))
+    : countQuery);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const page = Math.min(Math.max(params.page, 1), pageCount);
@@ -240,16 +284,24 @@ export async function searchOpportunities(
       order = [desc(popularity), ...recent];
       break;
     case "relevance":
-      order = [sql`${search!.score} desc`, ...recent];
+      order = [...search!.order, ...recent];
       break;
     default:
       order = recent;
   }
 
   const items = total
-    ? await fetchCards({ where, orderBy: [openRank, ...order], limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE, now })
+    ? await fetchCards({
+        where,
+        orderBy: [openRank, ...order],
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+        now,
+        searching: !!search,
+      })
     : [];
-  return { items, total, page, pageCount };
+  const correction = plan?.corrected ? { original: plan.original, corrected: plan.corrected } : null;
+  return { items, total, page, pageCount, correction };
 }
 
 // ---------- home ----------

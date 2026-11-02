@@ -4,7 +4,7 @@ import { parseVitrineParams, vitrineHref } from "@/lib/public/search-params";
 describe("parseVitrineParams", () => {
   it("padrões", () => {
     expect(parseVitrineParams({})).toEqual({
-      q: "", categories: [], scholarship: null, course: null, tags: [], includeClosed: false, sort: "recent", page: 1,
+      q: "", categories: [], scholarship: null, course: null, tags: [], includeClosed: false, sort: "recent", page: 1, exact: false,
     });
   });
   it("sort padrão depende de q", () => {
@@ -38,6 +38,8 @@ describe("parseVitrineParams", () => {
     expect(parseVitrineParams({ scholarship: "PAID" }).scholarship).toBe("PAID");
     expect(parseVitrineParams({ encerrados: "1" }).includeClosed).toBe(true);
     expect(parseVitrineParams({ encerrados: "0" }).includeClosed).toBe(false);
+    expect(parseVitrineParams({ corrigir: "0" }).exact).toBe(true);
+    expect(parseVitrineParams({ corrigir: "1" }).exact).toBe(false);
     expect(parseVitrineParams({ course: " CCO " }).course).toBe("CCO");
   });
 });
@@ -62,6 +64,7 @@ describe("vitrineHref", () => {
   it("mudar filtro volta à página 1; page explícito é mantido", () => {
     const p = parseVitrineParams({ page: "4", q: "ia" });
     expect(vitrineHref(p, { includeClosed: true })).toBe("/processos?q=ia&encerrados=1");
+    expect(vitrineHref(p, { exact: true })).toBe("/processos?q=ia&corrigir=0");
     expect(vitrineHref(p, { page: 5 })).toBe("/processos?q=ia&page=5");
   });
   it("inclui sort fora do padrão e tags", () => {
