@@ -300,7 +300,7 @@ export async function searchOpportunities(
         searching: !!search,
       })
     : [];
-  const correction = plan?.corrected ? { original: plan.original, corrected: plan.corrected } : null;
+  const correction = plan?.corrected && total > 0 ? { original: plan.original, corrected: plan.corrected } : null;
   return { items, total, page, pageCount, correction };
 }
 

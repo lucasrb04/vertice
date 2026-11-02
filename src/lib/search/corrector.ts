@@ -6,6 +6,7 @@ const MIN_LETTERS = 4;
 const MAX_LETTERS = 40; // Mesmo teto do vocabulário: acima disso não há candidato.
 const MAX_TOKENS = 12;
 const MIN_STEM = 3;
+const LONG_WORD = 6; // A partir daqui valem distância 2 e primeira letra diferente.
 
 /** Mesma normalização do SQL (sem acentos, minúsculas), usada para o termo do usuário. */
 export function normalizeQuery(q: string): string {
@@ -28,7 +29,7 @@ export type QueryToken = {
 
 const SENTENCE_EDGES = /^[,.;:!?()"]+|[,.;:!?()"]+$/g;
 
-/** Um trecho entre aspas é um token só. Tokens repetidos saem, e o total é limitado. */
+/** Um trecho entre aspas é um token só, distinto da mesma palavra fora delas. Repetidos saem, e o total é limitado. */
 export function tokenize(q: string): QueryToken[] {
   const tokens = new Map<string, QueryToken>();
   const text = q.normalize("NFC").replace(/[“”]/g, '"');
@@ -36,9 +37,10 @@ export function tokenize(q: string): QueryToken[] {
     const quoted = m[1] !== undefined;
     const raw = (m[1] ?? m[0]).replace(SENTENCE_EDGES, "").trim();
     const normalized = normalizeQuery(raw);
-    if (!normalized || tokens.has(normalized)) continue;
+    const key = `${quoted}:${normalized}`;
+    if (!normalized || tokens.has(key)) continue;
     if (tokens.size === MAX_TOKENS) break;
-    tokens.set(normalized, { text: raw.toLowerCase(), normalized, raw, quoted, corrected: false });
+    tokens.set(key, { text: raw.toLowerCase(), normalized, raw, quoted, corrected: false });
   }
   return [...tokens.values()];
 }
@@ -81,12 +83,12 @@ async function unknownWords(institutionId: string, words: string[]): Promise<str
     db
       .select({ slug: tagAliases.aliasSlug })
       .from(tagAliases)
-      .where(and(eq(tagAliases.institutionId, institutionId), inArray(tagAliases.aliasSlug, words))),
+      .where(eq(tagAliases.institutionId, institutionId)),
   ]);
   const known = new Set([
     ...vocabulary.map((v) => v.word),
     ...synonyms.flatMap((s) => [...s.term.split(" "), ...s.canonical.split(" ")]),
-    ...aliases.map((a) => a.slug),
+    ...aliases.flatMap((a) => a.slug.split("-")),
   ]);
   return words.filter((w) => !known.has(w));
 }
@@ -121,11 +123,20 @@ async function undoDiminutive(institutionId: string, word: string): Promise<stri
   return forms.find((f) => found.has(f)) ?? null;
 }
 
+const sortedLetters = (word: string) => [...word].sort().join("");
+
+/** Sem a primeira letra e o limite curto, palavra real fora do catálogo viraria outra: `nasa -> casa`. */
+function isPlausibleTypo(word: string, candidate: string, edits: number): boolean {
+  if (word[0] !== candidate[0]) return edits === 1 && word.length >= LONG_WORD;
+  if (word.length >= LONG_WORD || edits === 1) return true;
+  return sortedLetters(word) === sortedLetters(candidate);
+}
+
 async function nearestWord(institutionId: string, word: string): Promise<string | null> {
   const distance = word.length === MIN_LETTERS ? 1 : 2;
-  const edits = sql`levenshtein_less_equal(${searchVocabulary.word}, ${word}::text, ${distance}::int)`;
-  const [row] = await db
-    .select({ word: searchVocabulary.word })
+  const edits = sql<number>`levenshtein_less_equal(${searchVocabulary.word}, ${word}::text, ${distance}::int)`;
+  const rows = await db
+    .select({ word: searchVocabulary.word, edits })
     .from(searchVocabulary)
     .where(
       and(
@@ -135,9 +146,8 @@ async function nearestWord(institutionId: string, word: string): Promise<string 
         sql`numnode(plainto_tsquery('portuguese'::regconfig, ${searchVocabulary.word})) > 0`,
       ),
     )
-    .orderBy(edits, sql`${searchVocabulary.frequency} desc`, searchVocabulary.word)
-    .limit(1);
-  return row?.word ?? null;
+    .orderBy(edits, sql`${searchVocabulary.frequency} desc`, searchVocabulary.word);
+  return rows.find((r) => isPlausibleTypo(word, r.word, r.edits))?.word ?? null;
 }
 
 async function correctWord(institutionId: string, token: QueryToken): Promise<string | null> {
@@ -145,9 +155,13 @@ async function correctWord(institutionId: string, token: QueryToken): Promise<st
   return (await undoDiminutive(institutionId, token.normalized)) ?? (await nearestWord(institutionId, token.normalized));
 }
 
-function replaceWord(q: string, word: string, replacement: string): string {
-  // `word` tem só letras: não precisa de escape.
-  return q.replace(new RegExp(`(?<!\\p{L})${word}(?!\\p{L})`, "gu"), replacement);
+/** Reescreve a consulta como digitada: trechos entre aspas e tokens com símbolo ficam como estão. */
+function rewrite(q: string, fixes: Map<string, string>): string {
+  return q.replace(/"[^"]*"|“[^”]*”|\S+/g, (chunk) => {
+    const word = chunk.replace(SENTENCE_EDGES, "");
+    const fix = fixes.get(normalizeQuery(word));
+    return fix && !/^["“]/.test(chunk) ? chunk.replace(word, fix) : chunk;
+  });
 }
 
 export type CorrectedQuery = {
@@ -166,18 +180,12 @@ export async function correctQuery(institutionId: string, q: string): Promise<Co
     ? new Set(await unknownWords(institutionId, candidates.map((t) => t.normalized)))
     : new Set<string>();
 
-  let rewritten = q.normalize("NFC");
-  let changed = false;
+  const fixes = new Map<string, string>();
   const result: QueryToken[] = [];
   for (const token of tokens) {
-    const fix = unknown.has(token.normalized) ? await correctWord(institutionId, token) : null;
-    if (!fix) {
-      result.push(token);
-      continue;
-    }
-    changed = true;
-    rewritten = replaceWord(rewritten, token.raw, fix);
-    result.push({ ...token, text: fix, normalized: fix, corrected: true });
+    const fix = !token.quoted && unknown.has(token.normalized) ? await correctWord(institutionId, token) : null;
+    if (fix) fixes.set(token.normalized, fix);
+    result.push(fix ? { ...token, text: fix, normalized: fix, corrected: true } : token);
   }
-  return { original: q, corrected: changed ? rewritten : null, terms: result.map((t) => t.text), tokens: result };
+  return { original: q, corrected: fixes.size ? rewrite(q.normalize("NFC"), fixes) : null, terms: result.map((t) => t.text), tokens: result };
 }

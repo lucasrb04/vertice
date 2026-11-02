@@ -27,8 +27,8 @@ const isFtsText = (s: string) => /^[\p{L} ]+$/u.test(s);
 
 function groupOf(token: QueryToken): TermGroup {
   const group: TermGroup = { fts: [], like: [], corrected: token.corrected };
-  // Expressão entre aspas é texto exato. No FTS, a última palavra de uma forma do vetor fica colada à primeira da outra.
-  if (token.quoted && token.text.includes(" ")) group.like.push(token.normalized);
+  // Entre aspas é texto exato: sem radical, e no FTS a última palavra de uma forma do vetor fica colada à primeira da outra.
+  if (token.quoted) group.like.push(token.normalized);
   else addVariant(group, token.text);
   return group;
 }
@@ -96,7 +96,7 @@ export async function planSearch(institutionId: string, q: string, opts: { exact
     : await correctQuery(institutionId, q);
 
   // Uma palavra corrigida pode repetir outra da consulta.
-  const distinct = tokens.filter((t, i) => tokens.findIndex((o) => o.normalized === t.normalized) === i);
+  const distinct = tokens.filter((t, i) => tokens.findIndex((o) => o.normalized === t.normalized && o.quoted === t.quoted) === i);
   const groups = distinct.map(groupOf);
   await addSynonyms(institutionId, distinct, groups);
   await addTagAliases(institutionId, distinct, groups);

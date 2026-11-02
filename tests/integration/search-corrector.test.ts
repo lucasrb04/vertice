@@ -38,6 +38,59 @@ describe("correctQuery", () => {
     );
   });
 
+  it("palavra real fora do catálogo não vira outra (spec §5.3)", async () => {
+    await catalog("Ação", "Robótica", "Busca", "Casa", "Aero", "Prof. Otávio", "Vale");
+    for (const q of ["avião", "domótica", "música", "nasa", "carro", "navio", "vôlei"]) {
+      expect(await corrected(q), q).toBeNull();
+      expect((await correctQuery(inst, q)).terms, q).toHaveLength(1);
+    }
+  });
+
+  it("a regra nova preserva os erros de digitação", async () => {
+    await catalog("Bolsa de Python", "Robótica", "Algoritmo", "Engenharia", "Programação", "Casa", "Café");
+    const cases: [string, string][] = [
+      ["blosa", "bolsa"],
+      ["oython", "python"],
+      ["pyhton", "python"],
+      ["pithon", "python"],
+      ["robotcia", "robotica"],
+      ["algoritimo", "algoritmo"],
+      ["engeharia", "engenharia"],
+      ["progamacao", "programacao"],
+      ["casinha", "casa"],
+      ["cafezinho", "cafe"],
+    ];
+    for (const [q, want] of cases) expect(await corrected(q), q).toBe(want);
+  });
+
+  it("5 letras: distância 2 só com as mesmas letras; primeira letra diferente só com distância 1 em 6+", async () => {
+    await catalog("Bolsa", "Python", "Tecnologia");
+    expect(await corrected("bulsu")).toBeNull();
+    expect(await corrected("xython")).toBe("python");
+    expect(await corrected("xythan")).toBeNull();
+  });
+
+  it("palavra entre aspas fica, a mesma palavra fora delas é corrigida", async () => {
+    await catalog("Bolsa de Python");
+    expect(await corrected('pyhton "pyhton"')).toBe('python "pyhton"');
+    expect(await corrected('"pyhton" pyhton')).toBe('"pyhton" python');
+    expect(await corrected("“pyhton” pyhton")).toBe("“pyhton” python");
+  });
+
+  it("troca a palavra em qualquer caixa, com pontuação, e só palavra inteira", async () => {
+    await catalog("Bolsa de Python", "Programação");
+    expect(await corrected("PYHTON Pyhton pyhton")).toBe("python python python");
+    expect(await corrected("progamação PROGAMACAO")).toBe("programacao programacao");
+    expect(await corrected("(pyhton), pyhton3")).toBe("(python), pyhton3");
+  });
+
+  it("parte de alias de tag com várias palavras é conhecida", async () => {
+    await catalog("Machete", "Leaning");
+    const tag = await mkTag("Aprendizado de máquina");
+    await db.insert(tagAliases).values({ institutionId: inst, aliasSlug: "machine-learning", canonicalTagId: tag!.id });
+    expect(await corrected("machine learning")).toBeNull();
+  });
+
   it("cafezinho vira cafe", async () => {
     await catalog("Café com Ciência");
     expect(await corrected("cafezinho")).toBe("cafe");
@@ -96,8 +149,8 @@ describe("correctQuery", () => {
 
   it("palavra de sinônimo ou de alias de tag não é corrigida", async () => {
     await catalog("Código aberto", "Python");
-    await db.insert(searchSynonyms).values({ institutionId: inst, term: "coding", canonical: "programacao" });
-    expect(await corrected("coding")).toBeNull();
+    await db.insert(searchSynonyms).values({ institutionId: inst, term: "codego", canonical: "programacao" });
+    expect(await corrected("codego")).toBeNull();
     const tag = await mkTag("Python");
     await db.insert(tagAliases).values({ institutionId: inst, aliasSlug: "pyhton", canonicalTagId: tag!.id });
     expect(await corrected("pyhton")).toBeNull();

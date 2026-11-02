@@ -1,7 +1,7 @@
 {
-  "p1": 0.9148936170212766,
-  "p3": 0.574468085106383,
-  "ndcg10": 0.9148936170212766,
+  "p1": 1,
+  "p3": 0.6170212765957447,
+  "ndcg10": 0.9950076731274176,
   "zeroRate": 1,
   "perCategory": {
     "exata": {
@@ -38,10 +38,10 @@
     },
     "sinonimo": {
       "n": 7,
-      "p1": 0.42857142857142855,
-      "p3": 0.3333333333333333,
-      "np3": 0.42857142857142855,
-      "ndcg10": 0.42857142857142855,
+      "p1": 1,
+      "p3": 0.619047619047619,
+      "np3": 0.9523809523809524,
+      "ndcg10": 0.9664800909983745,
       "zeroRate": 0
     },
     "zero": {
@@ -578,14 +578,12 @@
     {
       "query": "domótica",
       "category": "sinonimo",
-      "p1": 0,
-      "p3": 0,
-      "ndcg10": 0,
-      "ok": false,
+      "p1": 1,
+      "p3": 0.3333333333333333,
+      "ndcg10": 1,
+      "ok": true,
       "results": [
-        "robotica-movel",
-        "robotica-competicao",
-        "robotica-educacional"
+        "casa-inteligente"
       ]
     },
     {
@@ -618,40 +616,37 @@
     {
       "query": "avião",
       "category": "sinonimo",
-      "p1": 0,
-      "p3": 0,
-      "ndcg10": 0,
-      "ok": false,
+      "p1": 1,
+      "p3": 0.6666666666666666,
+      "ndcg10": 0.7653606369886217,
+      "ok": true,
       "results": [
-        "robotica-educacional",
-        "horta-comunitaria",
-        "carinho-hospital",
-        "vizinho-solidario",
-        "caminho-trilhas",
-        "oficinas-idosos",
-        "casa-inteligente",
-        "python-ic",
-        "programacao-competitiva",
-        "programacao-embarcada"
+        "eng-aeronautica",
+        "aero-materiais"
       ]
     },
     {
       "query": "internet das coisas",
       "category": "sinonimo",
-      "p1": 0,
-      "p3": 0,
-      "ndcg10": 0,
-      "ok": false,
-      "results": []
+      "p1": 1,
+      "p3": 0.3333333333333333,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "casa-inteligente"
+      ]
     },
     {
       "query": "coding",
       "category": "sinonimo",
-      "p1": 0,
-      "p3": 0,
-      "ndcg10": 0,
-      "ok": false,
-      "results": []
+      "p1": 1,
+      "p3": 0.6666666666666666,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "programacao-competitiva",
+        "programacao-embarcada"
+      ]
     },
     {
       "query": "xadrez",

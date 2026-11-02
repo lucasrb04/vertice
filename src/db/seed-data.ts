@@ -56,4 +56,8 @@ export const SYNONYMS: { term: string; canonical: string }[] = [
   { term: "robo", canonical: "robotica" },
   { term: "programador", canonical: "programacao" },
   { term: "empresa jr", canonical: "empresa junior" },
+  { term: "domotica", canonical: "casa inteligente" },
+  { term: "aviao", canonical: "aeronautica" },
+  { term: "internet das coisas", canonical: "iot" },
+  { term: "coding", canonical: "programacao" },
 ];

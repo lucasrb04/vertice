@@ -178,6 +178,28 @@ describe("busca em camadas", () => {
     expect((await search({ q: '"casinha"' })).items).toEqual([]);
   });
 
+  it("palavra entre aspas busca o texto exato, sem radical; as demais seguem normais", async () => {
+    const p = await mkProject();
+    await mkOpportunity(p.id, { title: "Casa inteligente" });
+    await mkOpportunity(p.id, { title: "Estudo de caso" });
+    await mkOpportunity(p.id, { title: "Bolsa de monitoria" });
+    await reindex();
+    expect(await titles({ q: '"casa"' })).toEqual(["Casa inteligente"]);
+    expect(await titles({ q: '"casas"' })).toEqual([]);
+    expect(await titles({ q: "casas" })).toContain("Estudo de caso");
+    expect((await titles({ q: '"casa" bolsas' })).sort()).toEqual(["Bolsa de monitoria", "Casa inteligente"]);
+  });
+
+  it("sem resultado não há correção a mostrar", async () => {
+    const p = await mkProject({ category: "PET" });
+    await mkOpportunity(p.id, { title: "Casa inteligente" });
+    await reindex();
+    expect((await search({ q: "casinha" })).correction).not.toBeNull();
+    const none = await search({ q: "casinha", category: "EXTENSION" });
+    expect(none.total).toBe(0);
+    expect(none.correction).toBeNull();
+  });
+
   it("só sinais ou palavras comuns não dão erro e seguem no LIKE", async () => {
     const p = await mkProject();
     await mkOpportunity(p.id, { title: "Grito!!! na sala", description: "Texto." });
