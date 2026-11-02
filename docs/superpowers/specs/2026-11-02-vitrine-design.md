@@ -93,3 +93,30 @@ Nome, sigla, categoria, instituto, orientador, selo, descrição Markdown, site,
 ## 7. Decisões do Claude (revisar com a página aberta)
 
 Slogan e textos; "Encerrando em breve" como terceiro carrossel; rotas `/processos`, `/processo/[slug]`, `/projeto/[slug]` (`/projetos/[uuid]` é privada); popularidade sem janela de 30 dias; filtro "Tipo de inscrição" oculto; "A definir" fora do filtro de bolsa (não existe esse dado); paginação em vez de scroll infinito; visualização deduplicada em memória; seed de demonstração; processo `PAUSED` tratado como encerrado.
+
+## 8. Temas em aberto (para tratar depois)
+
+Registrados a pedido do autor em 2026-11-02. Nada aqui está decidido.
+
+**Decisões do autor**
+- Contraste do prazo: âmbar da D25 (`amber-600`) tem 3,2:1 em texto pequeno, abaixo do AA; recomendação: `amber-700` só para texto.
+- Processo com abertura de inscrições no futuro aparece como aberto, com "Acessar edital", antes da data.
+- Textos da home, slogan e o carrossel "Encerrando em breve" foram escolha do Claude.
+- Em que momento o aluno sente vontade de criar conta. Hipótese do autor: só quando o projeto faz a seleção pela plataforma; projetos que seguem 100% pelo edital não exigem registro.
+
+**Problemas conhecidos**
+- No celular, o painel de filtros fecha ao desmarcar o último filtro ativo (`filters.tsx`, `<details open={active}>`).
+- Carrossel: o foco do teclado pode se perder ao chegar na ponta.
+- Ordenação: o seletor perde o foco do teclado depois de alterado.
+
+**Melhorias adiadas**
+- Filtros: `::details-content` em navegadores antigos foi tratado, mas falta teste de filtros mantidos entre páginas, de filtro alterado na página 2 e do caminho sem JS no celular.
+- Código de curso desconhecido na URL filtra em vez de ser ignorado.
+- Normalização de acentos difere entre JS e SQL em letras fora do português (ß, Ø).
+- Cliques podem ser inflados trocando `x-forwarded-for`; o Caddy precisa sobrescrever o cabeçalho no deploy.
+- Teste de falha da telemetria pode não exercitar o `catch`; testes de "nenhum membro" não têm membro de verdade; falta E2E de processo em projeto arquivado.
+- Seed de demonstração só recusa por `NODE_ENV`; recusar também banco que não seja local.
+- Rotas: nome acessível longo no card, `h2` e `waitForTimeout` no E2E da home, dois relógios no card.
+- Herdado do Subprojeto 1: permissão lida fora da transação (corrida com arquivamento), sem retry de slug de processo, tags sem `orderBy` no formulário, `listCourses` com ordenação por bytes, `<details>` do formulário que fecha ao limpar erros, "Publicar" desabilitado sem aviso quando o token expira, mensagem de sessão para usuário banido.
+- `pnpm add` falha com `ERR_PNPM_UNEXPECTED_STORE` até reinstalar o `node_modules` no store padrão.
+

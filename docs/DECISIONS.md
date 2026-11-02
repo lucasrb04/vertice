@@ -54,6 +54,7 @@ Adota-se o **modelo de `ARCHITECTURE.md §5`** (é o mais preciso e implementáv
 | D36 | Visibilidade de processos encerrados | A vitrine e as telas iniciais mostram **apenas processos abertos**. Encerrados são acessíveis só por filtro explícito ("incluir encerrados") e no histórico da página pública do projeto — nunca priorizados em busca ou ordenação. A página pública do projeto permanece acessível mesmo sem processo aberto. | Decisão do autor (2026-10-27): o produto é uma gestão/consulta de processos seletivos — o que importa é quais editais estão abertos, quando fecham e o que pedem; o histórico serve só de referência. |
 | D37 | Rotas públicas | `/processos` (busca), `/processo/[slug]`, `/processo/[slug]/edital` (redirect com contagem) e `/projeto/[slug]`. `/projetos/[uuid]` segue privada. Público = processo não `UNDER_REVIEW` de projeto `ACTIVE` ou `ARCHIVED`. | Decisão técnica (Claude, 2026-11-02). |
 | D38 | Popularidade | `viewsCount + externalClicksCount`, sem janela de 30 dias. Substitui D29 até existirem candidaturas e dados por período. | Decisão técnica (Claude, 2026-11-02): as contagens atuais são acumuladas. |
+| D39 | Busca | Cascata no PostgreSQL: FTS `portuguese` em duas formas, corretor por vocabulário público, sinônimos em tabela e `LIKE` para siglas. Sem motor dedicado, BM25 ou `pgvector` por ora. Toda correção é visível e reversível. Refina a busca da spec da vitrine §5.4. | Pesquisa de 2026-11-02 (`reports/Busca inteligente em português.md`); autorizada pelo autor. |
 
 ## 4. Segurança e Limites
 
