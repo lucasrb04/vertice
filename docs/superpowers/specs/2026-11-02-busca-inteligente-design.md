@@ -50,10 +50,10 @@ Tabela `search_vocabulary` (`institution_id`, `word`, `frequency`; PK nas duas p
 Só em palavra com 4 letras ou mais que **não existe** no vocabulário nem nos sinônimos:
 
 1. Sem diminutivo (`-zinho(s)`, `-zinha(s)`, `-inho(s)`, `-inha(s)`, restaurando `a`/`o`): aceita se existir no vocabulário.
-2. `levenshtein_less_equal`: distância 1 para 4 letras, 2 para 5 ou mais; empate por menor distância e maior frequência.
+2. `levenshtein_less_equal`, mesma primeira letra: distância 1 para 4 e 5 letras, 2 para 6 ou mais; com 5 letras, distância 2 só se as letras forem as mesmas em outra ordem (`blosa → bolsa`). Primeira letra diferente só com distância 1 em palavra de 6 ou mais letras (`oython → python`). Empate por menor distância e maior frequência. Sem isso, palavras reais fora do catálogo viravam outras: `avião → acao`, `nasa → casa`, `música → busca`.
 3. Sem candidato: mantém a palavra.
 
-Consulta com aspas não é corrigida. `corrigir=0` na URL desliga a correção.
+Palavra entre aspas não é corrigida e busca o texto exato; as demais palavras da consulta seguem normais. `corrigir=0` na URL desliga a correção.
 
 ### 5.4. Consulta e ranqueamento
 
