@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { NextRequest } from "next/server";
 import { createRateLimiter } from "@/lib/security/rate-limit";
 import { isSearchRateLimited, SEARCH_LIMIT_PER_MINUTE } from "@/lib/security/search-limit";
+import { proxy } from "@/proxy";
 import { isLocalDatabaseUrl } from "@/db/seed-demo";
 
 const newLimiter = () => createRateLimiter({ limit: SEARCH_LIMIT_PER_MINUTE, windowMs: 60_000 });
@@ -46,5 +48,26 @@ describe("isLocalDatabaseUrl", () => {
     expect(isLocalDatabaseUrl("postgres://u:p@postgres:5432/db")).toBe(false);
     expect(isLocalDatabaseUrl("postgres://u:p@db.exemplo.com.br/db")).toBe(false);
     expect(isLocalDatabaseUrl("isto não é url")).toBe(false);
+  });
+
+  it("recusa host ou hostaddr na query, que sobrescrevem o host da URL", () => {
+    expect(isLocalDatabaseUrl("postgres://u:p@localhost/db?host=prod.example.com")).toBe(false);
+    expect(isLocalDatabaseUrl("postgres://u:p@localhost/db?hostaddr=10.0.0.5")).toBe(false);
+  });
+});
+
+describe("proxy", () => {
+  it("responde 429 em HTML pt-BR com link para /processos e Retry-After", async () => {
+    const make = () =>
+      new NextRequest("https://vertice.test/processos?q=robo", { headers: { "x-forwarded-for": "8.8.4.4" } });
+    for (let i = 0; i < SEARCH_LIMIT_PER_MINUTE; i++) expect(proxy(make()).status).toBe(200);
+    const res = proxy(make());
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("60");
+    expect(res.headers.get("Content-Type")).toContain("text/html");
+    const html = await res.text();
+    expect(html).toContain('lang="pt-BR"');
+    expect(html).toContain("Muitas buscas em pouco tempo. Tente de novo em um minuto.");
+    expect(html).toContain('href="/processos"');
   });
 });

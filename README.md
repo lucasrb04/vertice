@@ -61,7 +61,7 @@ pnpm db:seed:demo
 ```
 
 Roda depois de `pnpm db:seed`, é idempotente, recusa `NODE_ENV=production` e bancos que não sejam locais (`localhost`, `127.0.0.1`, `[::1]`) e cria projetos e processos com prefixo
-"Demo" (slugs `demo-*`, dono `demo@unifei.edu.br`), com datas relativas a hoje: abertos, encerrado, verificado e arquivado.
+"Demo" (slugs `demo-*`, dono `demo@unifei.edu.br`), com datas relativas a hoje: abertos, encerrado, verificado, arquivado e um com abertura futura (`demo-abertura-futura`, com o selo "Abre em dd/mm").
 
 ## Comandos
 

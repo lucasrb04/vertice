@@ -17,6 +17,7 @@ function pageList(page: number, count: number): (number | null)[] {
   return out;
 }
 
+/** `prefetch={false}`: o prefetch de /processos?q= gastaria o limite de buscas do visitante. */
 export function Pagination({
   params,
   page,
@@ -31,7 +32,7 @@ export function Pagination({
   return (
     <nav aria-label="Paginação" className="flex flex-wrap items-center justify-center gap-1.5">
       {page > 1 ? (
-        <Link href={href(page - 1)} rel="prev" className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}>
+        <Link href={href(page - 1)} prefetch={false} rel="prev" className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}>
           Anterior
         </Link>
       ) : null}
@@ -44,6 +45,7 @@ export function Pagination({
           <Link
             key={n}
             href={href(n)}
+            prefetch={false}
             aria-current={n === page ? "page" : undefined}
             aria-label={`Página ${n}`}
             className={cn(
@@ -58,7 +60,7 @@ export function Pagination({
         ),
       )}
       {page < pageCount ? (
-        <Link href={href(page + 1)} rel="next" className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}>
+        <Link href={href(page + 1)} prefetch={false} rel="next" className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}>
           Próxima
         </Link>
       ) : null}

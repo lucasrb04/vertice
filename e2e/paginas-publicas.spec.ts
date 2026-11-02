@@ -94,7 +94,17 @@ test.describe("/processo/[slug]", () => {
     await page.goto("/processos");
     const card = page.getByRole("link", { name: /Processo que abre em breve/ });
     await expect(card).toContainText(`Abre em ${opens}`);
-    await expect(card).not.toContainText("Encerra em");
+    await expect(card).toContainText("Encerra em 30 dias");
+  });
+
+  test("abertura amanhã com prazo em 3 dias: o card mostra selo e prazo, o prazo em âmbar", async ({ page }) => {
+    const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(daysFromNow(1));
+    await insertProcess({ title: "Abre amanhã e encerra logo", applicationsOpenOn: tomorrow, deadlineAt: daysFromNow(3) });
+
+    await page.goto("/processos");
+    const card = page.getByRole("link", { name: /Abre amanhã e encerra logo/ });
+    await expect(card).toContainText(`Abre em ${formatDay(daysFromNow(1)).slice(0, 5)}`);
+    await expect(card.getByText("Encerra em 3 dias")).toHaveClass(/text-amber-700/);
   });
 
   test("clique abre o destino e conta 1 mesmo clicando duas vezes; visualização conta 1", async ({ page, context }) => {

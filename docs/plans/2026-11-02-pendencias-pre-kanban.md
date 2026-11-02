@@ -49,7 +49,7 @@ Expected: FAIL, função inexistente.
 
 - [ ] **Step 3: Implementar**
 
-`opensInFuture` compara strings `YYYY-MM-DD` com `todayInSaoPaulo(now)`. Levar `applicationsOpenOn` ao `PublicCard` em todas as queries de card. O processo continua aberto: `isOpen` não muda. No card, com processo aberto e abertura futura, o selo aparece no lugar da contagem de prazo, sem destaque âmbar. Na página do processo, o selo aparece acima do prazo e "Acessar edital" continua disponível.
+`opensInFuture` compara strings `YYYY-MM-DD` com `todayInSaoPaulo(now)`. Levar `applicationsOpenOn` ao `PublicCard` em todas as queries de card. O processo continua aberto: `isOpen` não muda. No card, com processo aberto e abertura futura, o selo "Abre em dd/mm" e o prazo aparecem juntos, em duas linhas; o prazo mantém o âmbar quando urgente (D41). Na página do processo, o selo aparece acima do prazo e "Acessar edital" continua disponível.
 
 Trocar `text-amber-600` por `text-amber-700` nos três usos e registrar em `docs/DESIGN_SYSTEM.md` §2 que texto de prazo usa `amber-700` (D44).
 
@@ -57,7 +57,7 @@ Adicionar ao seed de demonstração o processo `demo-abertura-futura` com `sched
 
 - [ ] **Step 4: E2E**
 
-Em `e2e/paginas-publicas.spec.ts`: criar processo com abertura futura e conferir "Abre em" na lista e na página, com o link do edital visível.
+Em `e2e/paginas-publicas.spec.ts`: criar processo com abertura futura e conferir "Abre em" na lista e na página, com o link do edital visível. Cobrir também abertura amanhã com prazo em 3 dias: o card mostra o selo e o prazo, este em `text-amber-700`.
 
 Run: `pnpm test:unit && pnpm test:e2e e2e/paginas-publicas.spec.ts`
 Expected: PASS.

@@ -176,3 +176,41 @@ test.describe("celular, com JavaScript", () => {
     await expect(sort).toHaveValue("deadline");
   });
 });
+
+// O prefetch de links para /processos?q= gastaria o limite de buscas: cada página carregada faz uma só requisição com `q`.
+const countSearchRequests = (page: import("@playwright/test").Page) => {
+  const urls: string[] = [];
+  page.on("request", (req) => {
+    const url = new URL(req.url());
+    if (url.pathname === "/processos" && url.searchParams.has("q")) urls.push(req.url());
+  });
+  return urls;
+};
+
+test("busca paginada faz uma só requisição com q por página carregada", async ({ page }) => {
+  for (let i = 1; i <= 13; i++) await insertProcess({ title: `Robótica ${i}` });
+  await rebuildSearchIndex();
+  const urls = countSearchRequests(page);
+
+  await page.goto("/processos?q=robotica");
+  await hydrated(page);
+  await page.getByRole("navigation", { name: "Paginação" }).scrollIntoViewIfNeeded();
+  await page.waitForLoadState("networkidle");
+  expect(urls).toHaveLength(1);
+
+  await page.getByRole("link", { name: "Página 2" }).click();
+  await expect(page).toHaveURL(/page=2/);
+  await page.waitForLoadState("networkidle");
+  expect(urls).toHaveLength(2);
+});
+
+test("busca com correção faz uma só requisição com q", async ({ page }) => {
+  await insertProcess({ title: "Automação de casa inteligente" });
+  await rebuildSearchIndex();
+  const urls = countSearchRequests(page);
+
+  await page.goto("/processos?q=casinha");
+  await expect(page.getByRole("link", { name: /buscar exatamente/ })).toBeVisible();
+  await page.waitForLoadState("networkidle");
+  expect(urls).toHaveLength(1);
+});

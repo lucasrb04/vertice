@@ -172,7 +172,10 @@ const DEMO_OPPORTUNITIES: DemoOpportunity[] = [
 /** Só host local: o seed cria dados fictícios e não pode apontar para um banco compartilhado. */
 export function isLocalDatabaseUrl(url: string): boolean {
   try {
-    return ["localhost", "127.0.0.1", "[::1]"].includes(new URL(url).hostname);
+    const parsed = new URL(url);
+    // `?host=` e `?hostaddr=` fazem o driver ignorar o host da URL.
+    if (parsed.searchParams.has("host") || parsed.searchParams.has("hostaddr")) return false;
+    return ["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname);
   } catch {
     return false;
   }

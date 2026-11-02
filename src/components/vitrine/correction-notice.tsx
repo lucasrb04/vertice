@@ -18,6 +18,7 @@ export function CorrectionNotice({
       <span aria-hidden> · </span>
       <Link
         href={vitrineHref(params, { exact: true })}
+        prefetch={false}
         className="font-medium text-brand underline underline-offset-4"
       >
         buscar exatamente <strong className="font-semibold">{correction.original}</strong>

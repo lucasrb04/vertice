@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
  */
 export function OpportunityCard({ card }: { card: PublicCard }) {
   const deadline = card.isOpen ? deadlineChip(card.deadlineAt) : closedChip(card.closedOn);
-  const opensLater = card.isOpen && card.applicationsOpenOn !== null && opensInFuture(card.applicationsOpenOn);
+  const opensOn = card.isOpen && opensInFuture(card.applicationsOpenOn) ? card.applicationsOpenOn : null;
   const details = [scholarshipSummary(card), card.weeklyHours ? `${card.weeklyHours}h/sem` : null]
     .filter(Boolean)
     .join(" · ");
@@ -63,13 +63,10 @@ export function OpportunityCard({ card }: { card: PublicCard }) {
       <div className="mt-auto pt-4">
         <div className="space-y-0.5 border-t border-stone-100 pt-3 text-xs">
           <p className="text-stone-600">{requirementsSummary(card)}</p>
-          {opensLater ? (
-            <p className="font-mono text-stone-600">{opensOnLabel(card.applicationsOpenOn!)}</p>
-          ) : (
-            <p className={cn("font-mono", deadline.urgent ? "font-medium text-amber-700" : "text-stone-600")}>
-              {deadline.text}
-            </p>
-          )}
+          {opensOn ? <p className="font-mono text-stone-600">{opensOnLabel(opensOn)}</p> : null}
+          <p className={cn("font-mono", deadline.urgent ? "font-medium text-amber-700" : "text-stone-600")}>
+            {deadline.text}
+          </p>
         </div>
       </div>
     </Link>

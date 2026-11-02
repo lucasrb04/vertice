@@ -59,6 +59,7 @@ vertice-unifei/
 │   │   ├── (organizer)/          # Wizard de Criação (Projeto + Vaga), Painel do Projeto, Kanban
 │   │   ├── admin/                # Portal do SYSTEM_ADMIN (Dashboard, Projetos, Merge de Tags, Audit)
 │   │   └── api/                  # Webhooks/Rotas do Better-Auth e Cron de Alertas
+│   ├── proxy.ts                  # Proxy do Next.js em /processos: limite de buscas por IP (429 com link de volta)
 │   ├── components/
 │   │   ├── ui/                   # Primitivos do shadcn/ui customizados pelo Design System
 │   │   ├── layout/               # Header, Footer, CommandBar, Navegação
@@ -70,7 +71,7 @@ vertice-unifei/
 │   │   ├── index.ts              # Instância de conexão do Drizzle (Pool pg)
 │   │   ├── schema/               # Definição modular das tabelas (institutions, users, projects, etc.)
 │   │   ├── seed.ts               # Seed inicial (UNIFEI Itajubá, Cursos, Institutos, Tags Base)
-│   │   └── seed-demo.ts          # Dados fictícios "Demo" (pnpm db:seed:demo; recusa produção)
+│   │   └── seed-demo.ts          # Dados fictícios "Demo" (pnpm db:seed:demo; recusa produção e banco que não seja local: `localhost`, `127.0.0.1` ou `[::1]`, sem `host`/`hostaddr` na query)
 │   ├── lib/
 │   │   ├── auth/                 # Configuração do Better-Auth + Guards (requireAuth, requireAdmin)
 │   │   ├── matching/             # Motor matemático de Afinidade e Explainable Match (Puro + Testável)
@@ -667,6 +668,7 @@ Como a plataforma rodará na UNIFEI (onde há forte presença de alunos de Ciên
 3. **Proteção Anti-Spam e Rate Limiting:**
    * Validação server-side do token **Cloudflare Turnstile** na criação de projeto.
    * Rate Limiter em memória (`LRU Cache` no processo Node standalone) limitando mutações por IP e por `userId` (ex: máx. 3 projetos criados por usuário por dia, máx. 20 candidaturas por hora).
+   * **Limite de buscas (`src/proxy.ts` + `src/lib/security/search-limit.ts`):** `/processos` com `q` aceita 120 buscas por minuto por IP, em memória (D22, D44). Excedido, responde 429 com `Retry-After: 60` e HTML mínimo com link para `/processos`, que nunca é limitado. Links internos para `/processos?q=` usam `prefetch={false}`, porque o prefetch gastaria o limite. Não se isenta o cabeçalho `next-router-prefetch`: abriria um desvio.
 4. **Content Security Policy (CSP) e Headers HTTP (`next.config.ts`):**
    * `X-Frame-Options: DENY` (anti-clickjacking).
    * `X-Content-Type-Options: nosniff`.
@@ -819,6 +821,11 @@ volumes:
 ### 8.4. Deploy da busca inteligente
 
 Ordem: `pnpm db:migrate`, deploy da aplicação, `pnpm db:seed` (traz os sinônimos), `pnpm db:search:rebuild`. O último passo precisa rodar depois de qualquer deploy desta funcionalidade: não há backfill em SQL, e sem ele os processos existentes ficam fora do índice e do vocabulário. É idempotente e pode rodar com o site no ar.
+
+Verificações adicionais do deploy:
+
+- O Caddy deve **sobrescrever** `x-forwarded-for` (não acrescentar ao valor do cliente). O limite de buscas e a deduplicação de cliques usam esse IP; sem a sobrescrita, trocar o cabeçalho burla ambos.
+- A candidatura pela plataforma precisa checar `opensInFuture(applicationsOpenOn)`, porque `isOpen` segue `true` antes da abertura (D41).
 
 ---
 

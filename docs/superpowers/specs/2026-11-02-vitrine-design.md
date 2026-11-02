@@ -99,26 +99,20 @@ Slogan e textos; "Encerrando em breve" como terceiro carrossel; rotas `/processo
 Registrados a pedido do autor em 2026-11-02 e atualizados no mesmo dia.
 
 **Decididos, ainda por implementar**
-- Contraste do prazo: `amber-700` em texto (D44).
-- Processo com abertura futura: selo "Abre em dd/mm" (D41).
 - Criar conta: só para candidatura pela plataforma (D40).
 
 **Falta o autor revisar**
 - Textos da home, slogan e o carrossel "Encerrando em breve", que foram escolha do Claude.
 - Institutos dos cursos em `src/db/seed-data.ts`, marcados com `TODO`.
 
-**Problemas conhecidos, a corrigir**
-- No celular, o painel de filtros fecha ao desmarcar o último filtro ativo (`filters.tsx`, `<details open={active}>`).
-- Carrossel: o foco do teclado pode se perder ao chegar na ponta.
-- Ordenação: o seletor perde o foco do teclado depois de alterado.
-
 **Melhorias adiadas**
+- Filtros marcados ficam presos ao clicar em "Processos" no cabeçalho (`defaultChecked`), e o painel de filtros não acompanha a URL em navegação suave.
+- A contagem da home inclui processos que ainda não abriram.
 - Filtros: `::details-content` em navegadores antigos foi tratado, mas falta teste de filtros mantidos entre páginas, de filtro alterado na página 2 e do caminho sem JS no celular.
 - Código de curso desconhecido na URL filtra em vez de ser ignorado.
 - Normalização de acentos difere entre JS e SQL em letras fora do português (ß, Ø).
 - Cliques podem ser inflados trocando `x-forwarded-for`; o Caddy precisa sobrescrever o cabeçalho no deploy.
 - Teste de falha da telemetria pode não exercitar o `catch`; testes de "nenhum membro" não têm membro de verdade; falta E2E de processo em projeto arquivado.
-- Seed de demonstração só recusa por `NODE_ENV`; recusar também banco que não seja local.
 - Rotas: nome acessível longo no card, `h2` e `waitForTimeout` no E2E da home, dois relógios no card.
 - Herdado do Subprojeto 1: permissão lida fora da transação (corrida com arquivamento), sem retry de slug de processo, tags sem `orderBy` no formulário, `listCourses` com ordenação por bytes, `<details>` do formulário que fecha ao limpar erros, "Publicar" desabilitado sem aviso quando o token expira, mensagem de sessão para usuário banido.
 - `pnpm add` falha com `ERR_PNPM_UNEXPECTED_STORE` até reinstalar o `node_modules` no store padrão.
