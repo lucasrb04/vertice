@@ -169,10 +169,22 @@ const DEMO_OPPORTUNITIES: DemoOpportunity[] = [
   },
 ];
 
+/** Só host local: o seed cria dados fictícios e não pode apontar para um banco compartilhado. */
+export function isLocalDatabaseUrl(url: string): boolean {
+  try {
+    return ["localhost", "127.0.0.1", "[::1]"].includes(new URL(url).hostname);
+  } catch {
+    return false;
+  }
+}
+
 /** Popula a vitrine com dados fictícios. Exige `pnpm db:seed` antes; nunca roda em produção. */
 export async function runDemoSeed(now: Date = new Date()): Promise<void> {
   if (process.env.NODE_ENV === "production") {
     throw new Error("O seed de demonstração não roda em produção.");
+  }
+  if (!isLocalDatabaseUrl(process.env.DATABASE_URL ?? "")) {
+    throw new Error("O seed de demonstração só roda contra um banco local.");
   }
   const institution = await getDefaultInstitution();
   const institutionId = institution.id;

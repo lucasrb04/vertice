@@ -82,4 +82,10 @@ describe("runDemoSeed", () => {
     await expect(runDemoSeed(now)).rejects.toThrow(/produção/);
     expect(await total(projects)).toBe(0);
   });
+
+  it("recusa banco que não é local, mesmo fora de produção", async () => {
+    vi.stubEnv("DATABASE_URL", "postgres://u:p@db.exemplo.com.br:5432/vertice");
+    await expect(runDemoSeed(now)).rejects.toThrow(/local/);
+    expect(await total(projects)).toBe(0);
+  });
 });

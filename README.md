@@ -7,7 +7,7 @@ Decisões, regras de negócio e arquitetura: veja `docs/` (`DECISIONS.md` preval
 
 ## Pré-requisitos
 
-- Node 24
+- Node 24 (mínimo 22.9, conforme `engines` do `package.json`)
 - pnpm (o projeto usa somente pnpm; não use npm)
 - Docker com acesso sem `sudo` (o usuário deve estar no grupo `docker`)
 
@@ -60,7 +60,7 @@ Dados fictícios para ver a vitrine preenchida (opcional, nunca em produção):
 pnpm db:seed:demo
 ```
 
-Roda depois de `pnpm db:seed`, é idempotente, recusa `NODE_ENV=production` e cria projetos e processos com prefixo
+Roda depois de `pnpm db:seed`, é idempotente, recusa `NODE_ENV=production` e bancos que não sejam locais (`localhost`, `127.0.0.1`, `[::1]`) e cria projetos e processos com prefixo
 "Demo" (slugs `demo-*`, dono `demo@unifei.edu.br`), com datas relativas a hoje: abertos, encerrado, verificado e arquivado.
 
 ## Comandos
@@ -93,3 +93,9 @@ em `.env.test`), que nunca deve ser habilitado em produção (a aplicação recu
 6. Copie o ID e o segredo para `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` no `.env`.
 
 Em produção, adicione também a origem e o redirect do domínio público.
+
+## Limite de buscas
+
+O `src/proxy.ts` limita a 120 buscas (`/processos?q=`) por minuto por IP, em memória. O IP vem de
+`x-forwarded-for`/`x-real-ip`, então o limite só vale se o Caddy reescrever esses cabeçalhos; sem ele, o
+cliente os forja e escapa do limite.
