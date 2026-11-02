@@ -10,8 +10,17 @@ import { assertTestDatabase } from "../src/db/test-db-guard";
 // O processo do Playwright não tem o ambiente do servidor: conecta direto no banco de .env.test.
 const testEnv = parseEnv(readFileSync(".env.test", "utf8"));
 assertTestDatabase(testEnv.NODE_ENV ?? "", testEnv.DATABASE_URL ?? "");
-const pool = new Pool({ connectionString: testEnv.DATABASE_URL });
-const db = drizzle(pool);
+
+// O worker do Playwright é reaproveitado entre arquivos: cada `afterAll` fecha o pool e o próximo recria.
+let pool: Pool | null = null;
+let dbInstance: ReturnType<typeof drizzle> | null = null;
+function getDb() {
+  if (!pool || !dbInstance) {
+    pool = new Pool({ connectionString: testEnv.DATABASE_URL });
+    dbInstance = drizzle(pool);
+  }
+  return dbInstance;
+}
 
 const DAY_MS = 24 * 3_600_000;
 
@@ -26,7 +35,7 @@ export type ProcessInput = Partial<Omit<OpportunityValues, "title">> & {
 };
 
 async function institutionId(): Promise<string> {
-  const [inst] = await db
+  const [inst] = await getDb()
     .select({ id: institutions.id })
     .from(institutions)
     .where(eq(institutions.slug, testEnv.DEFAULT_INSTITUTION_SLUG ?? ""));
@@ -38,7 +47,7 @@ async function institutionId(): Promise<string> {
 export async function insertProcess({ project: projectOverrides, ...overrides }: ProcessInput) {
   const instId = await institutionId();
   const suffix = randomUUID().slice(0, 8);
-  const [project] = await db
+  const [project] = await getDb()
     .insert(projects)
     .values({
       institutionId: instId,
@@ -51,7 +60,7 @@ export async function insertProcess({ project: projectOverrides, ...overrides }:
       ...projectOverrides,
     })
     .returning();
-  const [opportunity] = await db
+  const [opportunity] = await getDb()
     .insert(opportunities)
     .values({
       institutionId: instId,
@@ -68,9 +77,12 @@ export async function insertProcess({ project: projectOverrides, ...overrides }:
 
 /** Remove todos os processos, para testes que dependem da vitrine vazia ou de uma ordem exata. */
 export async function clearOpportunities(): Promise<void> {
-  await db.delete(opportunities);
+  await getDb().delete(opportunities);
 }
 
 export async function closeTestDb(): Promise<void> {
-  await pool.end();
+  const closing = pool;
+  pool = null;
+  dbInstance = null;
+  await closing?.end();
 }

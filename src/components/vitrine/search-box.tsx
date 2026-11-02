@@ -13,9 +13,12 @@ function isTypingTarget(target: EventTarget | null): boolean {
 export function SearchBox({
   defaultValue,
   autoFocusShortcut = false,
+  embedded = false,
 }: {
   defaultValue?: string;
   autoFocusShortcut?: boolean;
+  /** Dentro de outro formulário GET: renderiza só os campos, sem `<form>` próprio. */
+  embedded?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -31,8 +34,13 @@ export function SearchBox({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [autoFocusShortcut]);
 
+  const Wrapper = embedded ? "div" : "form";
+  const wrapperProps = embedded
+    ? { role: "search" }
+    : { action: "/processos", method: "get", role: "search" };
+
   return (
-    <form action="/processos" method="get" role="search" className="flex flex-col gap-2 sm:flex-row">
+    <Wrapper {...wrapperProps} className="flex flex-col gap-2 sm:flex-row">
       <div className="relative min-w-0 flex-1">
         <Input
           ref={inputRef}
@@ -57,6 +65,6 @@ export function SearchBox({
       <Button type="submit" className="h-11 px-5">
         Buscar
       </Button>
-    </form>
+    </Wrapper>
   );
 }

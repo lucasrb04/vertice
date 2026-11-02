@@ -74,8 +74,8 @@ export function parseVitrineParams(raw: RawParams): VitrineParams {
 
   const tags = [
     ...new Set(
-      clean(first(raw.tags) ?? "")
-        .split(",")
+      all(raw.tags)
+        .flatMap((v) => clean(v).split(","))
         .map((t) => t.trim().toLowerCase())
         .filter((t) => tagSlugSchema.safeParse(t).success),
     ),

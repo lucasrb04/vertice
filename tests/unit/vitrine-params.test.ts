@@ -29,6 +29,10 @@ describe("parseVitrineParams", () => {
   it("tags separadas por vírgula", () => {
     expect(parseVitrineParams({ tags: "python,,cad" }).tags).toEqual(["python", "cad"]);
   });
+  it("tags repetidas (checkboxes) e mistas com vírgula", () => {
+    expect(parseVitrineParams({ tags: ["python", "cad"] }).tags).toEqual(["python", "cad"]);
+    expect(parseVitrineParams({ tags: ["python,cad", "Python", "ia"] }).tags).toEqual(["python", "cad", "ia"]);
+  });
   it("scholarship, encerrados e course", () => {
     expect(parseVitrineParams({ scholarship: "BOTH" }).scholarship).toBeNull();
     expect(parseVitrineParams({ scholarship: "PAID" }).scholarship).toBe("PAID");
