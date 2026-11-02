@@ -1,0 +1,657 @@
+{
+  "p1": 0.8297872340425532,
+  "p3": 0.5390070921985816,
+  "ndcg10": 0.8445409873110057,
+  "zeroRate": 0.9,
+  "perCategory": {
+    "exata": {
+      "n": 15,
+      "p1": 1,
+      "p3": 0.6666666666666667,
+      "ndcg10": 1,
+      "zeroRate": 0
+    },
+    "derivacao": {
+      "n": 9,
+      "p1": 0.8888888888888888,
+      "p3": 0.5925925925925924,
+      "ndcg10": 0.9659362670685856,
+      "zeroRate": 0
+    },
+    "erro": {
+      "n": 11,
+      "p1": 0.9090909090909091,
+      "p3": 0.606060606060606,
+      "ndcg10": 0.9090909090909091,
+      "zeroRate": 0
+    },
+    "diminutivo": {
+      "n": 5,
+      "p1": 0.6,
+      "p3": 0.2,
+      "ndcg10": 0.6,
+      "zeroRate": 0
+    },
+    "sinonimo": {
+      "n": 7,
+      "p1": 0.42857142857142855,
+      "p3": 0.3333333333333333,
+      "ndcg10": 0.42857142857142855,
+      "zeroRate": 0
+    },
+    "zero": {
+      "n": 10,
+      "p1": 0,
+      "p3": 0,
+      "ndcg10": 0,
+      "zeroRate": 0.9
+    }
+  },
+  "perQuery": [
+    {
+      "query": "casa",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "casa-inteligente",
+        "estudo-de-caso-gestao"
+      ]
+    },
+    {
+      "query": "python",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-bolsa",
+        "python-ic"
+      ]
+    },
+    {
+      "query": "robótica",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "robotica-competicao",
+        "robotica-movel",
+        "robotica-educacional"
+      ]
+    },
+    {
+      "query": "robotica",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "robotica-competicao",
+        "robotica-movel",
+        "robotica-educacional"
+      ]
+    },
+    {
+      "query": "algoritmos",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "programacao-competitiva",
+        "algoritmos-grafos",
+        "algoritmos-otimizacao"
+      ]
+    },
+    {
+      "query": "café",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "cafe-ciencia",
+        "cafe-qualidade",
+        "comunicacao-design"
+      ]
+    },
+    {
+      "query": "cafe",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "cafe-ciencia",
+        "cafe-qualidade",
+        "comunicacao-design"
+      ]
+    },
+    {
+      "query": "engenharia",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "eng-biomedica",
+        "eng-fotovoltaica",
+        "eng-aeronautica"
+      ]
+    },
+    {
+      "query": "iniciação científica",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-ic",
+        "ic-fisica",
+        "ic-quimica",
+        "ic-visao",
+        "comunicacao-design"
+      ]
+    },
+    {
+      "query": "programação",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "programacao-competitiva",
+        "programacao-embarcada",
+        "python-ic",
+        "ic-fisica",
+        "ic-quimica",
+        "ic-visao"
+      ]
+    },
+    {
+      "query": "vizinho",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "vizinho-solidario"
+      ]
+    },
+    {
+      "query": "caminho",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "caminho-trilhas",
+        "carinho-hospital",
+        "algoritmos-grafos"
+      ]
+    },
+    {
+      "query": "carinho",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "carinho-hospital",
+        "caminho-trilhas"
+      ]
+    },
+    {
+      "query": "horta",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "horta-comunitaria"
+      ]
+    },
+    {
+      "query": "taurus",
+      "category": "exata",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "programacao-embarcada",
+        "robotica-competicao"
+      ]
+    },
+    {
+      "query": "algoritmo",
+      "category": "derivacao",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "programacao-competitiva",
+        "algoritmos-grafos",
+        "algoritmos-otimizacao"
+      ]
+    },
+    {
+      "query": "programar",
+      "category": "derivacao",
+      "p1": 0,
+      "ndcg10": 0.6934264036172708,
+      "ok": false,
+      "results": [
+        "python-ic",
+        "programacao-competitiva",
+        "programacao-embarcada",
+        "ic-fisica",
+        "ic-quimica",
+        "ic-visao"
+      ]
+    },
+    {
+      "query": "bolsistas",
+      "category": "derivacao",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "casa-inteligente",
+        "robotica-movel",
+        "estatistica"
+      ]
+    },
+    {
+      "query": "monitores",
+      "category": "derivacao",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "programacao-competitiva",
+        "horta-comunitaria",
+        "energia-solar"
+      ]
+    },
+    {
+      "query": "desenvolvedores",
+      "category": "derivacao",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "jogos-educacionais",
+        "web-react"
+      ]
+    },
+    {
+      "query": "jogo",
+      "category": "derivacao",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "jogos-educacionais"
+      ]
+    },
+    {
+      "query": "bateria",
+      "category": "derivacao",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "baterias",
+        "ic-fisica",
+        "aero-materiais"
+      ]
+    },
+    {
+      "query": "fotovoltaicos",
+      "category": "derivacao",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "eng-fotovoltaica"
+      ]
+    },
+    {
+      "query": "trilha",
+      "category": "derivacao",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "caminho-trilhas"
+      ]
+    },
+    {
+      "query": "pyhton",
+      "category": "erro",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": false,
+      "results": []
+    },
+    {
+      "query": "bolsa pyhton",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-bolsa"
+      ]
+    },
+    {
+      "query": "robotcia",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "robotica-competicao",
+        "robotica-movel",
+        "robotica-educacional"
+      ]
+    },
+    {
+      "query": "algoritimo",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "programacao-competitiva",
+        "algoritmos-grafos",
+        "algoritmos-otimizacao"
+      ]
+    },
+    {
+      "query": "progamação",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "programacao-competitiva",
+        "programacao-embarcada"
+      ]
+    },
+    {
+      "query": "enginharia",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "eng-biomedica",
+        "eng-fotovoltaica",
+        "eng-aeronautica"
+      ]
+    },
+    {
+      "query": "inciação científica",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "python-ic",
+        "ic-fisica",
+        "ic-quimica",
+        "ic-visao",
+        "comunicacao-design"
+      ]
+    },
+    {
+      "query": "cafee",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "cafe-ciencia",
+        "cafe-qualidade",
+        "comunicacao-design"
+      ]
+    },
+    {
+      "query": "biomédca",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "eng-biomedica"
+      ]
+    },
+    {
+      "query": "fotovoltaca",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "eng-fotovoltaica"
+      ]
+    },
+    {
+      "query": "estatitica",
+      "category": "erro",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "estatistica"
+      ]
+    },
+    {
+      "query": "casinha",
+      "category": "diminutivo",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": false,
+      "results": []
+    },
+    {
+      "query": "casinha inteligente",
+      "category": "diminutivo",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "casa-inteligente",
+        "ic-visao"
+      ]
+    },
+    {
+      "query": "cafezinho",
+      "category": "diminutivo",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": false,
+      "results": []
+    },
+    {
+      "query": "cafezinho com ciência",
+      "category": "diminutivo",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "cafe-ciencia",
+        "comunicacao-design"
+      ]
+    },
+    {
+      "query": "hortinha",
+      "category": "diminutivo",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "horta-comunitaria"
+      ]
+    },
+    {
+      "query": "inteligência artificial",
+      "category": "sinonimo",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "ic-visao",
+        "python-ic"
+      ]
+    },
+    {
+      "query": "domótica",
+      "category": "sinonimo",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": false,
+      "results": [
+        "robotica-competicao",
+        "robotica-movel",
+        "robotica-educacional"
+      ]
+    },
+    {
+      "query": "robôs",
+      "category": "sinonimo",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "robotica-competicao",
+        "robotica-movel",
+        "robotica-educacional"
+      ]
+    },
+    {
+      "query": "painel solar",
+      "category": "sinonimo",
+      "p1": 1,
+      "ndcg10": 1,
+      "ok": true,
+      "results": [
+        "eng-fotovoltaica",
+        "energia-solar"
+      ]
+    },
+    {
+      "query": "avião",
+      "category": "sinonimo",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": false,
+      "results": []
+    },
+    {
+      "query": "internet das coisas",
+      "category": "sinonimo",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": false,
+      "results": []
+    },
+    {
+      "query": "coding",
+      "category": "sinonimo",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": false,
+      "results": []
+    },
+    {
+      "query": "xadrez",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "zzzzzz",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "culinária",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "futebol",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "astrologia",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": false,
+      "results": [
+        "jogos-educacionais",
+        "web-react",
+        "redes-servidores",
+        "horta-comunitaria"
+      ]
+    },
+    {
+      "query": "hieróglifos",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "dermatologia",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "colheita",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "criptografia",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    },
+    {
+      "query": "xqzwvk",
+      "category": "zero",
+      "p1": 0,
+      "ndcg10": 0,
+      "ok": true,
+      "results": []
+    }
+  ]
+}
