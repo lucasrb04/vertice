@@ -22,10 +22,17 @@ const schema = z
       .transform((v) => v === "true"),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().trim().optional().transform((v) => (v ? v : undefined)),
     TURNSTILE_SECRET_KEY: z.string().trim().optional().transform((v) => (v ? v : undefined)),
+    // Segredo do HMAC que anonimiza visitantes (cliques/visualizações). Obrigatório em produção.
+    VISITOR_HASH_SECRET: z
+      .string()
+      .trim()
+      .min(32)
+      .optional()
+      .or(z.literal("").transform(() => undefined)),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === "production") {
-      for (const key of ["NEXT_PUBLIC_TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"] as const) {
+      for (const key of ["NEXT_PUBLIC_TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "VISITOR_HASH_SECRET"] as const) {
         if (!env[key]) ctx.addIssue({ code: "custom", path: [key], message: "obrigatório em produção" });
       }
     }

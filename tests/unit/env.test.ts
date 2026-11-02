@@ -31,6 +31,7 @@ describe("parseEnv", () => {
       ENABLE_TEST_AUTH: "false",
       TURNSTILE_SECRET_KEY: "s",
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: "k",
+      VISITOR_HASH_SECRET: "v".repeat(32),
     });
     expect(env.NODE_ENV).toBe("production");
     expect(env.ENABLE_TEST_AUTH).toBe(false);
@@ -61,6 +62,7 @@ describe("parseEnv", () => {
       NODE_ENV: "production",
       TURNSTILE_SECRET_KEY: "s",
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: "k",
+      VISITOR_HASH_SECRET: "v".repeat(32),
     });
     expect(env.TURNSTILE_SECRET_KEY).toBe("s");
   });
@@ -68,5 +70,15 @@ describe("parseEnv", () => {
     const env = parseEnv(base);
     expect(env.TURNSTILE_SECRET_KEY).toBeUndefined();
     expect(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY).toBeUndefined();
+  });
+  it("recusa produção sem VISITOR_HASH_SECRET", () => {
+    const prod = { ...base, NODE_ENV: "production", TURNSTILE_SECRET_KEY: "s", NEXT_PUBLIC_TURNSTILE_SITE_KEY: "k" };
+    expect(() => parseEnv(prod)).toThrow(/VISITOR_HASH_SECRET: obrigatório em produção/);
+  });
+  it("recusa VISITOR_HASH_SECRET curto", () => {
+    expect(() => parseEnv({ ...base, VISITOR_HASH_SECRET: "curto" })).toThrow(/VISITOR_HASH_SECRET/);
+  });
+  it("dev sem VISITOR_HASH_SECRET passa", () => {
+    expect(parseEnv(base).VISITOR_HASH_SECRET).toBeUndefined();
   });
 });
