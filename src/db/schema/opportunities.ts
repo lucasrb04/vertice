@@ -45,6 +45,7 @@ export const opportunities = pgTable(
     noOtherScholarship: boolean("no_other_scholarship").notNull().default(false),
     closedAt: timestamp("closed_at", { withTimezone: true }),
     status: opportunityStatusEnum("status").notNull().default("OPEN"),
+    statusBeforeModeration: opportunityStatusEnum("status_before_moderation"), // Restaurar volta a ele; nulo fora da moderação
     viewsCount: integer("views_count").notNull().default(0),
     externalClicksCount: integer("external_clicks_count").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

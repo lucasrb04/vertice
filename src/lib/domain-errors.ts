@@ -41,7 +41,10 @@ export type DomainErrorCode =
   | "NO_INTERNAL_SELECTION"
   | "ALREADY_APPLIED"
   | "PROJECT_MEMBER"
-  | "PROJECT_READ_ONLY";
+  | "PROJECT_READ_ONLY"
+  | "ALREADY_HIDDEN"
+  | "NOT_HIDDEN"
+  | "NO_PENDING_REPORTS";
 
 /** Violação de regra de negócio, com mensagem pt-BR pronta para a UI. */
 export class DomainError extends Error {

@@ -48,6 +48,13 @@ export const careerGoalEnum = pgEnum("career_goal", [
 
 export const reportTargetEnum = pgEnum("report_target", ["PROJECT", "OPPORTUNITY"]);
 
+export const reportReasonEnum = pgEnum("report_reason", [
+  "SPAM",
+  "FALSE_INFO",    // Informação falsa
+  "INAPPROPRIATE", // Conteúdo impróprio
+  "OTHER",
+]);
+
 export const applicationStatusEnum = pgEnum("application_status", [
   "APPLIED",   // 1. Inscrito
   "IN_REVIEW", // 2. Em Análise

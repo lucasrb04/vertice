@@ -182,6 +182,13 @@ export const careerGoalEnum = pgEnum("career_goal", [
 
 export const reportTargetEnum = pgEnum("report_target", ["PROJECT", "OPPORTUNITY"]);
 
+export const reportReasonEnum = pgEnum("report_reason", [
+  "SPAM",
+  "FALSE_INFO",    // Informação falsa
+  "INAPPROPRIATE", // Conteúdo impróprio
+  "OTHER",
+]);
+
 export const applicationStatusEnum = pgEnum("application_status", [
   "APPLIED",   // 1. Inscrito
   "IN_REVIEW", // 2. Em Análise
@@ -360,6 +367,7 @@ export const projects = pgTable(
     contactEmail: varchar("contact_email", { length: 255 }).notNull(),
     hasInstitutionalBadge: boolean("has_institutional_badge").notNull().default(false), // "Projeto verificado" — concedido manualmente pelo admin (D31)
     status: projectStatusEnum("status").notNull().default("ACTIVE"),
+    statusBeforeModeration: projectStatusEnum("status_before_moderation"), // Restaurar volta a ele; nulo fora da moderação
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -421,6 +429,7 @@ export const opportunities = pgTable(
     noOtherScholarship: boolean("no_other_scholarship").notNull().default(false),
     closedAt: timestamp("closed_at", { withTimezone: true }),
     status: opportunityStatusEnum("status").notNull().default("OPEN"),
+    statusBeforeModeration: opportunityStatusEnum("status_before_moderation"), // Restaurar volta a ele; nulo fora da moderação
     viewsCount: integer("views_count").notNull().default(0),
     externalClicksCount: integer("external_clicks_count").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -531,10 +540,16 @@ export const reports = pgTable(
     reporterUserId: uuid("reporter_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    reason: varchar("reason", { length: 500 }).notNull(),
+    reasonCode: reportReasonEnum("reason_code").notNull(),
+    reason: varchar("reason", { length: 500 }), // Descrição opcional de quem denuncia
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }), // Restaurar ou descartar resolve; nulo = pendente
   },
-  (t) => [uniqueIndex("reports_unique_idx").on(t.reporterUserId, t.targetType, t.targetId)]
+  (t) => [
+    // Só entre pendentes: depois de resolvidas, novas denúncias começam do zero (D46).
+    uniqueIndex("reports_unique_idx").on(t.reporterUserId, t.targetType, t.targetId).where(sql`${t.resolvedAt} IS NULL`),
+    index("reports_pending_target_idx").on(t.targetType, t.targetId).where(sql`${t.resolvedAt} IS NULL`),
+  ]
 );
 
 // ==========================================
@@ -672,7 +687,12 @@ Como a plataforma rodará na UNIFEI (onde há forte presença de alunos de Ciên
    * Validação server-side do token **Cloudflare Turnstile** na criação de projeto.
    * Rate Limiter em memória (`LRU Cache` no processo Node standalone) limitando mutações por IP e por `userId` (ex: máx. 3 projetos criados por usuário por dia, máx. 20 candidaturas por hora).
    * **Limite de buscas (`src/proxy.ts` + `src/lib/security/search-limit.ts`):** `/processos` com `q` aceita 120 buscas por minuto por IP, em memória (D22, D44). Excedido, responde 429 com `Retry-After: 60` e HTML mínimo com link para `/processos`, que nunca é limitado. Links internos para `/processos?q=` usam `prefetch={false}`, porque o prefetch gastaria o limite. Não se isenta o cabeçalho `next-router-prefetch`: abriria um desvio.
-4. **Content Security Policy (CSP) e Headers HTTP (`next.config.ts`):**
+4. **Moderação (`src/lib/moderation/service.ts`, D43, D46):**
+   * `hideTarget`, `restoreTarget` e `dismissReports` exigem `SYSTEM_ADMIN` (`authorizeSystemAdmin`: não admin recebe `NotFoundError` e gera `ADMIN_ACCESS_DENIED`), motivo de 10 a 500 caracteres e alvo da mesma instituição.
+   * Ocultar: projeto vai para `SUSPENDED`, processo para `UNDER_REVIEW`; o estado anterior fica em `status_before_moderation`, e restaurar volta a ele, zera a coluna e resolve as denúncias pendentes do alvo. Descartar só resolve as denúncias.
+   * `applyAutomaticReview(tx, alvo)` roda na transação da denúncia: com `REPORT_THRESHOLD = 5` denunciantes distintos pendentes, o alvo visível vai para `UNDER_REVIEW`, com `TARGET_AUTO_REVIEW` sem ator.
+   * Cada ação, numa transação: trava de documentos do projeto, linha do alvo com `FOR UPDATE`, novo estado, `audit_logs` (motivo, estado anterior e novo) e reindexação do processo ou de todos os processos do projeto. Depois do commit, `scheduleVocabularyRebuild`.
+5. **Content Security Policy (CSP) e Headers HTTP (`next.config.ts`):**
    * `X-Frame-Options: DENY` (anti-clickjacking).
    * `X-Content-Type-Options: nosniff`.
    * `Referrer-Policy: strict-origin-when-cross-origin`.

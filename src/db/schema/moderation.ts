@@ -1,5 +1,6 @@
-import { pgTable, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
-import { reportTargetEnum } from "./enums";
+import { sql } from "drizzle-orm";
+import { index, pgTable, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import { reportReasonEnum, reportTargetEnum } from "./enums";
 import { institutions } from "./institutions";
 import { users } from "./users";
 
@@ -16,8 +17,14 @@ export const reports = pgTable(
     reporterUserId: uuid("reporter_user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    reason: varchar("reason", { length: 500 }).notNull(),
+    reasonCode: reportReasonEnum("reason_code").notNull(),
+    reason: varchar("reason", { length: 500 }), // Descrição opcional de quem denuncia
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    resolvedAt: timestamp("resolved_at", { withTimezone: true }), // Restaurar ou descartar resolve; nulo = pendente
   },
-  (t) => [uniqueIndex("reports_unique_idx").on(t.reporterUserId, t.targetType, t.targetId)]
+  (t) => [
+    // Só entre pendentes: depois de resolvidas, novas denúncias começam do zero (spec §7).
+    uniqueIndex("reports_unique_idx").on(t.reporterUserId, t.targetType, t.targetId).where(sql`${t.resolvedAt} IS NULL`),
+    index("reports_pending_target_idx").on(t.targetType, t.targetId).where(sql`${t.resolvedAt} IS NULL`),
+  ]
 );

@@ -23,6 +23,7 @@ export const projects = pgTable(
     contactEmail: varchar("contact_email", { length: 255 }).notNull(),
     hasInstitutionalBadge: boolean("has_institutional_badge").notNull().default(false), // "Projeto verificado" — concedido manualmente pelo admin (D31)
     status: projectStatusEnum("status").notNull().default("ACTIVE"),
+    statusBeforeModeration: projectStatusEnum("status_before_moderation"), // Restaurar volta a ele; nulo fora da moderação
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
