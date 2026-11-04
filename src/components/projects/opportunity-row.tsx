@@ -18,6 +18,7 @@ function ChannelBadge({ children }: { children: string }) {
 /**
  * Linha de processo no painel (spec §6.9). Ações só quando `canEdit` (OWNER/ADMIN em projeto ACTIVE);
  * "Candidatos" para quem tem membership real, inclusive em processo encerrado ou projeto arquivado.
+ * Processo oculto pela moderação mostra o motivo e não oferece editar nem duplicar (D46).
  */
 export function OpportunityRow({
   projectId,
@@ -37,14 +38,22 @@ export function OpportunityRow({
   const closingSoon = isOpen && daysUntil(o.deadlineAt, now) <= 7;
   const base = `/projetos/${projectId}/processos`;
   const showApplicants = isMember && o.internalSelectionEnabled;
+  const canChange = canEdit && !o.hidden;
 
   return (
     <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0 space-y-1">
         <p className="font-medium text-stone-900">{o.title}</p>
-        <p className={cn("font-mono text-xs", closingSoon ? "text-amber-700" : "text-stone-600")}>
-          {isOpen ? deadlineLabel(o.deadlineAt) : o.closedOn ? `Encerrado em ${formatDay(o.closedOn)}` : "Encerrado"}
-        </p>
+        {o.hidden ? (
+          <div className="space-y-0.5 text-sm">
+            <p className="font-mono text-xs text-stone-700">Oculto pela moderação</p>
+            {o.hiddenReason && <p className="[overflow-wrap:anywhere] text-stone-600">{o.hiddenReason}</p>}
+          </div>
+        ) : (
+          <p className={cn("font-mono text-xs", closingSoon ? "text-amber-700" : "text-stone-600")}>
+            {isOpen ? deadlineLabel(o.deadlineAt) : o.closedOn ? `Encerrado em ${formatDay(o.closedOn)}` : "Encerrado"}
+          </p>
+        )}
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
           <span className="font-mono text-xs text-stone-600">
             {o.vacanciesCount} {o.vacanciesCount === 1 ? "vaga" : "vagas"}
@@ -53,14 +62,14 @@ export function OpportunityRow({
           {o.internalSelectionEnabled && <ChannelBadge>Plataforma</ChannelBadge>}
         </div>
       </div>
-      {(canEdit || showApplicants) && (
+      {(canChange || showApplicants) && (
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {showApplicants && (
             <Button asChild variant="outline" size="sm">
               <Link href={`${base}/${o.id}/candidatos`}>Candidatos ({o.applicationsCount})</Link>
             </Button>
           )}
-          {canEdit && isOpen && (
+          {canChange && isOpen && (
             <>
               <Button asChild variant="outline" size="sm">
                 <Link href={`${base}/${o.id}/editar`}>Editar</Link>
@@ -74,7 +83,7 @@ export function OpportunityRow({
               />
             </>
           )}
-          {canEdit && (
+          {canChange && (
             <Button asChild variant="outline" size="sm">
               <Link href={`${base}/novo?duplicar=${o.id}`}>Duplicar</Link>
             </Button>

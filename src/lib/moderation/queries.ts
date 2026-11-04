@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLogs, opportunities, projects, reports } from "@/db/schema";
 import { authorizeSystemAdmin, type AuthUser } from "@/lib/auth/guards";
@@ -25,7 +25,7 @@ export type QueueItem = TargetRow & {
 
 export const SEARCH_LIMIT = 20;
 
-type Key = `${ModerationTargetType}:${string}`;
+export type Key = `${ModerationTargetType}:${string}`;
 const keyOf = (t: { targetType: ModerationTargetType; targetId: string }): Key => `${t.targetType}:${t.targetId}`;
 
 const norm = (col: unknown) => sql`lower(unaccent(${col}))`;
@@ -34,20 +34,25 @@ function escapeLike(s: string): string {
   return s.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
-async function loadRows(institutionId: string, filter: { projects?: SQL; opportunities?: SQL }): Promise<Omit<TargetRow, "pendingCount" | "hidden">[]> {
-  const projectRows = await db
+/** `limit` só na busca por nome; a fila já filtra pelos ids denunciados e precisa de todos. */
+async function loadRows(
+  institutionId: string,
+  filter: { projects?: SQL; opportunities?: SQL },
+  limit?: number,
+): Promise<Omit<TargetRow, "pendingCount" | "hidden">[]> {
+  const projectQuery = db
     .select({ targetId: projects.id, name: projects.name, status: projects.status })
     .from(projects)
     .where(and(eq(projects.institutionId, institutionId), filter.projects))
-    .orderBy(asc(projects.name))
-    .limit(SEARCH_LIMIT * 5);
-  const opportunityRows = await db
+    .orderBy(asc(projects.name));
+  const opportunityQuery = db
     .select({ targetId: opportunities.id, name: opportunities.title, projectName: projects.name, status: opportunities.status })
     .from(opportunities)
     .innerJoin(projects, eq(projects.id, opportunities.projectId))
     .where(and(eq(opportunities.institutionId, institutionId), filter.opportunities))
-    .orderBy(asc(opportunities.title))
-    .limit(SEARCH_LIMIT * 5);
+    .orderBy(asc(opportunities.title));
+  const projectRows = await (limit === undefined ? projectQuery : projectQuery.limit(limit));
+  const opportunityRows = await (limit === undefined ? opportunityQuery : opportunityQuery.limit(limit));
   return [
     ...projectRows.map((r) => ({ ...r, targetType: "PROJECT" as const, projectName: r.name })),
     ...opportunityRows.map((r) => ({ ...r, targetType: "OPPORTUNITY" as const })),
@@ -110,10 +115,14 @@ export async function searchModerationTargets(admin: AuthUser, q: string): Promi
   const term = q.trim();
   if (!term) return [];
   const pattern = `%${escapeLike(term)}%`;
-  const rows = await loadRows(admin.institutionId, {
-    projects: sql`${norm(projects.name)} LIKE ${sql`lower(unaccent(${pattern}::text))`}`,
-    opportunities: sql`${norm(opportunities.title)} LIKE ${sql`lower(unaccent(${pattern}::text))`}`,
-  });
+  const rows = await loadRows(
+    admin.institutionId,
+    {
+      projects: sql`${norm(projects.name)} LIKE ${sql`lower(unaccent(${pattern}::text))`}`,
+      opportunities: sql`${norm(opportunities.title)} LIKE ${sql`lower(unaccent(${pattern}::text))`}`,
+    },
+    SEARCH_LIMIT * 5,
+  );
   const found = rows
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR") || a.targetType.localeCompare(b.targetType))
     .slice(0, SEARCH_LIMIT);
@@ -126,26 +135,40 @@ export async function searchModerationTargets(admin: AuthUser, q: string): Promi
 /** Texto do aviso quando a ocultação veio da revisão automática, que não tem motivo escrito. */
 export const AUTO_REVIEW_NOTICE = "Oculto após denúncias da comunidade.";
 
+const HIDE_ACTIONS = ["PROJECT_SUSPENDED", "OPPORTUNITY_HIDDEN", "TARGET_AUTO_REVIEW"] as const;
+
 /**
- * Motivo da última ocultação do projeto, para os membros. Quem chama já provou a membership;
- * a consulta não devolve autor nem IP.
+ * Motivo da última ocultação de cada alvo, numa consulta só, para os membros verem no painel. Quem
+ * chama já provou a membership; a consulta não devolve autor nem IP. Chave `TIPO:id`; alvo sem
+ * registro de ocultação fica de fora.
  */
-export async function getProjectHiddenReason(project: { id: string; institutionId: string }): Promise<string | null> {
-  const [last] = await db
-    .select({ action: auditLogs.action, metadata: auditLogs.metadata })
+export async function getHiddenReasons(
+  institutionId: string,
+  targets: { targetType: ModerationTargetType; targetId: string }[],
+): Promise<Map<Key, string | null>> {
+  const byType = (type: ModerationTargetType) => targets.filter((t) => t.targetType === type).map((t) => t.targetId);
+  const conds = (["PROJECT", "OPPORTUNITY"] as const)
+    .map((type) => ({ type, ids: byType(type) }))
+    .filter((g) => g.ids.length > 0)
+    .map((g) => and(eq(auditLogs.targetType, g.type), inArray(auditLogs.targetId, g.ids)));
+  if (conds.length === 0) return new Map();
+
+  const rows = await db
+    .selectDistinctOn([auditLogs.targetType, auditLogs.targetId], {
+      targetType: auditLogs.targetType,
+      targetId: auditLogs.targetId,
+      action: auditLogs.action,
+      metadata: auditLogs.metadata,
+    })
     .from(auditLogs)
-    .where(
-      and(
-        eq(auditLogs.institutionId, project.institutionId),
-        eq(auditLogs.targetType, "PROJECT"),
-        eq(auditLogs.targetId, project.id),
-        inArray(auditLogs.action, ["PROJECT_SUSPENDED", "TARGET_AUTO_REVIEW"]),
-      ),
-    )
-    .orderBy(desc(auditLogs.createdAt))
-    .limit(1);
-  if (!last) return null;
-  if (last.action === "TARGET_AUTO_REVIEW") return AUTO_REVIEW_NOTICE;
-  const reason = last.metadata?.reason;
-  return typeof reason === "string" ? reason : null;
+    .where(and(eq(auditLogs.institutionId, institutionId), inArray(auditLogs.action, [...HIDE_ACTIONS]), or(...conds)))
+    .orderBy(auditLogs.targetType, auditLogs.targetId, desc(auditLogs.createdAt));
+
+  const reasons = new Map<Key, string | null>();
+  for (const r of rows) {
+    if (!r.targetId || (r.targetType !== "PROJECT" && r.targetType !== "OPPORTUNITY")) continue;
+    const reason = r.action === "TARGET_AUTO_REVIEW" ? AUTO_REVIEW_NOTICE : r.metadata?.reason;
+    reasons.set(`${r.targetType}:${r.targetId}`, typeof reason === "string" ? reason : null);
+  }
+  return reasons;
 }

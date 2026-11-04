@@ -4,7 +4,7 @@ import { db } from "@/db";
 import { applicationEvents, applications, auditLogs, studentProfiles } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
-import { getBoard, moveApplications } from "@/lib/applications/board";
+import { getBoard, moveApplications, OPPORTUNITY_HIDDEN } from "@/lib/applications/board";
 import { applyToOpportunity } from "@/lib/applications/service";
 import type { ApplicationStatus } from "@/lib/applications/labels";
 import { DomainError, ValidationError } from "@/lib/domain-errors";
@@ -135,6 +135,18 @@ describe("getBoard", () => {
     expect(board.canMove).toBe(false);
     expect(board.columns[0].cards).toHaveLength(1);
   });
+
+  it("processo oculto em projeto ativo: lê, sem poder mover, com o aviso da moderação", async () => {
+    const project = await mkProject();
+    const opp = await mkOpportunity(project.id, { internalSelectionEnabled: true, status: "UNDER_REVIEW", statusBeforeModeration: "OPEN" });
+    const reviewer = await mkUser(`rev${seq++}@unifei.edu.br`);
+    await addMember(project.id, reviewer.id, "REVIEWER");
+    await apply(opp.id);
+    const board = await getBoard(reviewer, project.id, opp.id);
+    expect(board.canMove).toBe(false);
+    expect(board.readOnlyReason).toBe(OPPORTUNITY_HIDDEN);
+    expect(board.columns[0].cards).toHaveLength(1);
+  });
 });
 
 describe("moveApplications", () => {
@@ -232,6 +244,19 @@ describe("moveApplications", () => {
     expect(err).toBeInstanceOf(DomainError);
     expect(err.code).toBe("PROJECT_READ_ONLY");
     expect(await statusOf(a.id)).toBe("APPLIED");
+  });
+
+  it("processo oculto em projeto ativo: DomainError, nada muda", async () => {
+    const project = await mkProject();
+    const opp = await mkOpportunity(project.id, { internalSelectionEnabled: true, status: "UNDER_REVIEW", statusBeforeModeration: "OPEN" });
+    const reviewer = await mkUser(`rev${seq++}@unifei.edu.br`);
+    await addMember(project.id, reviewer.id, "REVIEWER");
+    const a = await apply(opp.id);
+    const err = await moveApplications(reviewer, input({ project, opp }, [a], "INTERVIEW")).catch((e) => e);
+    expect(err).toBeInstanceOf(DomainError);
+    expect(err.userMessage).toBe("Este processo está oculto pela moderação.");
+    expect(await statusOf(a.id)).toBe("APPLIED");
+    expect(await moveEvents(a.id)).toHaveLength(0);
   });
 
   it("processo encerrado continua movendo", async () => {

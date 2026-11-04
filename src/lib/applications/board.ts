@@ -11,6 +11,7 @@ import { moveSchema, type MoveInput } from "@/lib/validation/application";
 import { APPLICATION_STATUSES, type ApplicationStatus } from "./labels";
 
 export const PROJECT_READ_ONLY = "Este projeto não está ativo: o quadro é só leitura.";
+export const OPPORTUNITY_HIDDEN = "Este processo está oculto pela moderação.";
 
 export type BoardCard = {
   id: string;
@@ -31,6 +32,8 @@ export type Board = {
   project: { id: string; name: string };
   opportunity: { id: string; title: string; customQuestion: string | null };
   canMove: boolean;
+  /** Por que o quadro é só leitura; nulo quando `canMove`. */
+  readOnlyReason: string | null;
   columns: { status: ApplicationStatus; cards: BoardCard[] }[];
 };
 
@@ -62,7 +65,12 @@ export async function getBoard(
   if (!uuidSchema.safeParse(opportunityId).success) throw new NotFoundError();
 
   const [opportunity] = await db
-    .select({ id: opportunities.id, title: opportunities.title, customQuestion: opportunities.customQuestion })
+    .select({
+      id: opportunities.id,
+      title: opportunities.title,
+      customQuestion: opportunities.customQuestion,
+      status: opportunities.status,
+    })
     .from(opportunities)
     .where(
       and(
@@ -112,10 +120,13 @@ export async function getBoard(
     historyOf.set(applicationId, list);
   }
 
+  const readOnlyReason =
+    project.status !== "ACTIVE" ? PROJECT_READ_ONLY : opportunity.status === "UNDER_REVIEW" ? OPPORTUNITY_HIDDEN : null;
   return {
     project: { id: project.id, name: project.name },
-    opportunity,
-    canMove: project.status === "ACTIVE",
+    opportunity: { id: opportunity.id, title: opportunity.title, customQuestion: opportunity.customQuestion },
+    canMove: readOnlyReason === null,
+    readOnlyReason,
     columns: APPLICATION_STATUSES.map((status) => ({
       status,
       cards: rows
@@ -127,7 +138,7 @@ export async function getBoard(
 
 /**
  * Move candidaturas entre etapas. Processo encerrado continua movendo: a seleção ocorre depois do
- * prazo. A etapa de origem enviada é conferida com a linha travada; a que não confere, já está no
+ * prazo; processo oculto pela moderação, não. A etapa de origem enviada é conferida com a linha travada; a que não confere, já está no
  * destino, não é deste processo ou é do próprio ator (D45) não muda e conta em `skipped`. Quem envia
  * e-mail usa `moved`.
  */
@@ -144,7 +155,7 @@ export async function moveApplications(user: AuthUser, input: MoveInput): Promis
     if (current?.status !== "ACTIVE") throw new DomainError("PROJECT_READ_ONLY", PROJECT_READ_ONLY);
 
     const [opportunity] = await tx
-      .select({ id: opportunities.id })
+      .select({ id: opportunities.id, status: opportunities.status })
       .from(opportunities)
       .where(
         and(
@@ -154,6 +165,8 @@ export async function moveApplications(user: AuthUser, input: MoveInput): Promis
         ),
       );
     if (!opportunity) throw new NotFoundError();
+    // A ocultação toma a mesma trava: o estado lido aqui vale até o commit.
+    if (opportunity.status === "UNDER_REVIEW") throw new DomainError("OPPORTUNITY_HIDDEN", OPPORTUNITY_HIDDEN);
 
     const expected = new Map(items.map((i) => [i.applicationId, i.fromStatus]));
     const rows = await tx

@@ -3,7 +3,7 @@ import { db, type Tx } from "@/db";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { courses, opportunities, projectMembers, projects } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
-import { RateLimitError, ValidationError, fromZodError } from "@/lib/domain-errors";
+import { DomainError, RateLimitError, ValidationError, fromZodError } from "@/lib/domain-errors";
 import {
   lockProjectSearchDocuments,
   refreshProjectSearchDocuments,
@@ -20,6 +20,20 @@ import { projectInputSchema, type ProjectInput } from "@/lib/validation/project"
 import { EDITOR_ROLES, OWNER_ONLY, loadProjectForWrite } from "./permissions";
 
 export const PROJECT_RATE_LIMIT = "Você atingiu o limite de 3 projetos criados por dia. Tente de novo amanhã.";
+export const PROJECT_NOT_ACTIVE = "Este projeto não está mais ativo e não pode ser alterado.";
+
+const projectNotActive = () => new DomainError("PROJECT_NOT_ACTIVE", PROJECT_NOT_ACTIVE);
+
+/**
+ * Abre a escrita no projeto: toma a trava que a moderação e o arquivamento também tomam e relê o
+ * status sob ela. `loadProjectForWrite` checa antes da trava; sem esta releitura, um projeto ocultado
+ * ou arquivado no meio do caminho ainda receberia a gravação.
+ */
+export async function lockActiveProject(tx: Tx, projectId: string): Promise<void> {
+  await lockProjectSearchDocuments(tx, projectId);
+  const [row] = await tx.select({ status: projects.status }).from(projects).where(eq(projects.id, projectId));
+  if (row?.status !== "ACTIVE") throw projectNotActive();
+}
 
 const MAX_PROJECTS_PER_DAY = 3;
 const DAY_MS = 24 * 3_600_000;
@@ -63,7 +77,7 @@ export async function insertOpportunity(
 ): Promise<string> {
   const { user, projectId } = ctx;
 
-  await lockProjectSearchDocuments(tx, projectId);
+  await lockActiveProject(tx, projectId);
   await assertCoursesBelongToInstitution(tx, user.institutionId, input.targetCourseIds);
 
   const { tags, scholarshipValueCents, deadline, ...rest } = input;
@@ -147,11 +161,13 @@ export async function updateProject(user: AuthUser, projectId: string, input: un
   const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   await db.transaction(async (tx) => {
     await lockProjectSearchDocuments(tx, project.id);
-    // slug, institutionId e status ficam de fora de propósito.
-    await tx
+    // slug, institutionId e status ficam de fora de propósito. Só grava se, sob a trava, ainda estiver ativo.
+    const changed = await tx
       .update(projects)
       .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId)));
+      .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId), eq(projects.status, "ACTIVE")))
+      .returning({ id: projects.id });
+    if (changed.length === 0) throw projectNotActive();
     await refreshProjectSearchDocuments(tx, project.id);
   });
   await scheduleVocabularyRebuild(project.institutionId);
@@ -161,10 +177,13 @@ export async function archiveProject(user: AuthUser, projectId: string): Promise
   const { project } = await loadProjectForWrite(user, projectId, OWNER_ONLY);
   await db.transaction(async (tx) => {
     await lockProjectSearchDocuments(tx, project.id);
-    await tx
+    // Ocultado pela moderação entre a checagem e a trava: não sobrescreve o estado da moderação.
+    const changed = await tx
       .update(projects)
       .set({ status: "ARCHIVED", updatedAt: new Date() })
-      .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId)));
+      .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId), eq(projects.status, "ACTIVE")))
+      .returning({ id: projects.id });
+    if (changed.length === 0) throw projectNotActive();
     await refreshProjectSearchDocuments(tx, project.id);
     await logAudit(
       {

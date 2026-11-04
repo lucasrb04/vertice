@@ -171,7 +171,7 @@ describe("reportTarget", () => {
     expect(await db.select().from(reports)).toHaveLength(0);
   });
 
-  it("alvo já oculto responde como um alvo válido, guarda a denúncia e não muda de estado", async () => {
+  it("alvo já oculto responde como um alvo válido, não grava nada e não muda de estado", async () => {
     const { opp } = await setup();
     const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
     await hideTarget(admin, { targetType: "OPPORTUNITY", targetId: opp.id, reason: "Oculto pela moderação para teste." });
@@ -180,9 +180,37 @@ describe("reportTarget", () => {
       last = await reportTarget(await mkReporter(), { targetType: "OPPORTUNITY", targetId: opp.id, reasonCode: "SPAM" });
     }
     expect(last).toEqual({ autoHidden: false, institutionId: inst, targetType: "OPPORTUNITY", targetId: opp.id });
-    expect(await reportRows(opp.id)).toHaveLength(REPORT_THRESHOLD);
+    expect(await reportRows(opp.id)).toHaveLength(0);
     expect(await opportunityStatus(opp.id)).toBe("UNDER_REVIEW");
     expect(await db.select().from(auditLogs).where(eq(auditLogs.action, "TARGET_AUTO_REVIEW"))).toHaveLength(0);
+  });
+
+  it("alvo fora do estado público não grava nada e responde igual", async () => {
+    const user = await mkReporter();
+    const cases: { targetType: "PROJECT" | "OPPORTUNITY"; targetId: string }[] = [];
+    for (const status of ["SUSPENDED", "UNDER_REVIEW"] as const) {
+      const project = await mkProject({ status });
+      cases.push({ targetType: "PROJECT", targetId: project.id });
+      // Processo visível por si, mas o projeto oculto o tira do ar.
+      cases.push({ targetType: "OPPORTUNITY", targetId: (await mkOpportunity(project.id)).id });
+    }
+    const active = await mkProject();
+    cases.push({ targetType: "OPPORTUNITY", targetId: (await mkOpportunity(active.id, { status: "UNDER_REVIEW" })).id });
+
+    for (const target of cases) {
+      expect(await reportTarget(user, { ...target, reasonCode: "SPAM" })).toEqual({ autoHidden: false, institutionId: inst, ...target });
+    }
+    expect(await db.select().from(reports)).toHaveLength(0);
+  });
+
+  it("projeto arquivado e processo encerrado seguem públicos e recebem denúncia", async () => {
+    const user = await mkReporter();
+    const archived = await mkProject({ status: "ARCHIVED" });
+    const closed = await mkOpportunity(archived.id, { status: "CLOSED", closedAt: new Date() });
+    await reportTarget(user, { targetType: "PROJECT", targetId: archived.id, reasonCode: "SPAM" });
+    await reportTarget(user, { targetType: "OPPORTUNITY", targetId: closed.id, reasonCode: "SPAM" });
+    expect(await reportRows(archived.id)).toHaveLength(1);
+    expect(await reportRows(closed.id)).toHaveLength(1);
   });
 
   it("entrada inválida dá ValidationError e não gasta o limite", async () => {

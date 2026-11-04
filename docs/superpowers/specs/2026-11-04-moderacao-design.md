@@ -38,7 +38,7 @@ Métricas, edição de projeto pelo admin, transferência de dono, selo de verif
 - A confirmação é sempre "Recebemos sua denúncia.", inclusive quando a denúncia é repetida.
 - Limite de 10 denúncias por dia por usuário.
 
-**Automático.** Na 5ª denúncia pendente de usuários distintos, o alvo visível vai para `UNDER_REVIEW` na mesma transação da denúncia, e todos os `SYSTEM_ADMIN` da instituição recebem e-mail depois do commit. Um alvo já oculto continua recebendo denúncias, sem mudar de estado.
+**Automático.** Na 5ª denúncia pendente de usuários distintos, o alvo visível vai para `UNDER_REVIEW` na mesma transação da denúncia, e todos os `SYSTEM_ADMIN` da instituição recebem e-mail depois do commit. Denúncia de alvo fora do ar (já oculto, processo fora da vitrine ou projeto fora de `ACTIVE`/`ARCHIVED`) não grava nada e recebe a mesma resposta.
 
 **Admin, em `/admin`.**
 - Fila de alvos com denúncias pendentes, mais denunciados primeiro, com tipo, nome, estado, número de denúncias e motivos.
@@ -52,6 +52,8 @@ Métricas, edição de projeto pelo admin, transferência de dono, selo de verif
 **Efeitos.**
 - Ocultar ou restaurar atualiza os documentos de busca do alvo (todos os processos, no caso de projeto) e agenda a reconstrução do vocabulário depois do commit.
 - Membros veem no painel do projeto "Oculto pela moderação", com o motivo da última ação, e o projeto fica só leitura, como já ocorre com estado não `ACTIVE`.
+- Processo oculto aparece no painel como "Oculto pela moderação", com o motivo da última ação (ou "Oculto após denúncias da comunidade." na revisão automática). O Kanban dele fica só leitura, e o processo não pode ser editado nem duplicado.
+- Arquivar, editar o projeto e criar ou editar processo releem o estado sob a trava do projeto: se a moderação ocultou o projeto no meio, nada é gravado.
 - Em "Minhas candidaturas", o título de processo ou projeto oculto aparece sem link.
 
 **Logs.** Os pontos restantes que passam o objeto de erro ao `console.error` passam a registrar só nome e código: telemetria, rota do edital, busca e indexação.

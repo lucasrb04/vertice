@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";
-import { db } from "@/db";
+import { db, type Tx } from "@/db";
 import { auditLogs, opportunities, projectMembers, projects, tags } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
-import { RateLimitError, ValidationError } from "@/lib/domain-errors";
+import { DomainError, RateLimitError, ValidationError } from "@/lib/domain-errors";
 import {
+  PROJECT_NOT_ACTIVE,
   PROJECT_RATE_LIMIT,
   archiveProject,
   createProjectWithOpportunity,
@@ -17,6 +18,7 @@ import { deadlineFromDay } from "@/lib/time";
 import { resetDb } from "../helpers/db";
 import { addMember, mkForeignInstitution, mkProject, mkUser } from "../helpers/fixtures";
 import { validOpportunityInput, validProjectInput } from "../helpers/inputs";
+import { raceUnderProjectLock } from "../helpers/locks";
 
 beforeEach(async () => {
   await resetDb();
@@ -179,5 +181,49 @@ describe("updateProject / archiveProject", () => {
     const other = await mkProject();
     await addMember(other.id, sys.id, "REVIEWER");
     await expect(updateProject(sys, other.id, validProjectInput())).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
+describe("ocultação concorrente", () => {
+  /** O que `hideTarget` grava num projeto ativo, feito sob a trava que ele também toma. */
+  const suspend = (projectId: string) => async (tx: Tx) => {
+    await tx.update(projects).set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" }).where(eq(projects.id, projectId));
+  };
+
+  async function setup() {
+    const owner = await mkUser("owner@unifei.edu.br");
+    const project = await mkProject({ name: "Nome Antigo" });
+    await addMember(project.id, owner.id, "OWNER");
+    return { owner, project };
+  }
+
+  it("archiveProject: ocultado entre a checagem e a gravação, DomainError e o projeto continua oculto", async () => {
+    const { owner, project } = await setup();
+    const result = await raceUnderProjectLock(project.id, () => archiveProject(owner, project.id), suspend(project.id));
+
+    expect(result.status).toBe("rejected");
+    const reason = (result as PromiseRejectedResult).reason;
+    expect(reason).toBeInstanceOf(DomainError);
+    expect(reason.userMessage).toBe(PROJECT_NOT_ACTIVE);
+    const [row] = await db.select().from(projects).where(eq(projects.id, project.id));
+    expect(row.status).toBe("SUSPENDED");
+    expect(row.statusBeforeModeration).toBe("ACTIVE");
+    const logs = await db.select().from(auditLogs).where(eq(auditLogs.action, "PROJECT_ARCHIVED"));
+    expect(logs).toHaveLength(0);
+  });
+
+  it("updateProject: ocultado entre a checagem e a gravação, DomainError e nada muda", async () => {
+    const { owner, project } = await setup();
+    const result = await raceUnderProjectLock(
+      project.id,
+      () => updateProject(owner, project.id, validProjectInput({ name: "Nome Novo" })),
+      suspend(project.id),
+    );
+
+    expect(result.status).toBe("rejected");
+    expect((result as PromiseRejectedResult).reason).toBeInstanceOf(DomainError);
+    const [row] = await db.select().from(projects).where(eq(projects.id, project.id));
+    expect(row.name).toBe("Nome Antigo");
+    expect(row.status).toBe("SUSPENDED");
   });
 });

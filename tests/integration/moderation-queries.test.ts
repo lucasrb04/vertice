@@ -3,8 +3,10 @@ import { db } from "@/db";
 import { reports } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
-import { hideTarget } from "@/lib/moderation/service";
-import { listReportQueue, searchModerationTargets } from "@/lib/moderation/queries";
+import { hideTarget, restoreTarget } from "@/lib/moderation/service";
+import { AUTO_REVIEW_NOTICE, getHiddenReasons, listReportQueue, searchModerationTargets } from "@/lib/moderation/queries";
+import { reportTarget } from "@/lib/moderation/reports";
+import { reportLimiter } from "@/lib/security/rate-limit";
 import { getDefaultInstitution } from "@/lib/tenant";
 import { resetDb } from "../helpers/db";
 import { mkForeignInstitution, mkOpportunity, mkProject, mkUser } from "../helpers/fixtures";
@@ -87,6 +89,69 @@ describe("listReportQueue", () => {
     const user = await mkUser("aluno@unifei.edu.br");
     await expect(listReportQueue(user!)).rejects.toBeInstanceOf(NotFoundError);
     await expect(searchModerationTargets(user!, "x")).rejects.toBeInstanceOf(NotFoundError);
+  });
+});
+
+describe("listReportQueue sem teto", () => {
+  it("traz todos os alvos denunciados, mesmo acima do limite da busca", async () => {
+    const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
+    const reporter = await mkUser("um.denunciante@unifei.edu.br");
+    const project = await mkProject({ name: "Projeto com muitos processos" });
+    const total = 105;
+    const ids: string[] = [];
+    for (let i = 0; i < total; i++) ids.push((await mkOpportunity(project.id, { title: `Processo ${String(i).padStart(3, "0")}` })).id);
+    await db.insert(reports).values(
+      ids.map((targetId) => ({ institutionId: inst, targetType: "OPPORTUNITY" as const, targetId, reporterUserId: reporter!.id, reasonCode: "SPAM" as const })),
+    );
+    const queue = await listReportQueue(admin!);
+    expect(queue).toHaveLength(total);
+  });
+});
+
+describe("getHiddenReasons", () => {
+  beforeEach(() => reportLimiter.reset());
+
+  it("hideTarget real: o projeto mostra o motivo gravado pelo admin", async () => {
+    const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
+    const project = await mkProject();
+    await hideTarget(admin!, { targetType: "PROJECT", targetId: project.id, reason: "Conteúdo fora das regras da plataforma." });
+
+    const reasons = await getHiddenReasons(inst, [{ targetType: "PROJECT", targetId: project.id }]);
+    expect(reasons.get(`PROJECT:${project.id}`)).toBe("Conteúdo fora das regras da plataforma.");
+  });
+
+  it("vale a última ocultação; processo pelo admin e pela revisão automática, numa chamada", async () => {
+    const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
+    const project = await mkProject();
+    const byAdmin = await mkOpportunity(project.id, { title: "Oculto pelo admin" });
+    const byReports = await mkOpportunity(project.id, { title: "Oculto por denúncias" });
+    const visible = await mkOpportunity(project.id, { title: "Visível" });
+
+    await hideTarget(admin!, { targetType: "OPPORTUNITY", targetId: byAdmin.id, reason: "Primeiro motivo do admin." });
+    await restoreTarget(admin!, { targetType: "OPPORTUNITY", targetId: byAdmin.id, reason: "Restaurado para revisão." });
+    await hideTarget(admin!, { targetType: "OPPORTUNITY", targetId: byAdmin.id, reason: "Segundo motivo do admin." });
+    for (let i = 0; i < 5; i++) {
+      const u = await mkUser(`rep${seq++}@unifei.edu.br`);
+      await reportTarget(u!, { targetType: "OPPORTUNITY", targetId: byReports.id, reasonCode: "SPAM" });
+    }
+
+    const reasons = await getHiddenReasons(inst, [
+      { targetType: "OPPORTUNITY", targetId: byAdmin.id },
+      { targetType: "OPPORTUNITY", targetId: byReports.id },
+      { targetType: "OPPORTUNITY", targetId: visible.id },
+    ]);
+    expect(reasons.get(`OPPORTUNITY:${byAdmin.id}`)).toBe("Segundo motivo do admin.");
+    expect(reasons.get(`OPPORTUNITY:${byReports.id}`)).toBe(AUTO_REVIEW_NOTICE);
+    expect(reasons.has(`OPPORTUNITY:${visible.id}`)).toBe(false);
+    expect((await getHiddenReasons(inst, [])).size).toBe(0);
+  });
+
+  it("não lê registros de outra instituição", async () => {
+    const foreign = await mkForeignInstitution();
+    const admin = await mkUser("sys@outra.edu.br", { systemRole: "SYSTEM_ADMIN", institutionId: foreign.id });
+    const project = await mkProject({ institutionId: foreign.id });
+    await hideTarget(admin!, { targetType: "PROJECT", targetId: project.id, reason: "Motivo de outra instituição." });
+    expect((await getHiddenReasons(inst, [{ targetType: "PROJECT", targetId: project.id }])).size).toBe(0);
   });
 });
 

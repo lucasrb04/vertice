@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { applications, opportunities, opportunityTags, tags } from "@/db/schema";
+import { applications, opportunities, opportunityTags, projects, tags } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError } from "@/lib/domain-errors";
@@ -16,6 +16,7 @@ import { tagCreationLimiter } from "@/lib/security/rate-limit";
 import { resetDb } from "../helpers/db";
 import { addMember, mkOpportunity, mkProject, mkUser } from "../helpers/fixtures";
 import { validOpportunityInput } from "../helpers/inputs";
+import { raceUnderProjectLock } from "../helpers/locks";
 
 beforeEach(async () => {
   await resetDb();
@@ -134,7 +135,46 @@ describe("updateOpportunity / closeOpportunity", () => {
   });
 });
 
+describe("ocultação concorrente", () => {
+  it("createOpportunity: projeto ocultado entre a checagem e a gravação, DomainError e nenhum processo novo", async () => {
+    const { owner, project } = await setup();
+    const result = await raceUnderProjectLock(
+      project.id,
+      () => createOpportunity(owner, project.id, validOpportunityInput()),
+      async (tx) => {
+        await tx.update(projects).set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" }).where(eq(projects.id, project.id));
+      },
+    );
+    expect(result.status).toBe("rejected");
+    expect((result as PromiseRejectedResult).reason).toBeInstanceOf(DomainError);
+    expect(await db.select().from(opportunities).where(eq(opportunities.projectId, project.id))).toHaveLength(0);
+  });
+
+  it("updateOpportunity: projeto ocultado entre a checagem e a gravação, DomainError e nada muda", async () => {
+    const { owner, project } = await setup();
+    const opp = await mkOpportunity(project.id, { title: "Título Antigo" });
+    const result = await raceUnderProjectLock(
+      project.id,
+      () => updateOpportunity(owner, project.id, opp.id, validOpportunityInput({ title: "Título Novo" })),
+      async (tx) => {
+        await tx.update(projects).set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" }).where(eq(projects.id, project.id));
+      },
+    );
+    expect(result.status).toBe("rejected");
+    expect((result as PromiseRejectedResult).reason).toBeInstanceOf(DomainError);
+    expect((await get(opp.id)).title).toBe("Título Antigo");
+  });
+});
+
 describe("getOpportunityFormValues", () => {
+  it("processo oculto pela moderação: NotFoundError para editar e duplicar", async () => {
+    const { owner, project } = await setup();
+    const opp = await mkOpportunity(project.id, { status: "UNDER_REVIEW", statusBeforeModeration: "OPEN" });
+    for (const mode of ["edit", "duplicate"] as const) {
+      await expect(getOpportunityFormValues(owner, project.id, opp.id, mode)).rejects.toBeInstanceOf(NotFoundError);
+    }
+  });
+
   it("duplicar gera valores sem datas e cria processo novo aberto com slug novo", async () => {
     const { owner, project } = await setup();
     const { opportunityId } = await createOpportunity(

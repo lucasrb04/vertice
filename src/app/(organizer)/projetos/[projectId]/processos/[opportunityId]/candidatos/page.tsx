@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplicationBoard } from "@/components/applications/board";
-import { getBoard, PROJECT_READ_ONLY, type Board } from "@/lib/applications/board";
+import { getBoard, type Board } from "@/lib/applications/board";
 import { NotFoundError } from "@/lib/auth/errors";
 import { requireAuthPage } from "@/lib/auth/guards";
 import { getRequestIp } from "@/lib/security/audit";
@@ -33,9 +33,9 @@ export default async function CandidatosPage({
       </Link>
       <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">Candidatos</h1>
       <p className="mt-1 [overflow-wrap:anywhere] text-stone-600">{board.opportunity.title}</p>
-      {!board.canMove && (
+      {board.readOnlyReason && (
         <p role="status" className="mt-4 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700">
-          {PROJECT_READ_ONLY}
+          {board.readOnlyReason}
         </p>
       )}
       <ApplicationBoard board={board} />

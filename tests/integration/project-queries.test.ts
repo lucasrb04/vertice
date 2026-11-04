@@ -6,6 +6,7 @@ import { applications } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { resetDb } from "../helpers/db";
 import { addMember, mkOpportunity, mkProject, mkUser } from "../helpers/fixtures";
+import { hideTarget } from "@/lib/moderation/service";
 
 const H = 3_600_000;
 
@@ -83,6 +84,30 @@ describe("consultas do painel", () => {
 
     const adminPanel = await getProjectPanel(await authorizeProjectRole(admin as AuthUser, project.id, ["OWNER"]));
     expect(adminPanel.open.every((o) => o.applicationsCount === 0)).toBe(true);
+  });
+
+  it("processo oculto vai para encerrados com o motivo; projeto oculto traz o motivo dele", async () => {
+    const owner = (await mkUser("o@unifei.edu.br"))!;
+    const admin = (await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" }))!;
+    const project = (await mkProject())!;
+    await addMember(project.id, owner.id, "OWNER");
+    const hidden = (await mkOpportunity(project.id, { title: "Oculto" }))!;
+    const open = (await mkOpportunity(project.id, { title: "Aberto" }))!;
+    await hideTarget(admin as AuthUser, { targetType: "OPPORTUNITY", targetId: hidden.id, reason: "Bolsa anunciada não existe." });
+
+    let panel = await getProjectPanel(await authorizeProjectRole(owner as AuthUser, project.id, ["OWNER"]));
+    expect(panel.open.map((o) => o.id)).toEqual([open.id]);
+    expect(panel.open[0]).toMatchObject({ hidden: false, hiddenReason: null });
+    expect(panel.closed.map((o) => o.id)).toEqual([hidden.id]);
+    expect(panel.closed[0]).toMatchObject({ hidden: true, hiddenReason: "Bolsa anunciada não existe." });
+    expect(panel.hiddenReason).toBeNull();
+
+    await hideTarget(admin as AuthUser, { targetType: "PROJECT", targetId: project.id, reason: "Projeto fora das regras." });
+    panel = await getProjectPanel(
+      await authorizeProjectRole(owner as AuthUser, project.id, ["OWNER"], { allowInactive: true }),
+    );
+    expect(panel.hiddenReason).toBe("Projeto fora das regras.");
+    expect(panel.closed.find((o) => o.id === hidden.id)?.hiddenReason).toBe("Bolsa anunciada não existe.");
   });
 
   it("projeto arquivado: todos os processos caem em encerrados", async () => {

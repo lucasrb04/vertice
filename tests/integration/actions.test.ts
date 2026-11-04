@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { applications, opportunities, projects } from "@/db/schema";
 import { runSeed } from "@/db/seed";
@@ -131,6 +132,31 @@ describe("Server Actions", () => {
     expect(await moveApplicationsAction(input)).toEqual({ ok: true, data: { moved: 1, skipped: 0 } });
     // O aviso por e-mail só é agendado para quem foi movido, e sem expor nada ao cliente.
     expect(state.afterCallbacks).toHaveLength(1);
+  });
+
+  it("moveApplicationsAction: processo oculto em projeto ativo não move nem agenda e-mail", async () => {
+    const project = (await mkProject())!;
+    const opp = (await mkOpportunity(project.id, {
+      internalSelectionEnabled: true,
+      status: "UNDER_REVIEW",
+      statusBeforeModeration: "OPEN",
+    }))!;
+    const student = (await mkUser("aluno@unifei.edu.br"))!;
+    const [app] = await db.insert(applications).values({ opportunityId: opp.id, userId: student.id }).returning();
+    const reviewer = (await mkUser("rev@unifei.edu.br"))!;
+    await addMember(project.id, reviewer.id, "REVIEWER");
+    state.sessionUserId = reviewer.id;
+
+    const res = await moveApplicationsAction({
+      projectId: project.id,
+      opportunityId: opp.id,
+      items: [{ applicationId: app!.id, fromStatus: "APPLIED" }],
+      toStatus: "ACCEPTED",
+    });
+    expect(res).toEqual({ ok: false, error: "RULE", message: "Este processo está oculto pela moderação." });
+    expect(state.afterCallbacks).toHaveLength(0);
+    const [row] = await db.select().from(applications).where(eq(applications.id, app!.id));
+    expect(row!.status).toBe("APPLIED");
   });
 
   it("searchTagsAction exige sessão e valida o tamanho", async () => {

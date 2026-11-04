@@ -180,7 +180,7 @@ Por ser uma plataforma utilizada em uma universidade com forte presença de curs
    * **Cloudflare Turnstile** (desafio invisível) obrigatório na Criação de Projeto (login e cadastro já passam pelo Google).
    * **Rate Limiting em Camadas:** Implementado no backend por IP e por `user_id` (ex: máximo de 3 projetos criados por usuário por dia; máximo de 20 candidaturas por hora; limite de requisições na busca e no disparo de e-mails de verificação).
 4. **Botão de "Denunciar Vaga/Projeto" na Comunidade:**
-   * Qualquer usuário logado pode reportar uma vaga ou projeto suspeito (uma denúncia por usuário por alvo). Ao atingir $5$ denúncias distintas, o alvo entra automaticamente no status `UNDER_REVIEW`, deixa de aparecer na timeline e dispara um alerta por e-mail para o `SYSTEM_ADMIN`.
+   * Qualquer usuário logado que não seja membro do projeto pode reportar uma vaga ou projeto que esteja no ar (uma denúncia pendente por usuário por alvo; até 10 por dia; a resposta é sempre "Recebemos sua denúncia."). Ao atingir $5$ denúncias pendentes de usuários distintos, o alvo entra automaticamente no status `UNDER_REVIEW`, deixa de aparecer na timeline e dispara um alerta por e-mail para todos os `SYSTEM_ADMIN` da instituição. Restaurar resolve as denúncias pendentes e novas começam do zero (D46).
 5. **Isolamento de Dados de Candidatos (LGPD & Privacidade):**
    * As rotas públicas da Timeline e da Vaga **jamais** retornam dados de quem se candidatou. Apenas os membros autorizados do projeto (`OWNER`, `ADMIN`, `REVIEWER`) e o próprio aluno têm acesso aos dados da candidatura.
 

@@ -6,8 +6,8 @@ import { NotFoundError } from "@/lib/auth/errors";
 import type { AuthUser } from "@/lib/auth/guards";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
 import { EDITOR_ROLES, loadProjectForWrite } from "@/lib/projects/permissions";
-import { assertCoursesBelongToInstitution, insertOpportunity } from "@/lib/projects/service";
-import { lockProjectSearchDocuments, refreshSearchDocument, scheduleVocabularyRebuild } from "@/lib/search/index-documents";
+import { assertCoursesBelongToInstitution, insertOpportunity, lockActiveProject } from "@/lib/projects/service";
+import { refreshSearchDocument, scheduleVocabularyRebuild } from "@/lib/search/index-documents";
 import { syncOpportunityTags } from "@/lib/tags/service";
 import { dayFromDeadline, deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
 import {
@@ -84,7 +84,7 @@ export async function updateOpportunity(
   const data = parseInput(input, now);
 
   await db.transaction(async (tx) => {
-    await lockProjectSearchDocuments(tx, project.id);
+    await lockActiveProject(tx, project.id);
     const row = await lockOpenOpportunity(tx, project, opportunityId, now);
     await assertCoursesBelongToInstitution(tx, row.institutionId, data.targetCourseIds);
 
@@ -115,7 +115,7 @@ export async function closeOpportunity(
   const now = opts.now ?? new Date();
   const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   await db.transaction(async (tx) => {
-    await lockProjectSearchDocuments(tx, project.id);
+    await lockActiveProject(tx, project.id);
     const row = await lockOpenOpportunity(tx, project, opportunityId, now);
     await tx
       .update(opportunities)
@@ -154,7 +154,8 @@ export async function getOpportunityFormValues(
     .select()
     .from(opportunities)
     .where(and(eq(opportunities.id, opportunityId), eq(opportunities.projectId, project.id)));
-  if (!o) throw new NotFoundError();
+  // Oculto pela moderação: não se edita nem se duplica (D46).
+  if (!o || o.status === "UNDER_REVIEW") throw new NotFoundError();
 
   const tagRows = await db
     .select({ tagId: opportunityTags.tagId, relationType: opportunityTags.relationType, name: tagsTable.name })

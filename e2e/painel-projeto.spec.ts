@@ -1,7 +1,7 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Browser, type Page } from "@playwright/test";
 import { SYSTEM_ADMIN_READ_ONLY } from "../src/lib/projects/labels";
 import { MEMBER_NO_ACCOUNT } from "../src/lib/projects/members";
-import { closeTestDb, insertModerationLog, updateProjectStatus } from "./helpers";
+import { addProcess, closeTestDb, insertReport } from "./helpers";
 import { formatDay, todayInSaoPaulo } from "../src/lib/time";
 
 test.afterAll(closeTestDb);
@@ -168,22 +168,81 @@ test("painel de projeto alheio é 404", async ({ page, browser }) => {
   await adminContext.close();
 });
 
-test("membro vê o aviso e o motivo de um projeto oculto pela moderação", async ({ page }) => {
-  await loginAs(page, "dono.oculto@unifei.edu.br", "Dono Oculto");
-  const projectId = await publishProject(page, "Projeto Oculto", "Processo do oculto");
+/** Oculta pelo portal do admin, que chama `hideTarget` de verdade. */
+async function hideAsAdmin(browser: Browser, name: string, reason: string) {
+  const context = await browser.newContext();
+  const admin = await context.newPage();
+  await loginAs(admin, "admin@unifei.edu.br", "Admin");
+  await admin.goto(`/admin?q=${encodeURIComponent(name)}`);
+  await admin.getByRole("button", { name: `Ocultar: ${name}`, exact: true }).click();
+  const dialog = admin.getByRole("dialog");
+  await dialog.getByLabel("Motivo").fill(reason);
+  await dialog.getByRole("button", { name: "Ocultar", exact: true }).click();
+  await expect(admin.getByRole("status")).toContainText("Item ocultado.");
+  await context.close();
+}
 
-  await updateProjectStatus(projectId, "SUSPENDED");
-  await insertModerationLog(projectId, "PROJECT_SUSPENDED", { reason: "Conteúdo fora das regras da plataforma." });
+test("membro vê o aviso e o motivo de um projeto oculto pela moderação", async ({ page, browser }) => {
+  await loginAs(page, "dono.oculto@unifei.edu.br", "Dono Oculto");
+  const projectId = await publishProject(page, "Projeto Oculto Pelo Admin", "Processo do oculto");
+
+  await hideAsAdmin(browser, "Projeto Oculto Pelo Admin", "Conteúdo fora das regras da plataforma.");
   await page.goto(`/projetos/${projectId}`);
   const notice = page.getByRole("status").filter({ hasText: "Oculto pela moderação" });
   await expect(notice).toContainText("Conteúdo fora das regras da plataforma.");
   await expect(page.getByRole("link", { name: "Novo processo", exact: true })).toHaveCount(0);
+});
 
-  // Revisão automática não tem motivo escrito.
-  await updateProjectStatus(projectId, "UNDER_REVIEW");
-  await insertModerationLog(projectId, "TARGET_AUTO_REVIEW", { pendingReports: 5 });
+test("processo oculto: motivo no painel, sem editar nem duplicar, Kanban só leitura", async ({ page, browser }) => {
+  await loginAs(page, "dono.processo.oculto@unifei.edu.br", "Dono Processo Oculto");
+  const projectId = await publishProject(page, "Projeto Com Processo Oculto", "Processo que segue no ar");
+  await addProcess(projectId, { title: "Processo oculto pelo admin", internalSelectionEnabled: true });
+
+  await hideAsAdmin(browser, "Processo oculto pelo admin", "A bolsa anunciada não existe.");
   await page.goto(`/projetos/${projectId}`);
-  await expect(page.getByRole("status").filter({ hasText: "Oculto pela moderação" })).toContainText(
-    "Oculto após denúncias da comunidade.",
-  );
+  // Sem aviso de projeto: só o processo saiu do ar.
+  await expect(page.getByRole("status").filter({ hasText: "Oculto pela moderação" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Abertos" }).getByText("Processo oculto pelo admin")).toHaveCount(0);
+
+  const encerrados = page.getByRole("region", { name: "Encerrados" });
+  await encerrados.locator("summary").click();
+  const row = encerrados.getByRole("listitem").filter({ hasText: "Processo oculto pelo admin" });
+  await expect(row.getByText("Oculto pela moderação")).toBeVisible();
+  await expect(row.getByText("A bolsa anunciada não existe.")).toBeVisible();
+  await expect(row.getByRole("link", { name: "Duplicar" })).toHaveCount(0);
+  await expect(row.getByRole("link", { name: "Editar" })).toHaveCount(0);
+
+  await row.getByRole("link", { name: /Candidatos/ }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Este processo está oculto pela moderação." })).toBeVisible();
+});
+
+test("processo oculto por denúncias mostra o aviso da comunidade no painel", async ({ page, browser }) => {
+  await loginAs(page, "dono.denunciado@unifei.edu.br", "Dono Denunciado");
+  const projectId = await publishProject(page, "Projeto Denunciado", "Processo de controle");
+  const opportunity = await addProcess(projectId, { title: "Processo denunciado pela comunidade" });
+
+  // Quatro denúncias de usuários distintos; a quinta pela página, que dispara a revisão automática.
+  const context = await browser.newContext();
+  const reporter = await context.newPage();
+  for (let i = 0; i < 4; i++) {
+    const email = `denunciante.painel${i}@unifei.edu.br`;
+    await loginAs(reporter, email, `Denunciante ${i}`);
+    await insertReport({ targetType: "OPPORTUNITY", targetId: opportunity.id }, email);
+  }
+  await loginAs(reporter, "denunciante.painel4@unifei.edu.br", "Denunciante 4");
+  await reporter.goto(`/processo/${opportunity.slug}`);
+  await reporter.getByRole("button", { name: "Denunciar" }).click();
+  const dialog = reporter.getByRole("dialog");
+  await dialog.getByRole("combobox", { name: "Motivo" }).click();
+  await reporter.getByRole("option", { name: "Spam" }).click();
+  await dialog.getByRole("button", { name: "Enviar denúncia" }).click();
+  await expect(dialog.getByText("Recebemos sua denúncia.")).toBeVisible();
+  await context.close();
+
+  await page.goto(`/projetos/${projectId}`);
+  const encerrados = page.getByRole("region", { name: "Encerrados" });
+  await encerrados.locator("summary").click();
+  const row = encerrados.getByRole("listitem").filter({ hasText: "Processo denunciado pela comunidade" });
+  await expect(row.getByText("Oculto pela moderação")).toBeVisible();
+  await expect(row.getByText("Oculto após denúncias da comunidade.")).toBeVisible();
 });
