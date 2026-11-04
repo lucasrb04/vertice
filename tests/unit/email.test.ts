@@ -170,6 +170,7 @@ describe("limite do provedor", () => {
 
   it("recusa parcial e falha ao montar um e-mail não levam dados do aluno ao log e não barram os outros", async () => {
     const secret = "Maria Souza mensagem-secreta";
+    // biome-ignore lint/correctness/noComponentHookFactories: componente descartável que só lança, sem estado nem hooks.
     const Broken = (): never => {
       throw new Error(secret);
     };

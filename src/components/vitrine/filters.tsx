@@ -76,7 +76,7 @@ export function Filters({ params, options }: { params: VitrineParams; options: O
         </fieldset>
 
         <div className={fieldset}>
-          <label htmlFor="filtro-curso" className={legend + " block"}>
+          <label htmlFor="filtro-curso" className={`${legend} block`}>
             Curso
           </label>
           <select

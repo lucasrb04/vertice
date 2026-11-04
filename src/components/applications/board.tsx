@@ -94,6 +94,7 @@ function CandidateCard({
             <dd>
               <ol className="mt-1 space-y-1.5 border-l-2 border-stone-200 pl-3">
                 {card.history.map((h, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
                   <li key={`${h.createdAt.toISOString()}-${i}`}>
                     <p className="font-mono text-xs text-stone-500">
                       {formatDay(h.createdAt)} · {APPLICATION_STATUS_LABELS[h.toStatus]}
@@ -161,6 +162,7 @@ export function ApplicationBoard({ board }: { board: Board }) {
   return (
     <div className="mt-6 space-y-4">
       {board.canMove && (
+        // biome-ignore lint/a11y/useSemanticElements: barra de ações, não grupo de campos; fieldset não cabe aqui.
         <div
           role="group"
           aria-label="Candidatos selecionados"

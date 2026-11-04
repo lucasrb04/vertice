@@ -114,7 +114,7 @@ export async function createProjectWithOpportunity(
 
   const created = await db.transaction(async (tx) => {
     // Serializa criações do mesmo usuário para o limite diário não ser furado por corrida.
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${"project-create:" + user.id}))`);
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`project-create:${user.id}`}))`);
 
     const [{ count }] = await tx
       .select({ count: sql<number>`count(*)::int` })

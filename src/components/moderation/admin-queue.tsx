@@ -99,6 +99,7 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
                 {item.descriptions.length > 0 && (
                   <ul className="mt-3 space-y-1 border-l-2 border-stone-200 pl-3 text-sm text-stone-600">
                     {item.descriptions.map((d, i) => (
+                      // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
                       <li key={i}>{d}</li>
                     ))}
                   </ul>
@@ -116,26 +117,28 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
         <h2 id="busca-titulo" className="font-heading text-xl font-semibold tracking-tight text-stone-900">
           Buscar projeto ou processo
         </h2>
-        <form method="get" action="/admin" role="search" className="flex flex-wrap gap-2">
-          <label htmlFor="admin-q" className="sr-only">
-            Nome do projeto ou do processo
-          </label>
-          <input
-            id="admin-q"
-            name="q"
-            type="search"
-            defaultValue={query}
-            maxLength={100}
-            placeholder="Nome do projeto ou do processo"
-            className="h-9 min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 placeholder:text-stone-500"
-          />
-          <button
-            type="submit"
-            className="h-9 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"
-          >
-            Buscar
-          </button>
-        </form>
+        <search>
+          <form method="get" action="/admin" className="flex flex-wrap gap-2">
+            <label htmlFor="admin-q" className="sr-only">
+              Nome do projeto ou do processo
+            </label>
+            <input
+              id="admin-q"
+              name="q"
+              type="search"
+              defaultValue={query}
+              maxLength={100}
+              placeholder="Nome do projeto ou do processo"
+              className="h-9 min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 placeholder:text-stone-500"
+            />
+            <button
+              type="submit"
+              className="h-9 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"
+            >
+              Buscar
+            </button>
+          </form>
+        </search>
         {query &&
           (results.length === 0 ? (
             <p className="text-sm text-stone-600">Nada encontrado para essa busca.</p>

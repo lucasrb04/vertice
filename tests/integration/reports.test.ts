@@ -28,7 +28,7 @@ vi.mock("@/lib/email/send", () => ({
 }));
 
 import { notifyReviewAlert } from "@/lib/email/notify";
-import { reportTarget } from "@/lib/moderation/reports";
+import { type ReportResult, reportTarget } from "@/lib/moderation/reports";
 
 let inst: string;
 
@@ -121,7 +121,7 @@ describe("reportTarget", () => {
 
   it("projeto também vai para revisão na 5ª denúncia", async () => {
     const { project } = await setup();
-    let last;
+    let last: ReportResult | undefined;
     for (let i = 0; i < REPORT_THRESHOLD; i++) {
       last = await reportTarget(await mkReporter(), {
         targetType: "PROJECT",
@@ -199,7 +199,7 @@ describe("reportTarget", () => {
       targetId: opp.id,
       reason: "Oculto pela moderação para teste.",
     });
-    let last;
+    let last: ReportResult | undefined;
     for (let i = 0; i < REPORT_THRESHOLD; i++) {
       last = await reportTarget(await mkReporter(), {
         targetType: "OPPORTUNITY",

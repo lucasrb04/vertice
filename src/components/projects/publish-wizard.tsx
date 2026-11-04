@@ -25,7 +25,10 @@ function validateRequired(draft: ProjectDraft): FieldErrors {
   const parsed = requiredProjectFields.safeParse(toProjectFormValues(draft));
   if (parsed.success) return {};
   const errors: FieldErrors = {};
-  for (const issue of parsed.error.issues) (errors[issue.path.join(".")] ??= []).push(issue.message);
+  for (const issue of parsed.error.issues) {
+    const key = issue.path.join(".");
+    errors[key] = [...(errors[key] ?? []), issue.message];
+  }
   return errors;
 }
 

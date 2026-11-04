@@ -35,6 +35,7 @@ export function Pagination({ params, page, pageCount }: { params: VitrineParams;
       ) : null}
       {pageList(page, pageCount).map((n, i) =>
         n === null ? (
+          // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
           <span key={`gap-${i}`} aria-hidden className="px-1 font-mono text-stone-500">
             …
           </span>

@@ -14,20 +14,17 @@ export function Requirements({
   noOtherScholarship: boolean;
 }) {
   const semesters = semesterRange(minSemester, maxSemester);
-  const rows: [string, React.ReactNode][] = [
-    [
-      "Cursos",
-      courses.length === 0 ? (
-        "Todos os cursos"
-      ) : (
-        <ul className="space-y-0.5">
-          {courses.map((c) => (
-            <li key={c.code}>{c.name}</li>
-          ))}
-        </ul>
-      ),
-    ],
-  ];
+  const courseList =
+    courses.length === 0 ? (
+      "Todos os cursos"
+    ) : (
+      <ul className="space-y-0.5">
+        {courses.map((c) => (
+          <li key={c.code}>{c.name}</li>
+        ))}
+      </ul>
+    );
+  const rows: [string, React.ReactNode][] = [["Cursos", courseList]];
   if (semesters) rows.push(["Período", semesters]);
   if (availability) rows.push(["Disponibilidade", availability]);
   if (noOtherScholarship) rows.push(["Bolsa", "Não acumular com outra bolsa"]);

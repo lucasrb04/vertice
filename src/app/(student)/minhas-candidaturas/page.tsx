@@ -53,6 +53,7 @@ export default async function MinhasCandidaturasPage() {
               {a.messages.length > 0 && (
                 <ul aria-label="Mensagens da equipe" className="space-y-2 border-l-2 border-stone-200 pl-4">
                   {a.messages.map((m, i) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
                     <li key={`${m.createdAt.toISOString()}-${i}`} className="text-sm">
                       <p className="font-mono text-xs text-stone-500">
                         {formatDay(m.createdAt)} · {APPLICATION_STATUS_LABELS[m.toStatus]}

@@ -33,7 +33,7 @@ export default async function CandidatarPage({ params }: { params: Promise<{ slu
   const user = await requireAuthPage(`/processo/${encodeURIComponent(slug)}/candidatar`);
   if (slug.length > 140 || slug.includes("\0")) notFound();
   const found = await getPublicOpportunity(user.institutionId, slug);
-  if (!found || !found.opportunity.internalSelectionEnabled) notFound();
+  if (!found?.opportunity.internalSelectionEnabled) notFound();
   const { opportunity, project, isOpen } = found;
 
   const [ctx, courses] = await Promise.all([getApplyContext(user, opportunity.id), listCourses(user.institutionId)]);

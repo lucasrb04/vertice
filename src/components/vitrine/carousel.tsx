@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Children, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { Children, isValidElement, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +12,7 @@ const SCROLL_FRACTION = 0.85;
  * Os botões só aparecem depois de medir que há o que rolar.
  */
 export function Carousel({ label, header, children }: { label: string; header?: ReactNode; children: ReactNode }) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLElement>(null);
   const [can, setCan] = useState({ prev: false, next: false });
 
   const measure = useCallback(() => {
@@ -73,22 +73,23 @@ export function Carousel({ label, header, children }: { label: string; header?: 
         </div>
       </div>
       {/* Margens negativas: no celular o card seguinte encosta na borda da tela e o foco não é cortado. */}
-      <div
+      <section
         ref={scrollerRef}
-        role="region"
         aria-label={label}
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: área rolável precisa de foco para rolar pelo teclado.
         tabIndex={0}
         onScroll={measure}
         className="-mx-4 mt-3 snap-x snap-mandatory scroll-px-4 overflow-x-auto px-4 py-1 outline-none [scrollbar-color:#d6d3d1_transparent] [scrollbar-width:thin] focus-visible:ring-3 focus-visible:ring-ring/50 lg:-mx-1 lg:scroll-px-1 lg:px-1"
       >
         <ul className="flex gap-4 pb-2">
-          {Children.toArray(children).map((child, i) => (
-            <li key={i} className="flex w-70 shrink-0 snap-start">
+          {Children.toArray(children).map((child) => (
+            // Children.toArray já atribui uma chave estável a cada filho.
+            <li key={isValidElement(child) ? child.key : String(child)} className="flex w-70 shrink-0 snap-start">
               {child}
             </li>
           ))}
         </ul>
-      </div>
+      </section>
     </div>
   );
 }

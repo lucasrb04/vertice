@@ -15,7 +15,7 @@ export function fromZodError(err: z.ZodError): ValidationError {
   const fieldErrors: Record<string, string[]> = {};
   for (const issue of err.issues) {
     const key = issue.path.join(".");
-    (fieldErrors[key] ??= []).push(issue.message);
+    fieldErrors[key] = [...(fieldErrors[key] ?? []), issue.message];
   }
   return new ValidationError(fieldErrors);
 }

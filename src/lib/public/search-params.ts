@@ -38,7 +38,7 @@ export function defaultSort(q: string): VitrineSort {
 }
 
 // Postgres rejeita \0 em texto (22021); removemos antes de qualquer validação.
-const clean = (s: string) => s.replace(/\u0000/g, "");
+const clean = (s: string) => s.replaceAll("\0", "");
 
 const qSchema = z
   .string()

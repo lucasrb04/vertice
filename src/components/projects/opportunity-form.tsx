@@ -586,6 +586,7 @@ export function OpportunityForm({
         {(errors.tags ?? []).length > 0 && (
           <ul role="alert" className="list-disc pl-5 text-sm text-red-700 sm:col-span-6">
             {(errors.tags ?? []).map((m, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
               <li key={i}>{m}</li>
             ))}
           </ul>
@@ -610,6 +611,7 @@ export function OpportunityForm({
         {otherErrors.length > 0 && (
           <ul className="list-disc pl-5 text-sm text-red-700">
             {otherErrors.map((m, i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
               <li key={i}>{m}</li>
             ))}
           </ul>

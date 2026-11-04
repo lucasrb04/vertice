@@ -106,17 +106,15 @@ describe("listReportQueue sem teto", () => {
     const ids: string[] = [];
     for (let i = 0; i < total; i++)
       ids.push((await mkOpportunity(project.id, { title: `Processo ${String(i).padStart(3, "0")}` })).id);
-    await db
-      .insert(reports)
-      .values(
-        ids.map((targetId) => ({
-          institutionId: inst,
-          targetType: "OPPORTUNITY" as const,
-          targetId,
-          reporterUserId: reporter!.id,
-          reasonCode: "SPAM" as const,
-        })),
-      );
+    await db.insert(reports).values(
+      ids.map((targetId) => ({
+        institutionId: inst,
+        targetType: "OPPORTUNITY" as const,
+        targetId,
+        reporterUserId: reporter!.id,
+        reasonCode: "SPAM" as const,
+      })),
+    );
     const queue = await listReportQueue(admin!);
     expect(queue).toHaveLength(total);
   });

@@ -78,7 +78,8 @@ async function addSynonyms(institutionId: string, tokens: QueryToken[], groups: 
           fromWords.length > 1
             ? fromWords.includes(w) && sentence.includes(` ${from} `)
             : w !== "|" && sameStem(w, from);
-        if (hit) members.filter((to) => to !== from).forEach((to) => addVariant(groups[i], to));
+        if (!hit) return;
+        for (const to of members) if (to !== from) addVariant(groups[i], to);
       });
     }
   }

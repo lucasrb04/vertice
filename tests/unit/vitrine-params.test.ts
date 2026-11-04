@@ -92,7 +92,7 @@ describe("vitrineHref", () => {
       encerrados: "1",
       sort: "deadline",
     });
-    const url = new URL("http://x" + vitrineHref(p));
+    const url = new URL(`http://x${vitrineHref(p)}`);
     const raw: Record<string, string | string[]> = {};
     for (const k of new Set(url.searchParams.keys())) {
       const v = url.searchParams.getAll(k);
