@@ -73,6 +73,7 @@ Roda depois de `pnpm db:seed`, é idempotente, recusa `NODE_ENV=production` e ba
 | --- | --- |
 | Servidor de desenvolvimento (porta 3000) | `pnpm dev` |
 | Lint e type-check | `pnpm lint && pnpm exec tsc --noEmit` |
+| Formatar e aplicar correções seguras (Biome) | `pnpm lint:fix` |
 | Testes unitários e de integração (Vitest) | `pnpm test` |
 | Testes E2E (Playwright, porta 3100) | `pnpm test:e2e` |
 | Dados fictícios de demonstração | `pnpm db:seed:demo` |

@@ -29,6 +29,7 @@ Este arquivo define as diretrizes, comandos e padrões arquiteturais para o agen
 | Rodar servidor de desenvolvimento | `pnpm dev` |
 | Rodar testes | `pnpm test` |
 | Rodar linters e type-check | `pnpm lint && pnpm tsc --noEmit` |
+| Formatar e aplicar correções seguras (Biome) | `pnpm lint:fix` |
 | Build de produção (Standalone) | `pnpm build` |
 
 ## 3. Diretrizes de Código e Arquitetura

@@ -26,6 +26,7 @@ Este documento define a arquitetura de software, modelagem de banco de dados, re
 | **Estilização & UI** | **Tailwind CSS v4** + **shadcn/ui** (Radix UI) | Componentes acessíveis e customizáveis para construir uma interface autoral (Editorial/Acadêmica) sem "cara de IA". |
 | **Validação & Forms** | **Zod** + **React Hook Form** | Validação compartilhada entre cliente e servidor, bloqueando payloads malformados ou protocolos inseguros (`javascript:`). |
 | **Testes** | **Vitest** + **Playwright** | Unidade (match, tags, URLs) e integração contra Postgres real de teste; E2E nos fluxos críticos. |
+| **Qualidade de código** | **Biome** + **ESLint** enxuto | Biome formata, organiza imports e faz a maior parte do lint em menos de um segundo; o ESLint fica só com as regras do Next e do `react-hooks`, que o Biome não cobre. |
 | **E-mails** | **Resend** + **React Email** | Templates transacionais em React/TSX com excelente entregabilidade para domínios `@unifei.edu.br`. |
 | **Segurança & Anti-Bot** | **Cloudflare Turnstile** + **Rate Limiter** | Proteção invisível gratuita na criação de projetos e limitação de requisições por IP/Usuário. |
 | **Infraestrutura & Proxy** | **Docker Compose** + **Caddy 2** | Orquestração simples de containers e provisionamento automático de certificados TLS/HTTPS (Let's Encrypt). |
