@@ -7,6 +7,30 @@ import { lazy } from "@/lib/lazy";
 import { toAPIError } from "./errors";
 import { beforeSessionCreate, beforeUserCreate } from "./hooks";
 
+/**
+ * Rotas HTTP do Better-Auth que o Vértice não usa. Abertas, deixariam o usuário trocar nome e foto
+ * (e se passar por outra pessoa no Kanban), vincular outra conta ou ler o token do Google. Só o
+ * roteador HTTP as bloqueia: as chamadas `auth.api.*` do servidor seguem funcionando.
+ */
+export const DISABLED_AUTH_PATHS = [
+  "/update-user",
+  "/delete-user",
+  "/change-email",
+  "/change-password",
+  "/set-password",
+  "/verify-password",
+  "/request-password-reset",
+  "/reset-password",
+  "/send-verification-email",
+  "/verify-email",
+  "/link-social",
+  "/unlink-account",
+  "/list-accounts",
+  "/account-info",
+  "/get-access-token",
+  "/refresh-token",
+];
+
 function createAuth() {
   const env = getEnv();
   return betterAuth({
@@ -14,6 +38,7 @@ function createAuth() {
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     trustedOrigins: [env.NEXT_PUBLIC_APP_URL],
+    disabledPaths: DISABLED_AUTH_PATHS,
     database: drizzleAdapter(getDb(), { provider: "pg", schema, usePlural: true }),
     advanced: {
       // O banco usa colunas uuid com default gen_random_uuid() (D16, Zero IDOR).
