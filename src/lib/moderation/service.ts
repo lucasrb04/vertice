@@ -43,7 +43,7 @@ const ACTIONS = {
   restore: { PROJECT: "PROJECT_RESTORED", OPPORTUNITY: "OPPORTUNITY_RESTORED" },
 } satisfies Record<string, Record<ModerationTargetType, AuditAction>>;
 
-const isHidden = (targetType: ModerationTargetType, status: Status) => HIDDEN[targetType].includes(status);
+export const isHidden = (targetType: ModerationTargetType, status: Status) => HIDDEN[targetType].includes(status);
 
 /**
  * Trava do projeto primeiro e linha do alvo depois, na ordem de `lockProjectSearchDocuments`.
