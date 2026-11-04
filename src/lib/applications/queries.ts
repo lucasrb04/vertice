@@ -45,7 +45,7 @@ export async function getApplyContext(user: AuthUser, opportunityId: string) {
 export type MyApplication = {
   id: string;
   opportunityTitle: string;
-  /** Nulo quando o processo está em revisão: a página pública devolveria 404. */
+  /** Nulo quando o processo ou o projeto está oculto: a página pública devolveria 404. */
   opportunitySlug: string | null;
   projectName: string;
   /** Projeto arquivado com a candidatura ainda em andamento: o aluno não terá resultado por aqui. */
@@ -97,7 +97,7 @@ export async function listMyApplications(user: AuthUser): Promise<MyApplication[
   return rows.map(({ opportunityStatus, opportunitySlug, projectStatus, ...row }) => ({
     ...row,
     projectArchived: projectStatus === "ARCHIVED" && IN_PROGRESS_STATUSES.includes(row.status),
-    opportunitySlug: opportunityStatus === "UNDER_REVIEW" ? null : opportunitySlug,
+    opportunitySlug: opportunityStatus === "UNDER_REVIEW" || !["ACTIVE", "ARCHIVED"].includes(projectStatus) ? null : opportunitySlug,
     messages: byApplication.get(row.id) ?? [],
   }));
 }

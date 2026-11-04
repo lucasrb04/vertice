@@ -1,6 +1,7 @@
 import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
 import { tagAliases, tags } from "@/db/schema";
+import { logError } from "@/lib/log";
 import { correctQuery, loadSynonyms, normalizeQuery, tokenize, type QueryToken } from "./corrector";
 import { normalizeTagSlug } from "./tags";
 
@@ -101,7 +102,7 @@ async function correctedOrPlain(institutionId: string, q: string, exact: boolean
   try {
     return await correctQuery(institutionId, q);
   } catch (err) {
-    console.error("Falha ao corrigir a busca:", err);
+    logError("Falha ao corrigir a busca:", err);
     return plain();
   }
 }

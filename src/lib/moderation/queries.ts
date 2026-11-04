@@ -1,6 +1,6 @@
-import { and, asc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { opportunities, projects, reports } from "@/db/schema";
+import { auditLogs, opportunities, projects, reports } from "@/db/schema";
 import { authorizeSystemAdmin, type AuthUser } from "@/lib/auth/guards";
 import { isHidden } from "./service";
 import type { ModerationTargetType, ReportReason } from "@/lib/validation/moderation";
@@ -121,4 +121,31 @@ export async function searchModerationTargets(admin: AuthUser, q: string): Promi
   const counts = new Map<Key, number>();
   for (const r of await pendingOf(admin.institutionId)) counts.set(keyOf(r), (counts.get(keyOf(r)) ?? 0) + 1);
   return found.map((r) => ({ ...r, hidden: isHidden(r.targetType, r.status), pendingCount: counts.get(keyOf(r)) ?? 0 }));
+}
+
+/** Texto do aviso quando a ocultação veio da revisão automática, que não tem motivo escrito. */
+export const AUTO_REVIEW_NOTICE = "Oculto após denúncias da comunidade.";
+
+/**
+ * Motivo da última ocultação do projeto, para os membros. Quem chama já provou a membership;
+ * a consulta não devolve autor nem IP.
+ */
+export async function getProjectHiddenReason(project: { id: string; institutionId: string }): Promise<string | null> {
+  const [last] = await db
+    .select({ action: auditLogs.action, metadata: auditLogs.metadata })
+    .from(auditLogs)
+    .where(
+      and(
+        eq(auditLogs.institutionId, project.institutionId),
+        eq(auditLogs.targetType, "PROJECT"),
+        eq(auditLogs.targetId, project.id),
+        inArray(auditLogs.action, ["PROJECT_SUSPENDED", "TARGET_AUTO_REVIEW"]),
+      ),
+    )
+    .orderBy(desc(auditLogs.createdAt))
+    .limit(1);
+  if (!last) return null;
+  if (last.action === "TARGET_AUTO_REVIEW") return AUTO_REVIEW_NOTICE;
+  const reason = last.metadata?.reason;
+  return typeof reason === "string" ? reason : null;
 }

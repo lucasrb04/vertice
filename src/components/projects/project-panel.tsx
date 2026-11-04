@@ -21,6 +21,8 @@ export function ProjectPanel({
   open,
   closed,
   inProgressCount,
+  hidden = false,
+  hiddenReason = null,
 }: {
   project: Project;
   /** `null` só para SYSTEM_ADMIN sem membership (somente leitura). */
@@ -30,6 +32,9 @@ export function ProjectPanel({
   open: PanelOpportunity[];
   closed: PanelOpportunity[];
   inProgressCount: number;
+  /** Projeto oculto pela moderação (suspenso ou em revisão). */
+  hidden?: boolean;
+  hiddenReason?: string | null;
 }) {
   const now = new Date();
   const active = project.status === "ACTIVE";
@@ -57,7 +62,15 @@ export function ProjectPanel({
         </dl>
       </header>
 
-      {!active && (
+      {hidden && (
+        <div role="status" className="space-y-1 rounded-lg border border-stone-300 bg-stone-100 px-4 py-3 text-sm text-stone-700">
+          <p className="font-medium text-stone-900">Oculto pela moderação</p>
+          {hiddenReason && <p>{hiddenReason}</p>}
+          <p>O painel fica disponível só para leitura e nenhum processo recebe inscrições.</p>
+        </div>
+      )}
+
+      {!active && !hidden && (
         <p role="status" className="rounded-lg border border-stone-300 bg-stone-100 px-4 py-3 text-sm text-stone-700">
           Projeto {PROJECT_STATUS_LABELS[project.status].toLowerCase()}: o painel fica disponível só para leitura e
           nenhum processo recebe inscrições.

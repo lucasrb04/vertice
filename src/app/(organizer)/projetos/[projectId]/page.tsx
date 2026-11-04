@@ -1,4 +1,5 @@
 import { ProjectPanel } from "@/components/projects/project-panel";
+import { getProjectHiddenReason } from "@/lib/moderation/queries";
 import { getProjectPanel } from "@/lib/projects/queries";
 import { loadProjectReadPage } from "./access";
 
@@ -8,6 +9,8 @@ export default async function ProjectPanelPage({ params }: { params: Promise<{ p
   const { projectId } = await params;
   const access = await loadProjectReadPage(projectId);
   const { open, closed, inProgressCount } = await getProjectPanel(access);
+  const hidden = access.project.status === "SUSPENDED" || access.project.status === "UNDER_REVIEW";
+  const hiddenReason = hidden ? await getProjectHiddenReason(access.project) : null;
 
   return (
     <section className="mx-auto max-w-4xl px-4 py-12">
@@ -19,6 +22,8 @@ export default async function ProjectPanelPage({ params }: { params: Promise<{ p
         open={open}
         closed={closed}
         inProgressCount={inProgressCount}
+        hidden={hidden}
+        hiddenReason={hiddenReason}
       />
     </section>
   );

@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { applicationEvents, applications, institutions, opportunities, projectMembers, projects, reports, users } from "../src/db/schema";
+import { applicationEvents, applications, auditLogs, institutions, opportunities, projectMembers, projects, reports, users } from "../src/db/schema";
 import { assertTestDatabase } from "../src/db/test-db-guard";
 
 // O processo do Playwright não tem o ambiente do servidor: conecta direto no banco de .env.test.
@@ -130,6 +130,12 @@ export async function updateCustomQuestion(opportunityId: string, customQuestion
 
 export async function updateProjectStatus(projectId: string, status: ProjectValues["status"]) {
   await getDb().update(projects).set({ status }).where(eq(projects.id, projectId));
+}
+
+/** Registro de moderação de um projeto, como `hideTarget` e a revisão automática gravam. */
+export async function insertModerationLog(projectId: string, action: string, metadata: Record<string, unknown> = {}) {
+  const [project] = await getDb().select({ institutionId: projects.institutionId }).from(projects).where(eq(projects.id, projectId));
+  await getDb().insert(auditLogs).values({ institutionId: project!.institutionId, action, targetType: "PROJECT", targetId: projectId, metadata });
 }
 
 /** Remove todos os processos, para testes que dependem da vitrine vazia ou de uma ordem exata. */

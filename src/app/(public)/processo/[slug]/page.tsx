@@ -29,6 +29,7 @@ import { getRequestIp } from "@/lib/security/audit";
 import { getDefaultInstitution } from "@/lib/tenant";
 import { formatDay } from "@/lib/time";
 import { cn } from "@/lib/utils";
+import { logError } from "@/lib/log";
 import { isHttps } from "@/lib/validation/common";
 
 // Prazos e estado aberto/encerrado mudam com o relógio: nunca pré-renderizar.
@@ -94,7 +95,7 @@ export default async function ProcessoPage({ params }: Props) {
       try {
         await recordView(opportunity.id, visitorHash(ip, userAgent, getVisitorHashSecret()));
       } catch (error) {
-        console.error("[telemetria] falha ao registrar visualização", error);
+        logError("[telemetria] falha ao registrar visualização", error);
       }
     });
   }

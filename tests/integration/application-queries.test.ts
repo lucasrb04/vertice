@@ -86,6 +86,30 @@ describe("listMyApplications", () => {
   });
 });
 
+describe("listMyApplications: alvo oculto", () => {
+  it("anula o link de processo ou projeto oculto pela moderação", async () => {
+    const me = await mkUser(`oculto${seq++}@unifei.edu.br`);
+    const suspended = await mkProject({ name: "Projeto suspenso", status: "SUSPENDED" });
+    const review = await mkProject({ name: "Projeto em revisão", status: "UNDER_REVIEW" });
+    const archived = await mkProject({ name: "Projeto arquivado", status: "ARCHIVED" });
+    const visible = await mkProject({ name: "Projeto visível" });
+    const hiddenProcess = await mkOpportunity(visible.id, { title: "Processo oculto", status: "UNDER_REVIEW" });
+    const inSuspended = await mkOpportunity(suspended.id, { title: "No suspenso" });
+    const inReview = await mkOpportunity(review.id, { title: "No em revisão" });
+    const inArchived = await mkOpportunity(archived.id, { title: "No arquivado" });
+    const ok = await mkOpportunity(visible.id, { title: "Normal" });
+    const opps = [hiddenProcess, inSuspended, inReview, inArchived, ok];
+    for (const [i, o] of opps.entries()) await apply(me.id, o.id, at(i));
+
+    const slugs = new Map((await listMyApplications(me)).map((x) => [x.opportunityTitle, x.opportunitySlug]));
+    expect(slugs.get("Processo oculto")).toBeNull();
+    expect(slugs.get("No suspenso")).toBeNull();
+    expect(slugs.get("No em revisão")).toBeNull();
+    expect(slugs.get("No arquivado")).toBe(inArchived.slug);
+    expect(slugs.get("Normal")).toBe(ok.slug);
+  });
+});
+
 describe("listMyApplications: dois alunos e projeto arquivado", () => {
   it("mensagens de outro aluno na mesma oportunidade não vazam", async () => {
     const project = await mkProject();

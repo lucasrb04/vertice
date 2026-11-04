@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getPublicOpportunity } from "@/lib/public/queries";
 import { getVisitorHashSecret, recordExternalClick, visitorHash } from "@/lib/public/telemetry";
 import { getRequestIp } from "@/lib/security/audit";
+import { logError } from "@/lib/log";
 import { getDefaultInstitution } from "@/lib/tenant";
 
 const notFound = () => new NextResponse("Não encontrado", { status: 404 });
@@ -31,7 +32,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ slug: strin
     );
     await recordExternalClick(result.opportunity.id, hash);
   } catch (error) {
-    console.error("[telemetria] falha ao registrar clique no edital", error);
+    logError("[telemetria] falha ao registrar clique no edital", error);
   }
 
   const res = NextResponse.redirect(target.toString(), 302);

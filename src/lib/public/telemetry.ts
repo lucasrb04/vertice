@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { opportunities, opportunityExternalClicks } from "@/db/schema";
 import { getEnv, type Env } from "@/env";
 import { createRateLimiter } from "@/lib/security/rate-limit";
+import { logError } from "@/lib/log";
 import { todayInSaoPaulo } from "@/lib/time";
 
 export function getVisitorHashSecret(env: Env = getEnv()): string {
@@ -57,6 +58,6 @@ export async function recordView(opportunityId: string, hash: string, now: Date 
       .set({ viewsCount: sql`${opportunities.viewsCount} + 1` })
       .where(eq(opportunities.id, opportunityId));
   } catch (error) {
-    console.error("[telemetria] falha ao registrar visualização", error);
+    logError("[telemetria] falha ao registrar visualização", error);
   }
 }

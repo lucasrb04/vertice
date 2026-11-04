@@ -2,6 +2,7 @@ import { eq, sql, type SQL } from "drizzle-orm";
 import { db, type Tx } from "@/db";
 import { opportunities, projects, searchVocabulary } from "@/db/schema";
 import { publicOpportunitySql } from "@/lib/public/queries";
+import { logError } from "@/lib/log";
 import { UNACCENTED_STOPWORDS } from "./corrector";
 
 const tagNames = sql`(
@@ -108,6 +109,6 @@ export async function scheduleVocabularyRebuild(institutionId: string): Promise<
   try {
     await rebuildSearchVocabulary(institutionId);
   } catch (err) {
-    console.error("Falha ao reconstruir o vocabulário de busca:", err);
+    logError("Falha ao reconstruir o vocabulário de busca:", err);
   }
 }

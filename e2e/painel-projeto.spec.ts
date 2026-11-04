@@ -1,7 +1,10 @@
 import { test, expect, type Page } from "@playwright/test";
 import { SYSTEM_ADMIN_READ_ONLY } from "../src/lib/projects/labels";
 import { MEMBER_NO_ACCOUNT } from "../src/lib/projects/members";
+import { closeTestDb, insertModerationLog, updateProjectStatus } from "./helpers";
 import { formatDay, todayInSaoPaulo } from "../src/lib/time";
+
+test.afterAll(closeTestDb);
 
 async function loginAs(page: Page, email: string, name: string) {
   const res = await page.request.post("/api/test-auth/login", { data: { email, name } });
@@ -163,4 +166,24 @@ test("painel de projeto alheio é 404", async ({ page, browser }) => {
     expect(res?.status()).toBe(404);
   }
   await adminContext.close();
+});
+
+test("membro vê o aviso e o motivo de um projeto oculto pela moderação", async ({ page }) => {
+  await loginAs(page, "dono.oculto@unifei.edu.br", "Dono Oculto");
+  const projectId = await publishProject(page, "Projeto Oculto", "Processo do oculto");
+
+  await updateProjectStatus(projectId, "SUSPENDED");
+  await insertModerationLog(projectId, "PROJECT_SUSPENDED", { reason: "Conteúdo fora das regras da plataforma." });
+  await page.goto(`/projetos/${projectId}`);
+  const notice = page.getByRole("status").filter({ hasText: "Oculto pela moderação" });
+  await expect(notice).toContainText("Conteúdo fora das regras da plataforma.");
+  await expect(page.getByRole("link", { name: "Novo processo", exact: true })).toHaveCount(0);
+
+  // Revisão automática não tem motivo escrito.
+  await updateProjectStatus(projectId, "UNDER_REVIEW");
+  await insertModerationLog(projectId, "TARGET_AUTO_REVIEW", { pendingReports: 5 });
+  await page.goto(`/projetos/${projectId}`);
+  await expect(page.getByRole("status").filter({ hasText: "Oculto pela moderação" })).toContainText(
+    "Oculto após denúncias da comunidade.",
+  );
 });
