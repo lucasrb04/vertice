@@ -69,7 +69,18 @@ describe("correctQuery", () => {
   });
 
   it("erros reais continuam corrigidos pela regra da spec", async () => {
-    await catalog("Python", "Estágio", "Marketing", "Iniciação", "Dados", "Hidrologia", "Robótica", "Algoritmo", "Engenharia", "Bolsa");
+    await catalog(
+      "Python",
+      "Estágio",
+      "Marketing",
+      "Iniciação",
+      "Dados",
+      "Hidrologia",
+      "Robótica",
+      "Algoritmo",
+      "Engenharia",
+      "Bolsa",
+    );
     const cases: [string, string][] = [
       ["pyhton", "python"],
       ["pyton", "python"],

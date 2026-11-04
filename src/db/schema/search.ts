@@ -1,4 +1,15 @@
-import { customType, date, index, integer, pgTable, primaryKey, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
+import {
+  customType,
+  date,
+  index,
+  integer,
+  pgTable,
+  primaryKey,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 import { institutions } from "./institutions";
 import { opportunities } from "./opportunities";
 
@@ -59,5 +70,8 @@ export const searchZeroResults = pgTable(
     day: date("day").notNull(),
     count: integer("count").notNull().default(1),
   },
-  (t) => [uniqueIndex("search_zero_results_unique_idx").on(t.institutionId, t.term, t.day), index("search_zero_results_day_idx").on(t.day)],
+  (t) => [
+    uniqueIndex("search_zero_results_unique_idx").on(t.institutionId, t.term, t.day),
+    index("search_zero_results_day_idx").on(t.day),
+  ],
 );

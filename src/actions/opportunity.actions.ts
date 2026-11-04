@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth/guards";
 import { closeOpportunity, createOpportunity, updateOpportunity } from "@/lib/opportunities/service";
-import { runAction, type ActionResult } from "./result";
+import { type ActionResult, runAction } from "./result";
 
 /** Painel e páginas de edição/duplicação dos processos do projeto. */
 function revalidateProject(projectId: string) {

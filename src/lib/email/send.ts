@@ -1,7 +1,7 @@
-import type { ReactElement } from "react";
 import { render } from "@react-email/render";
+import type { ReactElement } from "react";
 import { Resend } from "resend";
-import { getEnv, type Env } from "@/env";
+import { type Env, getEnv } from "@/env";
 
 type EmailInput = { to: string; subject: string; react: ReactElement };
 

@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { institutions, type Institution } from "@/db/schema";
+import { type Institution, institutions } from "@/db/schema";
 import { getEnv } from "@/env";
 
 export class InstitutionNotSeededError extends Error {

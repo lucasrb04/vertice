@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplicationBoard } from "@/components/applications/board";
-import { getBoard, type Board } from "@/lib/applications/board";
+import { type Board, getBoard } from "@/lib/applications/board";
 import { NotFoundError } from "@/lib/auth/errors";
 import { requireAuthPage } from "@/lib/auth/guards";
 import { getRequestIp } from "@/lib/security/audit";

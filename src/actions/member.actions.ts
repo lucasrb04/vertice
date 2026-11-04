@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth/guards";
 import { addMember, changeMemberRole, leaveProject, removeMember } from "@/lib/projects/members";
-import { runAction, type ActionResult } from "./result";
+import { type ActionResult, runAction } from "./result";
 
 /** Painel, membros e demais subpáginas do projeto; `/painel` lista o papel em cada projeto. */
 function revalidateMembers(projectId: string) {

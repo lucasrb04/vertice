@@ -8,7 +8,12 @@ export type ApplicationReceivedProps = {
   url: string;
 };
 
-export function ApplicationReceivedEmail({ studentName, opportunityTitle, projectName, url }: ApplicationReceivedProps) {
+export function ApplicationReceivedEmail({
+  studentName,
+  opportunityTitle,
+  projectName,
+  url,
+}: ApplicationReceivedProps) {
   return (
     <EmailLayout preview={`Recebemos a sua candidatura a ${opportunityTitle}`}>
       <Text style={paragraph}>Olá, {studentName}.</Text>

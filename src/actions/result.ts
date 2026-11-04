@@ -1,10 +1,16 @@
 import { unstable_rethrow } from "next/navigation";
 import { NotFoundError, UnauthorizedError } from "@/lib/auth/errors";
-import { TURNSTILE_FAILED, TurnstileFailedError } from "@/lib/security/turnstile";
-import { logError } from "@/lib/log";
 import { DomainError, RateLimitError, ValidationError } from "@/lib/domain-errors";
+import { logError } from "@/lib/log";
+import { TURNSTILE_FAILED, TurnstileFailedError } from "@/lib/security/turnstile";
 
-export type ActionErrorCode = "UNAUTHORIZED" | "NOT_FOUND" | "VALIDATION" | "RATE_LIMITED" | "TURNSTILE_FAILED" | "RULE";
+export type ActionErrorCode =
+  | "UNAUTHORIZED"
+  | "NOT_FOUND"
+  | "VALIDATION"
+  | "RATE_LIMITED"
+  | "TURNSTILE_FAILED"
+  | "RULE";
 
 export type ActionResult<T = void> =
   | { ok: true; data: T }

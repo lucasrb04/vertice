@@ -16,11 +16,7 @@ export function isHttps(value: string): boolean {
 
 /** URL https obrigatória; devolve o valor aparado. */
 export function httpsUrl(max: number) {
-  return z
-    .string()
-    .trim()
-    .max(max)
-    .refine(isHttps, { message: HTTPS_ONLY });
+  return z.string().trim().max(max).refine(isHttps, { message: HTTPS_ONLY });
 }
 
 /** URL https opcional; vazio ou ausente vira null. */

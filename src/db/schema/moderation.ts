@@ -24,7 +24,9 @@ export const reports = pgTable(
   },
   (t) => [
     // Só entre pendentes: depois de resolvidas, novas denúncias começam do zero (spec §7).
-    uniqueIndex("reports_unique_idx").on(t.reporterUserId, t.targetType, t.targetId).where(sql`${t.resolvedAt} IS NULL`),
+    uniqueIndex("reports_unique_idx")
+      .on(t.reporterUserId, t.targetType, t.targetId)
+      .where(sql`${t.resolvedAt} IS NULL`),
     index("reports_pending_target_idx").on(t.targetType, t.targetId).where(sql`${t.resolvedAt} IS NULL`),
-  ]
+  ],
 );

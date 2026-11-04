@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { projectMembers, type ProjectRole, type ProjectStatus } from "@/db/schema";
+import { type ProjectRole, type ProjectStatus, projectMembers } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
-import { authorizeProjectRole, type AuthUser, type ProjectAccess } from "@/lib/auth/guards";
+import { type AuthUser, authorizeProjectRole, type ProjectAccess } from "@/lib/auth/guards";
 
 export const ALL_ROLES = ["OWNER", "ADMIN", "REVIEWER"] as const;
 export const EDITOR_ROLES = ["OWNER", "ADMIN"] as const;

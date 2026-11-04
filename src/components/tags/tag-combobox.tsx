@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
 import { XIcon } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 import { searchTagsAction } from "@/actions/tag.actions";
 import { Command, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { normalizeTagSlug } from "@/lib/search/tags";
@@ -96,7 +96,10 @@ export function TagCombobox({
   return (
     <div className="space-y-2">
       <div aria-hidden="true" className="text-sm font-medium text-stone-800">
-        {label} <span className="font-mono text-xs text-stone-500">{value.length}/{max}</span>
+        {label}{" "}
+        <span className="font-mono text-xs text-stone-500">
+          {value.length}/{max}
+        </span>
       </div>
       {value.length > 0 && (
         <ul aria-label={`Tags escolhidas: ${label}`} className="flex flex-wrap gap-1.5">
@@ -122,11 +125,7 @@ export function TagCombobox({
           })}
         </ul>
       )}
-      <Command
-        shouldFilter={false}
-        label={label}
-        className="rounded-lg! border border-stone-200 bg-white p-0"
-      >
+      <Command shouldFilter={false} label={label} className="rounded-lg! border border-stone-200 bg-white p-0">
         <CommandInput
           value={query}
           onValueChange={changeQuery}

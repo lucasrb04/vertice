@@ -1,6 +1,15 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { courses, institutions, opportunities, opportunityTags, projectMembers, projects, tags, users } from "@/db/schema";
+import {
+  courses,
+  institutions,
+  opportunities,
+  opportunityTags,
+  projectMembers,
+  projects,
+  tags,
+  users,
+} from "@/db/schema";
 import { getDefaultInstitution } from "@/lib/tenant";
 
 type SystemRole = typeof users.$inferInsert.systemRole;
@@ -67,7 +76,10 @@ export async function addMember(projectId: string, userId: string, role: MemberR
 }
 
 export async function mkOpportunity(projectId: string, overrides: Partial<typeof opportunities.$inferInsert> = {}) {
-  const [project] = await db.select({ institutionId: projects.institutionId }).from(projects).where(eq(projects.id, projectId));
+  const [project] = await db
+    .select({ institutionId: projects.institutionId })
+    .from(projects)
+    .where(eq(projects.id, projectId));
   const [opp] = await db
     .insert(opportunities)
     .values({
@@ -87,15 +99,27 @@ export async function mkOpportunity(projectId: string, overrides: Partial<typeof
 export async function mkForeignInstitution() {
   const [inst] = await db
     .insert(institutions)
-    .values({ slug: `outra-${uniq()}`, name: "Outra Instituição", shortName: "OUTRA", allowedEmailDomains: ["outra.edu.br"] })
+    .values({
+      slug: `outra-${uniq()}`,
+      name: "Outra Instituição",
+      shortName: "OUTRA",
+      allowedEmailDomains: ["outra.edu.br"],
+    })
     .returning();
   return inst;
 }
 
 export async function mkTag(name: string, opts: { institutionId?: string; usageCount?: number } = {}) {
   const institutionId = opts.institutionId ?? (await getDefaultInstitution()).id;
-  const slug = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-");
-  const [existing] = await db.select().from(tags).where(and(eq(tags.institutionId, institutionId), eq(tags.normalizedSlug, slug)));
+  const slug = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+  const [existing] = await db
+    .select()
+    .from(tags)
+    .where(and(eq(tags.institutionId, institutionId), eq(tags.normalizedSlug, slug)));
   if (existing) return existing;
   const [tag] = await db
     .insert(tags)
@@ -114,7 +138,10 @@ export async function tagOpportunity(
 
 export async function mkCourse(code: string, name = `Curso ${code}`, institutionId?: string) {
   const inst = institutionId ?? (await getDefaultInstitution()).id;
-  const [existing] = await db.select().from(courses).where(and(eq(courses.institutionId, inst), eq(courses.code, code)));
+  const [existing] = await db
+    .select()
+    .from(courses)
+    .where(and(eq(courses.institutionId, inst), eq(courses.code, code)));
   if (existing) return existing;
   const [course] = await db.insert(courses).values({ institutionId: inst, code, name, institute: "TESTE" }).returning();
   return course;

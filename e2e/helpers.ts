@@ -1,11 +1,20 @@
 import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
-import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { applicationEvents, applications, institutions, opportunities, projectMembers, projects, reports, users } from "../src/db/schema";
+import {
+  applicationEvents,
+  applications,
+  institutions,
+  opportunities,
+  projectMembers,
+  projects,
+  reports,
+  users,
+} from "../src/db/schema";
 import { assertTestDatabase } from "../src/db/test-db-guard";
 
 // O processo do Playwright não tem o ambiente do servidor: conecta direto no banco de .env.test.
@@ -107,8 +116,13 @@ export async function insertReport(
   reasonCode: (typeof reports.$inferInsert)["reasonCode"] = "SPAM",
   reason: string | null = null,
 ) {
-  const [user] = await getDb().select({ id: users.id, institutionId: users.institutionId }).from(users).where(eq(users.email, email));
-  await getDb().insert(reports).values({ institutionId: user!.institutionId, ...target, reporterUserId: user!.id, reasonCode, reason });
+  const [user] = await getDb()
+    .select({ id: users.id, institutionId: users.institutionId })
+    .from(users)
+    .where(eq(users.email, email));
+  await getDb()
+    .insert(reports)
+    .values({ institutionId: user!.institutionId, ...target, reporterUserId: user!.id, reasonCode, reason });
 }
 
 /** Candidatura de um usuário já logado, como `applyToOpportunity` grava. */

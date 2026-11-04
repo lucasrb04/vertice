@@ -2,7 +2,6 @@ import { boolean, integer, jsonb, pgTable, text, timestamp, uuid, varchar } from
 import { careerGoalEnum, systemRoleEnum } from "./enums";
 import { courses, institutions } from "./institutions";
 
-
 // Tabela de usuário do Better-Auth (modelName "users" + additionalFields: institutionId,
 // systemRole, isBanned). Só e-mails dos allowedEmailDomains da instituição se cadastram (D31).
 // As tabelas sessions, accounts e verifications
@@ -41,4 +40,3 @@ export const studentProfiles = pgTable("student_profiles", {
   emailAlertsEnabled: boolean("email_alerts_enabled").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
-

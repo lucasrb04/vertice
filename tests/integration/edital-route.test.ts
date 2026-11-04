@@ -1,16 +1,21 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { GET } from "@/app/(public)/processo/[slug]/edital/route";
 import { db } from "@/db";
 import { opportunities } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { resetDb } from "../helpers/db";
 import { mkOpportunity, mkProject } from "../helpers/fixtures";
-import { GET } from "@/app/(public)/processo/[slug]/edital/route";
 
 const call = (slug: string) =>
-  GET(new Request("http://localhost/processo/x/edital", { headers: { "x-forwarded-for": "203.0.113.5", "user-agent": "t" } }), {
-    params: Promise.resolve({ slug }),
-  });
+  GET(
+    new Request("http://localhost/processo/x/edital", {
+      headers: { "x-forwarded-for": "203.0.113.5", "user-agent": "t" },
+    }),
+    {
+      params: Promise.resolve({ slug }),
+    },
+  );
 
 beforeEach(async () => {
   await resetDb();

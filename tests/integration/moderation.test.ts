@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { and, eq, isNull } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { auditLogs, opportunities, projects, reports, searchVocabulary } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError, ValidationError } from "@/lib/domain-errors";
 import {
-  REPORT_THRESHOLD,
   applyAutomaticReview,
   dismissReports,
   hideTarget,
+  REPORT_THRESHOLD,
   restoreTarget,
 } from "@/lib/moderation/service";
 import { getPublicOpportunity, getPublicProject, searchOpportunities } from "@/lib/public/queries";
@@ -33,7 +33,10 @@ async function setup(opts: { projectStatus?: "ACTIVE" | "ARCHIVED"; opportunityS
   const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
   const user = await mkUser("aluno@unifei.edu.br");
   const project = await mkProject({ name: "Equipe Quimera", status: opts.projectStatus ?? "ACTIVE" });
-  const opp = await mkOpportunity(project.id, { title: "Bolsista de Xilogravura", status: opts.opportunityStatus ?? "OPEN" });
+  const opp = await mkOpportunity(project.id, {
+    title: "Bolsista de Xilogravura",
+    status: opts.opportunityStatus ?? "OPEN",
+  });
   await db.transaction((tx) => refreshProjectSearchDocuments(tx, project.id));
   await rebuildSearchVocabulary(inst);
   return { admin, user, project, opp };
@@ -53,13 +56,20 @@ const hasWord = async (word: string) =>
 
 async function mkReports(targetType: "PROJECT" | "OPPORTUNITY", targetId: string, n: number, institutionId = inst) {
   for (let i = 0; i < n; i++) {
-    const reporter = await mkUser(`denunciante${i}-${crypto.randomUUID().slice(0, 8)}@unifei.edu.br`, { institutionId });
-    await db.insert(reports).values({ institutionId, targetType, targetId, reporterUserId: reporter.id, reasonCode: "SPAM", reason: null });
+    const reporter = await mkUser(`denunciante${i}-${crypto.randomUUID().slice(0, 8)}@unifei.edu.br`, {
+      institutionId,
+    });
+    await db
+      .insert(reports)
+      .values({ institutionId, targetType, targetId, reporterUserId: reporter.id, reasonCode: "SPAM", reason: null });
   }
 }
 
 const pendingReports = async (targetId: string) =>
-  db.select().from(reports).where(and(eq(reports.targetId, targetId), isNull(reports.resolvedAt)));
+  db
+    .select()
+    .from(reports)
+    .where(and(eq(reports.targetId, targetId), isNull(reports.resolvedAt)));
 
 describe("hideTarget", () => {
   it("projeto ACTIVE vira SUSPENDED, guarda o estado e some da vitrine, da busca e do vocabulário", async () => {
@@ -67,7 +77,11 @@ describe("hideTarget", () => {
     expect(await searchTitles("xilogravura")).toEqual(["Bolsista de Xilogravura"]);
     expect(await hasWord("xilogravura")).toBe(true);
 
-    await hideTarget(s.admin, { targetType: "PROJECT", targetId: s.project.id, reason: REASON }, { ipAddress: "10.0.0.9" });
+    await hideTarget(
+      s.admin,
+      { targetType: "PROJECT", targetId: s.project.id, reason: REASON },
+      { ipAddress: "10.0.0.9" },
+    );
 
     const row = await projectRow(s.project.id);
     expect(row.status).toBe("SUSPENDED");
@@ -124,7 +138,11 @@ describe("restoreTarget", () => {
     const s = await setup({ projectStatus: "ARCHIVED" });
     await hideTarget(s.admin, { targetType: "PROJECT", targetId: s.project.id, reason: REASON });
     await mkReports("PROJECT", s.project.id, 2);
-    await restoreTarget(s.admin, { targetType: "PROJECT", targetId: s.project.id, reason: "Revisado, conteúdo legítimo." });
+    await restoreTarget(s.admin, {
+      targetType: "PROJECT",
+      targetId: s.project.id,
+      reason: "Revisado, conteúdo legítimo.",
+    });
 
     const row = await projectRow(s.project.id);
     expect(row.status).toBe("ARCHIVED");
@@ -148,7 +166,12 @@ describe("restoreTarget", () => {
     expect(row.status).toBe("CLOSED");
     expect(row.statusBeforeModeration).toBeNull();
     const [log] = await db.select().from(auditLogs).where(eq(auditLogs.action, "OPPORTUNITY_RESTORED"));
-    expect(log.metadata).toEqual({ reason: REASON, previousStatus: "UNDER_REVIEW", newStatus: "CLOSED", resolvedReports: 0 });
+    expect(log.metadata).toEqual({
+      reason: REASON,
+      previousStatus: "UNDER_REVIEW",
+      newStatus: "CLOSED",
+      resolvedReports: 0,
+    });
   });
 
   it("restaurar algo não oculto: DomainError", async () => {
@@ -177,7 +200,11 @@ describe("dismissReports", () => {
   it("resolve as denúncias pendentes sem mudar o estado e audita", async () => {
     const s = await setup();
     await mkReports("OPPORTUNITY", s.opp.id, 3);
-    await dismissReports(s.admin, { targetType: "OPPORTUNITY", targetId: s.opp.id, reason: "Denúncias sem fundamento." });
+    await dismissReports(s.admin, {
+      targetType: "OPPORTUNITY",
+      targetId: s.opp.id,
+      reason: "Denúncias sem fundamento.",
+    });
     expect(await pendingReports(s.opp.id)).toHaveLength(0);
     expect((await opportunityRow(s.opp.id)).status).toBe("OPEN");
     const [log] = await db.select().from(auditLogs).where(eq(auditLogs.action, "REPORTS_DISMISSED"));
@@ -289,7 +316,11 @@ describe("applyAutomaticReview", () => {
   it("denúncias resolvidas não contam", async () => {
     const s = await setup();
     await mkReports("OPPORTUNITY", s.opp.id, 4);
-    await dismissReports(s.admin, { targetType: "OPPORTUNITY", targetId: s.opp.id, reason: "Denúncias sem fundamento." });
+    await dismissReports(s.admin, {
+      targetType: "OPPORTUNITY",
+      targetId: s.opp.id,
+      reason: "Denúncias sem fundamento.",
+    });
     await mkReports("OPPORTUNITY", s.opp.id, 1);
     expect(await review("OPPORTUNITY", s.opp.id)).toBe(false);
     expect((await opportunityRow(s.opp.id)).status).toBe("OPEN");

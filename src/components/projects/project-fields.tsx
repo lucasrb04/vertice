@@ -49,10 +49,12 @@ export function ProjectFields({
   onChange: (next: ProjectDraft) => void;
   errors?: FieldErrors;
 }) {
-  const set = <K extends keyof ProjectDraft>(key: K) => (v: ProjectDraft[K]) => onChange({ ...values, [key]: v });
+  const set =
+    <K extends keyof ProjectDraft>(key: K) =>
+    (v: ProjectDraft[K]) =>
+      onChange({ ...values, [key]: v });
   const text =
-    (key: Exclude<keyof ProjectDraft, "category">) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (key: Exclude<keyof ProjectDraft, "category">) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       set(key)(e.target.value);
   const isIC = values.category === "SCIENTIFIC_INIT";
 
@@ -119,9 +121,7 @@ export function ProjectFields({
         errors={errorsFor(errors, "description")}
         className="sm:col-span-6"
       >
-        {(p) => (
-          <Textarea {...p} value={values.description} onChange={text("description")} maxLength={5000} rows={5} />
-        )}
+        {(p) => <Textarea {...p} value={values.description} onChange={text("description")} maxLength={5000} rows={5} />}
       </Field>
       <Field label="E-mail de contato" errors={errorsFor(errors, "contactEmail")} className="sm:col-span-6">
         {(p) => (

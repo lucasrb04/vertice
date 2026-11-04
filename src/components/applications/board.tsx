@@ -48,7 +48,9 @@ function CandidateCard({
         )}
         <div className="min-w-0 space-y-0.5">
           <p className="font-medium [overflow-wrap:anywhere] text-stone-900">{card.name}</p>
-          {details.length > 0 && <p className="text-sm [overflow-wrap:anywhere] text-stone-600">{details.join(" · ")}</p>}
+          {details.length > 0 && (
+            <p className="text-sm [overflow-wrap:anywhere] text-stone-600">{details.join(" · ")}</p>
+          )}
           <p className="font-mono text-xs text-stone-500">{formatDay(card.appliedAt)}</p>
           {card.isOwn && <p className="text-xs font-medium text-stone-600">Sua candidatura</p>}
         </div>
@@ -177,7 +179,9 @@ export function ApplicationBoard({ board }: { board: Board }) {
                 {
                   cards: selectedCards,
                   summary:
-                    selectedCards.length === 1 ? selectedCards[0]!.name : `${selectedCards.length} candidatos selecionados`,
+                    selectedCards.length === 1
+                      ? selectedCards[0]!.name
+                      : `${selectedCards.length} candidatos selecionados`,
                 },
                 e.currentTarget,
               )

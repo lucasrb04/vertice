@@ -10,16 +10,12 @@ const mono = JetBrains_Mono({ variable: "--font-jetbrains", subsets: ["latin"] }
 
 export const metadata: Metadata = {
   title: "Vértice — UNIFEI",
-  description:
-    "Plataforma de divulgação de vagas, ICs, extensão e projetos especiais da UNIFEI.",
+  description: "Plataforma de divulgação de vagas, ICs, extensão e projetos especiais da UNIFEI.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="pt-BR"
-      className={`${heading.variable} ${sans.variable} ${mono.variable} h-full`}
-    >
+    <html lang="pt-BR" className={`${heading.variable} ${sans.variable} ${mono.variable} h-full`}>
       <body className="flex min-h-full flex-col">
         <SiteHeader />
         <main className="flex-1">{children}</main>

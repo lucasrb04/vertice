@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import type { ProjectRole } from "@/db/schema";
-import { requireProjectRolePage, type ProjectAccess } from "@/lib/auth/guards";
+import { type ProjectAccess, requireProjectRolePage } from "@/lib/auth/guards";
 import { ALL_ROLES, EDITOR_ROLES, effectiveMembership, projectCapabilities } from "@/lib/projects/permissions";
 
 type Membership = { role: ProjectRole };

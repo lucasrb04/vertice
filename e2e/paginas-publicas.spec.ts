@@ -1,7 +1,7 @@
-import { test, expect, type Page } from "@playwright/test";
-import { addProcess, closeTestDb, daysFromNow, insertProcess, opportunityCounters } from "./helpers";
+import { expect, type Page, test } from "@playwright/test";
 import { deadlineLabel } from "../src/lib/projects/labels";
 import { formatDay } from "../src/lib/time";
+import { addProcess, closeTestDb, daysFromNow, insertProcess, opportunityCounters } from "./helpers";
 
 const EDITAL = "https://edital.example.com/e2e.pdf";
 
@@ -26,7 +26,12 @@ test.describe("/processo/[slug]", () => {
       resultOn: "2026-12-15",
       availabilityRequirement: "Terças à tarde",
       noOtherScholarship: true,
-      project: { name: "Laboratório de Robótica", acronym: "LR", hasInstitutionalBadge: true, category: "SCIENTIFIC_INIT" },
+      project: {
+        name: "Laboratório de Robótica",
+        acronym: "LR",
+        hasInstitutionalBadge: true,
+        category: "SCIENTIFIC_INIT",
+      },
     });
 
     await page.goto(`/processo/${opportunity.slug}`);
@@ -37,7 +42,10 @@ test.describe("/processo/[slug]", () => {
     );
 
     await expect(page.getByRole("heading", { level: 1, name: "Bolsista de visão computacional" })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Laboratório de Robótica/ })).toHaveAttribute("href", `/projeto/${project.slug}`);
+    await expect(page.getByRole("link", { name: /Laboratório de Robótica/ })).toHaveAttribute(
+      "href",
+      `/projeto/${project.slug}`,
+    );
     await expect(page.getByRole("main")).toContainText("Iniciação científica");
     await expect(page.getByRole("main")).toContainText("Verificado");
     await expect(page.getByText(deadlineLabel(opportunity.deadlineAt))).toBeVisible();
@@ -99,7 +107,11 @@ test.describe("/processo/[slug]", () => {
 
   test("abertura amanhã com prazo em 3 dias: o card mostra selo e prazo, o prazo em âmbar", async ({ page }) => {
     const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(daysFromNow(1));
-    await insertProcess({ title: "Abre amanhã e encerra logo", applicationsOpenOn: tomorrow, deadlineAt: daysFromNow(3) });
+    await insertProcess({
+      title: "Abre amanhã e encerra logo",
+      applicationsOpenOn: tomorrow,
+      deadlineAt: daysFromNow(3),
+    });
 
     await page.goto("/processos");
     const card = page.getByRole("link", { name: /Abre amanhã e encerra logo/ });

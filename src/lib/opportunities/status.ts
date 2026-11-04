@@ -1,6 +1,6 @@
-import { sql, type SQL } from "drizzle-orm";
-import { opportunities, projects } from "@/db/schema";
+import { type SQL, sql } from "drizzle-orm";
 import type { OpportunityStatus, ProjectStatus } from "@/db/schema";
+import { opportunities, projects } from "@/db/schema";
 import { todayInSaoPaulo } from "@/lib/time";
 
 /** Regra única de "processo aberto": status OPEN, prazo não vencido e projeto ACTIVE. */

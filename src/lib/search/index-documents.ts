@@ -1,8 +1,8 @@
-import { eq, sql, type SQL } from "drizzle-orm";
+import { eq, type SQL, sql } from "drizzle-orm";
 import { db, type Tx } from "@/db";
 import { opportunities, projects, searchVocabulary } from "@/db/schema";
-import { publicOpportunitySql } from "@/lib/public/queries";
 import { logError } from "@/lib/log";
+import { publicOpportunitySql } from "@/lib/public/queries";
 import { UNACCENTED_STOPWORDS } from "./corrector";
 
 const tagNames = sql`(
@@ -11,7 +11,11 @@ const tagNames = sql`(
   where ot.opportunity_id = ${opportunities.id}
 )`;
 
-const concat = (...parts: unknown[]) => sql`concat_ws(' ', ${sql.join(parts.map((p) => sql`${p}`), sql`, `)})`;
+const concat = (...parts: unknown[]) =>
+  sql`concat_ws(' ', ${sql.join(
+    parts.map((p) => sql`${p}`),
+    sql`, `,
+  )})`;
 
 /** Duas formas no vetor (spec §5.1): `unaccent` antes do stemmer sozinho quebra derivações. */
 const weighted = (text: SQL, weight: "A" | "B" | "C") =>
@@ -39,7 +43,8 @@ async function upsertDocuments(tx: Tx, where: SQL): Promise<void> {
  * o que a transação anterior gravou (READ COMMITTED). Ordem fixa: esta trava primeiro, depois as
  * linhas; quem escreve a pega no início da transação, para nunca esperar por ela segurando linha.
  */
-const lockProjectDocuments = (projectId: SQL) => sql`pg_advisory_xact_lock(hashtext('search-documents:' || ${projectId}))`;
+const lockProjectDocuments = (projectId: SQL) =>
+  sql`pg_advisory_xact_lock(hashtext('search-documents:' || ${projectId}))`;
 
 /** Abre a escrita de um projeto. Reentrante: os `refresh*` podem pegá-la de novo na mesma transação. */
 export async function lockProjectSearchDocuments(tx: Tx, projectId: string): Promise<void> {

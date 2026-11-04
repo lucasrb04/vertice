@@ -10,7 +10,10 @@ export default async function AdminPage({
   const admin = await requireSystemAdminPage("/admin");
   const { q } = await searchParams;
   const query = (typeof q === "string" ? q : "").trim().slice(0, 100);
-  const [queue, results] = await Promise.all([listReportQueue(admin), query ? searchModerationTargets(admin, query) : []]);
+  const [queue, results] = await Promise.all([
+    listReportQueue(admin),
+    query ? searchModerationTargets(admin, query) : [],
+  ]);
   return (
     <section className="mx-auto max-w-6xl px-4 py-16">
       <h1 className="font-heading text-3xl font-bold tracking-tight text-stone-900">Portal do administrador</h1>

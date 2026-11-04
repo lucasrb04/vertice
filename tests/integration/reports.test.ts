@@ -1,6 +1,6 @@
 import { render } from "@react-email/render";
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { and, eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
 import { auditLogs, opportunities, projects, reports, searchVocabulary } from "@/db/schema";
 import { runSeed } from "@/db/seed";
@@ -57,8 +57,12 @@ const reportRows = (targetId: string) => db.select().from(reports).where(eq(repo
 const opportunityStatus = async (id: string) =>
   (await db.select({ status: opportunities.status }).from(opportunities).where(eq(opportunities.id, id)))[0]!.status;
 const hasWord = async (word: string) =>
-  (await db.select().from(searchVocabulary).where(and(eq(searchVocabulary.institutionId, inst), eq(searchVocabulary.word, word))))
-    .length > 0;
+  (
+    await db
+      .select()
+      .from(searchVocabulary)
+      .where(and(eq(searchVocabulary.institutionId, inst), eq(searchVocabulary.word, word)))
+  ).length > 0;
 
 describe("reportTarget", () => {
   it("grava a denúncia com o motivo e a descrição sem espaços nas pontas", async () => {
@@ -93,13 +97,21 @@ describe("reportTarget", () => {
   it(`a ${REPORT_THRESHOLD}ª denúncia distinta oculta o processo, audita e tira as palavras do vocabulário`, async () => {
     const { opp } = await setup();
     for (let i = 0; i < REPORT_THRESHOLD - 1; i++) {
-      const r = await reportTarget(await mkReporter(), { targetType: "OPPORTUNITY", targetId: opp.id, reasonCode: "SPAM" });
+      const r = await reportTarget(await mkReporter(), {
+        targetType: "OPPORTUNITY",
+        targetId: opp.id,
+        reasonCode: "SPAM",
+      });
       expect(r.autoHidden).toBe(false);
     }
     expect(await opportunityStatus(opp.id)).toBe("OPEN");
     expect(await hasWord("xilogravura")).toBe(true);
 
-    const last = await reportTarget(await mkReporter(), { targetType: "OPPORTUNITY", targetId: opp.id, reasonCode: "SPAM" });
+    const last = await reportTarget(await mkReporter(), {
+      targetType: "OPPORTUNITY",
+      targetId: opp.id,
+      reasonCode: "SPAM",
+    });
     expect(last).toEqual({ autoHidden: true, institutionId: inst, targetType: "OPPORTUNITY", targetId: opp.id });
     expect(await opportunityStatus(opp.id)).toBe("UNDER_REVIEW");
     const logs = await db.select().from(auditLogs).where(eq(auditLogs.action, "TARGET_AUTO_REVIEW"));
@@ -111,7 +123,11 @@ describe("reportTarget", () => {
     const { project } = await setup();
     let last;
     for (let i = 0; i < REPORT_THRESHOLD; i++) {
-      last = await reportTarget(await mkReporter(), { targetType: "PROJECT", targetId: project.id, reasonCode: "INAPPROPRIATE" });
+      last = await reportTarget(await mkReporter(), {
+        targetType: "PROJECT",
+        targetId: project.id,
+        reasonCode: "INAPPROPRIATE",
+      });
     }
     expect(last!.autoHidden).toBe(true);
     const [row] = await db.select().from(projects).where(eq(projects.id, project.id));
@@ -132,9 +148,9 @@ describe("reportTarget", () => {
     const { project, opp } = await setup();
     const member = await mkReporter();
     await addMember(project.id, member.id, "REVIEWER");
-    await expect(reportTarget(member, { targetType: "PROJECT", targetId: project.id, reasonCode: "SPAM" })).rejects.toBeInstanceOf(
-      DomainError,
-    );
+    await expect(
+      reportTarget(member, { targetType: "PROJECT", targetId: project.id, reasonCode: "SPAM" }),
+    ).rejects.toBeInstanceOf(DomainError);
     await expect(
       reportTarget(member, { targetType: "OPPORTUNITY", targetId: opp.id, reasonCode: "SPAM" }),
     ).rejects.toBeInstanceOf(DomainError);
@@ -156,13 +172,17 @@ describe("reportTarget", () => {
     const foreign = await mkForeignInstitution();
     const foreignProject = await mkProject({ institutionId: foreign.id });
     const foreignOpp = await mkOpportunity(foreignProject.id);
-    expect(await reportTarget(user, { targetType: "PROJECT", targetId: foreignProject.id, reasonCode: "SPAM" })).toEqual({
+    expect(
+      await reportTarget(user, { targetType: "PROJECT", targetId: foreignProject.id, reasonCode: "SPAM" }),
+    ).toEqual({
       autoHidden: false,
       institutionId: inst,
       targetType: "PROJECT",
       targetId: foreignProject.id,
     });
-    expect(await reportTarget(user, { targetType: "OPPORTUNITY", targetId: foreignOpp.id, reasonCode: "SPAM" })).toEqual({
+    expect(
+      await reportTarget(user, { targetType: "OPPORTUNITY", targetId: foreignOpp.id, reasonCode: "SPAM" }),
+    ).toEqual({
       autoHidden: false,
       institutionId: inst,
       targetType: "OPPORTUNITY",
@@ -174,10 +194,18 @@ describe("reportTarget", () => {
   it("alvo já oculto responde como um alvo válido, não grava nada e não muda de estado", async () => {
     const { opp } = await setup();
     const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
-    await hideTarget(admin, { targetType: "OPPORTUNITY", targetId: opp.id, reason: "Oculto pela moderação para teste." });
+    await hideTarget(admin, {
+      targetType: "OPPORTUNITY",
+      targetId: opp.id,
+      reason: "Oculto pela moderação para teste.",
+    });
     let last;
     for (let i = 0; i < REPORT_THRESHOLD; i++) {
-      last = await reportTarget(await mkReporter(), { targetType: "OPPORTUNITY", targetId: opp.id, reasonCode: "SPAM" });
+      last = await reportTarget(await mkReporter(), {
+        targetType: "OPPORTUNITY",
+        targetId: opp.id,
+        reasonCode: "SPAM",
+      });
     }
     expect(last).toEqual({ autoHidden: false, institutionId: inst, targetType: "OPPORTUNITY", targetId: opp.id });
     expect(await reportRows(opp.id)).toHaveLength(0);
@@ -195,10 +223,17 @@ describe("reportTarget", () => {
       cases.push({ targetType: "OPPORTUNITY", targetId: (await mkOpportunity(project.id)).id });
     }
     const active = await mkProject();
-    cases.push({ targetType: "OPPORTUNITY", targetId: (await mkOpportunity(active.id, { status: "UNDER_REVIEW" })).id });
+    cases.push({
+      targetType: "OPPORTUNITY",
+      targetId: (await mkOpportunity(active.id, { status: "UNDER_REVIEW" })).id,
+    });
 
     for (const target of cases) {
-      expect(await reportTarget(user, { ...target, reasonCode: "SPAM" })).toEqual({ autoHidden: false, institutionId: inst, ...target });
+      expect(await reportTarget(user, { ...target, reasonCode: "SPAM" })).toEqual({
+        autoHidden: false,
+        institutionId: inst,
+        ...target,
+      });
     }
     expect(await db.select().from(reports)).toHaveLength(0);
   });
@@ -223,7 +258,9 @@ describe("reportTarget", () => {
       { targetType: "OPPORTUNITY", targetId: opp.id, reasonCode: "SPAM", description: "x".repeat(501) },
     ];
     for (const input of bad) {
-      await expect(reportTarget(user, input as Parameters<typeof reportTarget>[1])).rejects.toBeInstanceOf(ValidationError);
+      await expect(reportTarget(user, input as Parameters<typeof reportTarget>[1])).rejects.toBeInstanceOf(
+        ValidationError,
+      );
     }
     for (let i = 0; i < 10; i++) {
       await reportTarget(user, { targetType: "OPPORTUNITY", targetId: opp.id, reasonCode: "SPAM" });
@@ -237,9 +274,9 @@ describe("reportTarget", () => {
       await reportTarget(user, { targetType: "PROJECT", targetId: project.id, reasonCode: "SPAM" });
     }
     const project = await mkProject();
-    await expect(reportTarget(user, { targetType: "PROJECT", targetId: project.id, reasonCode: "SPAM" })).rejects.toBeInstanceOf(
-      RateLimitError,
-    );
+    await expect(
+      reportTarget(user, { targetType: "PROJECT", targetId: project.id, reasonCode: "SPAM" }),
+    ).rejects.toBeInstanceOf(RateLimitError);
     expect(await reportRows(project.id)).toHaveLength(0);
   });
 
@@ -287,7 +324,11 @@ describe("notifyReviewAlert", () => {
     const foreign = await mkForeignInstitution();
     const foreignProject = await mkProject({ institutionId: foreign.id });
     await expect(
-      notifyReviewAlert({ institutionId: inst, targetType: "PROJECT", targetId: "00000000-0000-4000-8000-000000000000" }),
+      notifyReviewAlert({
+        institutionId: inst,
+        targetType: "PROJECT",
+        targetId: "00000000-0000-4000-8000-000000000000",
+      }),
     ).resolves.toBeUndefined();
     await notifyReviewAlert({ institutionId: inst, targetType: "PROJECT", targetId: foreignProject.id });
     expect(sent).toHaveLength(0);

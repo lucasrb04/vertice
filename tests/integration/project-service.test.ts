@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db, type Tx } from "@/db";
 import { auditLogs, opportunities, projectMembers, projects, tags } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError, RateLimitError, ValidationError } from "@/lib/domain-errors";
 import {
-  PROJECT_NOT_ACTIVE,
-  PROJECT_RATE_LIMIT,
   archiveProject,
   createProjectWithOpportunity,
+  PROJECT_NOT_ACTIVE,
+  PROJECT_RATE_LIMIT,
   updateProject,
 } from "@/lib/projects/service";
 import { tagCreationLimiter } from "@/lib/security/rate-limit";
@@ -85,7 +85,8 @@ describe("createProjectWithOpportunity", () => {
 
   it("quarto projeto em 24h é recusado", async () => {
     const user = await mkUser("a@unifei.edu.br");
-    for (let i = 0; i < 3; i++) await createProjectWithOpportunity(user, wizard(validProjectInput({ name: `Projeto ${i} X` })));
+    for (let i = 0; i < 3; i++)
+      await createProjectWithOpportunity(user, wizard(validProjectInput({ name: `Projeto ${i} X` })));
     const err = await createProjectWithOpportunity(user, wizard()).catch((e) => e);
     expect(err).toBeInstanceOf(RateLimitError);
     expect(err.userMessage).toBe(PROJECT_RATE_LIMIT);
@@ -159,7 +160,11 @@ describe("updateProject / archiveProject", () => {
       .from(auditLogs)
       .where(and(eq(auditLogs.action, "PROJECT_ARCHIVED"), eq(auditLogs.targetId, s.project.id)));
     expect(logs).toHaveLength(1);
-    expect(logs[0]).toMatchObject({ targetType: "PROJECT", actorUserId: s.owner.id, institutionId: s.project.institutionId });
+    expect(logs[0]).toMatchObject({
+      targetType: "PROJECT",
+      actorUserId: s.owner.id,
+      institutionId: s.project.institutionId,
+    });
 
     await expect(updateProject(s.owner, s.project.id, validProjectInput())).rejects.toBeInstanceOf(NotFoundError);
   });
@@ -187,7 +192,10 @@ describe("updateProject / archiveProject", () => {
 describe("ocultação concorrente", () => {
   /** O que `hideTarget` grava num projeto ativo, feito sob a trava que ele também toma. */
   const suspend = (projectId: string) => async (tx: Tx) => {
-    await tx.update(projects).set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" }).where(eq(projects.id, projectId));
+    await tx
+      .update(projects)
+      .set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" })
+      .where(eq(projects.id, projectId));
   };
 
   async function setup() {

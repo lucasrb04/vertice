@@ -1,12 +1,12 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
-import { auditLogs, institutions, projectMembers, projects, users } from "@/db/schema";
 import type { ProjectRole } from "@/db/schema";
+import { auditLogs, institutions, projectMembers, projects, users } from "@/db/schema";
 import { runSeed } from "@/db/seed";
-import { getDefaultInstitution } from "@/lib/tenant";
 import { NotFoundError, UnauthorizedError } from "@/lib/auth/errors";
 import { authorizeProjectRole, authorizeSystemAdmin, resolveActiveUser } from "@/lib/auth/guards";
+import { getDefaultInstitution } from "@/lib/tenant";
 import { resetDb } from "../helpers/db";
 
 type Fx = Awaited<ReturnType<typeof setup>>;
@@ -121,11 +121,9 @@ describe("guards", () => {
     });
 
     it("projectId inexistente e projectId sem permissão lançam o mesmo NotFoundError", async () => {
-      const missing = await authorizeProjectRole(
-        fx.outsider,
-        "00000000-0000-4000-8000-000000000000",
-        ["OWNER"],
-      ).catch((e: unknown) => e);
+      const missing = await authorizeProjectRole(fx.outsider, "00000000-0000-4000-8000-000000000000", ["OWNER"]).catch(
+        (e: unknown) => e,
+      );
       const denied = await authorizeProjectRole(fx.outsider, fx.project.id, ["OWNER"]).catch((e: unknown) => e);
       expect(missing).toBeInstanceOf(NotFoundError);
       expect(denied).toBeInstanceOf(NotFoundError);

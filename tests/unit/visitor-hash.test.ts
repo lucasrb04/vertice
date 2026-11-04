@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { getVisitorHashSecret, visitorHash } from "@/lib/public/telemetry";
 import type { Env } from "@/env";
+import { getVisitorHashSecret, visitorHash } from "@/lib/public/telemetry";
 
 const env = (o: Partial<Env>) => o as Env;
 

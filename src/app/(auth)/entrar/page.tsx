@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { SignInButton } from "@/components/layout/sign-in-button";
-import { isAuthErrorCode, UnauthorizedError, type AuthErrorCode } from "@/lib/auth/errors";
+import { type AuthErrorCode, isAuthErrorCode, UnauthorizedError } from "@/lib/auth/errors";
 import { resolveActiveUser } from "@/lib/auth/guards";
 import { safeNextPath } from "@/lib/auth/next-path";
 import { getSessionUser } from "@/lib/auth/session";
@@ -46,9 +46,7 @@ export default async function EntrarPage({
   return (
     <section className="mx-auto max-w-md px-4 py-16">
       <div className="rounded-lg border border-stone-200 bg-white p-6">
-        <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-900">
-          Entrar no Vértice
-        </h1>
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-900">Entrar no Vértice</h1>
         <p className="mt-2 text-stone-600">Use sua conta Google @unifei.edu.br.</p>
         {message ? (
           <p

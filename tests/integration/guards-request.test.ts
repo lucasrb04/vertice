@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
 import { auditLogs, projectMembers, projects, users } from "@/db/schema";
 import { runSeed } from "@/db/seed";
-import { getDefaultInstitution } from "@/lib/tenant";
 import { NotFoundError, UnauthorizedError } from "@/lib/auth/errors";
+import { getDefaultInstitution } from "@/lib/tenant";
 import { resetDb } from "../helpers/db";
 
 // Os wrappers de request dependem do runtime do Next: substituímos só as bordas

@@ -1,9 +1,9 @@
-import { beforeEach, describe, it, expect } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { auditLogs } from "@/db/schema";
 import { runSeed } from "@/db/seed";
-import { getDefaultInstitution } from "@/lib/tenant";
 import { getRequestIp, logAudit } from "@/lib/security/audit";
+import { getDefaultInstitution } from "@/lib/tenant";
 import { resetDb } from "../helpers/db";
 
 describe("logAudit", () => {

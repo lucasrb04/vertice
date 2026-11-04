@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { deadlineFromDay } from "@/lib/time";
 import { closedOnDate, isOpportunityOpen, opensInFuture, opensOnLabel } from "@/lib/opportunities/status";
+import { deadlineFromDay } from "@/lib/time";
 
 const now = new Date("2026-10-27T12:00:00Z");
 const future = new Date("2026-11-01T02:59:59Z");

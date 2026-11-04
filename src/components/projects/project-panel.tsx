@@ -1,12 +1,7 @@
 import Link from "next/link";
-import type { Project, ProjectRole } from "@/db/schema";
 import { Button } from "@/components/ui/button";
-import {
-  CATEGORY_LABELS,
-  PROJECT_STATUS_LABELS,
-  ROLE_LABELS,
-  SYSTEM_ADMIN_READ_ONLY,
-} from "@/lib/projects/labels";
+import type { Project, ProjectRole } from "@/db/schema";
+import { CATEGORY_LABELS, PROJECT_STATUS_LABELS, ROLE_LABELS, SYSTEM_ADMIN_READ_ONLY } from "@/lib/projects/labels";
 import type { PanelOpportunity } from "@/lib/projects/queries";
 import { cn } from "@/lib/utils";
 import { ArchiveProjectButton } from "./archive-project-button";
@@ -63,7 +58,10 @@ export function ProjectPanel({
       </header>
 
       {hidden && (
-        <div role="status" className="space-y-1 rounded-lg border border-stone-300 bg-stone-100 px-4 py-3 text-sm text-stone-700">
+        <div
+          role="status"
+          className="space-y-1 rounded-lg border border-stone-300 bg-stone-100 px-4 py-3 text-sm text-stone-700"
+        >
           <p className="font-medium text-stone-900">Oculto pela moderação</p>
           {hiddenReason && <p>{hiddenReason}</p>}
           <p>O painel fica disponível só para leitura e nenhum processo recebe inscrições.</p>

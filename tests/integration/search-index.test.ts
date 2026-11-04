@@ -1,7 +1,14 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { and, eq, sql } from "drizzle-orm";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
-import { opportunities, opportunityTags, projects, searchDocuments, searchSynonyms, searchVocabulary } from "@/db/schema";
+import {
+  opportunities,
+  opportunityTags,
+  projects,
+  searchDocuments,
+  searchSynonyms,
+  searchVocabulary,
+} from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { SYNONYMS } from "@/db/seed-data";
 import { runDemoSeed } from "@/db/seed-demo";
@@ -19,7 +26,15 @@ import {
 import { tagCreationLimiter } from "@/lib/security/rate-limit";
 import { getDefaultInstitution } from "@/lib/tenant";
 import { resetDb } from "../helpers/db";
-import { addMember, mkForeignInstitution, mkOpportunity, mkProject, mkTag, mkUser, tagOpportunity } from "../helpers/fixtures";
+import {
+  addMember,
+  mkForeignInstitution,
+  mkOpportunity,
+  mkProject,
+  mkTag,
+  mkUser,
+  tagOpportunity,
+} from "../helpers/fixtures";
 import { validOpportunityInput, validProjectInput } from "../helpers/inputs";
 
 let institutionId: string;
@@ -196,7 +211,18 @@ describe("vocabulário", () => {
     await rebuildSearchVocabulary(institutionId);
 
     const v = await words();
-    for (const w of ["hidraulica", "aplicada", "hidra", "conceicao", "bolsista", "robotica", "mecatronica", "acao", "itajuba", "metrologia"]) {
+    for (const w of [
+      "hidraulica",
+      "aplicada",
+      "hidra",
+      "conceicao",
+      "bolsista",
+      "robotica",
+      "mecatronica",
+      "acao",
+      "itajuba",
+      "metrologia",
+    ]) {
       expect(v.has(w), w).toBe(true);
     }
     for (const w of v.keys()) expect(w, w).toMatch(/^[a-z]{3,}$/);
@@ -300,7 +326,10 @@ describe("vocabulário", () => {
       owner,
       project.id,
       opportunityId,
-      validOpportunityInput({ title: "Torneiro", description: `Descrição com ${huge}, ${longest} e ${"c".repeat(41)}.` }),
+      validOpportunityInput({
+        title: "Torneiro",
+        description: `Descrição com ${huge}, ${longest} e ${"c".repeat(41)}.`,
+      }),
     );
 
     const [row] = await db.select().from(opportunities).where(eq(opportunities.id, opportunityId));
@@ -340,7 +369,11 @@ describe("vocabulário", () => {
     it("não aborta nenhuma escrita, e o documento é salvo", async () => {
       const log = vi.spyOn(console, "error").mockImplementation(() => {});
       const { owner, project } = await setup();
-      const { opportunityId } = await createOpportunity(owner, project.id, validOpportunityInput({ title: "Soldador" }));
+      const { opportunityId } = await createOpportunity(
+        owner,
+        project.id,
+        validOpportunityInput({ title: "Soldador" }),
+      );
 
       await withBrokenVocabulary(async () => {
         await updateOpportunity(owner, project.id, opportunityId, validOpportunityInput({ title: "Torneiro" }));
@@ -371,7 +404,10 @@ describe("carga inicial", () => {
       ["pibic", "iniciacao cientifica"],
       ["empresa jr", "empresa junior"],
     ]) {
-      expect(rows.some((r) => r.term === term && r.canonical === canonical), term).toBe(true);
+      expect(
+        rows.some((r) => r.term === term && r.canonical === canonical),
+        term,
+      ).toBe(true);
     }
     for (const r of rows) {
       expect(normalizeQuery(r.term)).toBe(r.term);
@@ -449,7 +485,11 @@ describe("escritas concorrentes", () => {
   });
 
   /** Com a trava do projeto em posse de outra transação, a escrita não pode ter travado nenhuma linha. */
-  async function assertNoRowLockedWhileWaiting(projectId: string, opportunityId: string, write: () => Promise<unknown>) {
+  async function assertNoRowLockedWhileWaiting(
+    projectId: string,
+    opportunityId: string,
+    write: () => Promise<unknown>,
+  ) {
     let held!: () => void;
     let release!: () => void;
     const heldP = new Promise<void>((r) => (held = r));
@@ -463,8 +503,12 @@ describe("escritas concorrentes", () => {
     const writing = write();
     await new Promise((r) => setTimeout(r, 150));
     try {
-      await db.transaction((tx) => tx.select().from(opportunities).where(eq(opportunities.id, opportunityId)).for("update", { noWait: true }));
-      await db.transaction((tx) => tx.select().from(projects).where(eq(projects.id, projectId)).for("update", { noWait: true }));
+      await db.transaction((tx) =>
+        tx.select().from(opportunities).where(eq(opportunities.id, opportunityId)).for("update", { noWait: true }),
+      );
+      await db.transaction((tx) =>
+        tx.select().from(projects).where(eq(projects.id, projectId)).for("update", { noWait: true }),
+      );
     } finally {
       release();
       await Promise.all([holder, writing]);
@@ -477,13 +521,17 @@ describe("escritas concorrentes", () => {
     await assertNoRowLockedWhileWaiting(project.id, opportunityId, () =>
       updateOpportunity(owner, project.id, opportunityId, validOpportunityInput({ title: "Torneiro" })),
     );
-    await assertNoRowLockedWhileWaiting(project.id, opportunityId, () => closeOpportunity(owner, project.id, opportunityId));
+    await assertNoRowLockedWhileWaiting(project.id, opportunityId, () =>
+      closeOpportunity(owner, project.id, opportunityId),
+    );
   });
 
   it("updateProject e archiveProject pegam a trava do projeto antes das linhas", async () => {
     const { owner, project } = await setup();
     const { opportunityId } = await createOpportunity(owner, project.id, validOpportunityInput());
-    await assertNoRowLockedWhileWaiting(project.id, opportunityId, () => updateProject(owner, project.id, validProjectInput()));
+    await assertNoRowLockedWhileWaiting(project.id, opportunityId, () =>
+      updateProject(owner, project.id, validProjectInput()),
+    );
     await assertNoRowLockedWhileWaiting(project.id, opportunityId, () => archiveProject(owner, project.id));
   });
 
@@ -492,7 +540,11 @@ describe("escritas concorrentes", () => {
     const tag = (await mkTag("Metrologia"))!;
     const { opportunityId } = await createOpportunity(owner, project.id, validOpportunityInput());
     await assertNoRowLockedWhileWaiting(project.id, opportunityId, async () => {
-      await createOpportunity(owner, project.id, validOpportunityInput({ tags: { THEME: [{ id: tag.id }], DESIRED_SKILL: [], DEVELOPED_SKILL: [] } }));
+      await createOpportunity(
+        owner,
+        project.id,
+        validOpportunityInput({ tags: { THEME: [{ id: tag.id }], DESIRED_SKILL: [], DEVELOPED_SKILL: [] } }),
+      );
     });
     expect(await db.select().from(opportunityTags).where(eq(opportunityTags.tagId, tag.id))).toHaveLength(1);
   });

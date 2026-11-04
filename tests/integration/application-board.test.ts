@@ -1,12 +1,12 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { eq, inArray } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { applicationEvents, applications, auditLogs, studentProfiles } from "@/db/schema";
 import { runSeed } from "@/db/seed";
-import { NotFoundError } from "@/lib/auth/errors";
 import { getBoard, moveApplications, OPPORTUNITY_HIDDEN } from "@/lib/applications/board";
-import { applyToOpportunity } from "@/lib/applications/service";
 import type { ApplicationStatus } from "@/lib/applications/labels";
+import { applyToOpportunity } from "@/lib/applications/service";
+import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError, ValidationError } from "@/lib/domain-errors";
 import { applicationLimiter } from "@/lib/security/rate-limit";
 import { resetDb } from "../helpers/db";
@@ -138,7 +138,11 @@ describe("getBoard", () => {
 
   it("processo oculto em projeto ativo: lê, sem poder mover, com o aviso da moderação", async () => {
     const project = await mkProject();
-    const opp = await mkOpportunity(project.id, { internalSelectionEnabled: true, status: "UNDER_REVIEW", statusBeforeModeration: "OPEN" });
+    const opp = await mkOpportunity(project.id, {
+      internalSelectionEnabled: true,
+      status: "UNDER_REVIEW",
+      statusBeforeModeration: "OPEN",
+    });
     const reviewer = await mkUser(`rev${seq++}@unifei.edu.br`);
     await addMember(project.id, reviewer.id, "REVIEWER");
     await apply(opp.id);
@@ -248,7 +252,11 @@ describe("moveApplications", () => {
 
   it("processo oculto em projeto ativo: DomainError, nada muda", async () => {
     const project = await mkProject();
-    const opp = await mkOpportunity(project.id, { internalSelectionEnabled: true, status: "UNDER_REVIEW", statusBeforeModeration: "OPEN" });
+    const opp = await mkOpportunity(project.id, {
+      internalSelectionEnabled: true,
+      status: "UNDER_REVIEW",
+      statusBeforeModeration: "OPEN",
+    });
     const reviewer = await mkUser(`rev${seq++}@unifei.edu.br`);
     await addMember(project.id, reviewer.id, "REVIEWER");
     const a = await apply(opp.id);
@@ -393,7 +401,10 @@ describe("moveApplications", () => {
     ]);
     expect(x.moved.length + y.moved.length).toBe(2);
     expect(x.skipped + y.skipped).toBe(2);
-    const events = await db.select().from(applicationEvents).where(inArray(applicationEvents.applicationId, [a.id, b.id]));
+    const events = await db
+      .select()
+      .from(applicationEvents)
+      .where(inArray(applicationEvents.applicationId, [a.id, b.id]));
     expect(events.filter((e) => e.fromStatus !== null)).toHaveLength(2);
   });
 

@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 import { parseEnv } from "@/env";
 import {
   E2E_TURNSTILE_TOKEN,
-  TURNSTILE_TEST_KEYS,
   getTurnstileConfig,
+  TURNSTILE_TEST_KEYS,
   verifyTurnstile,
 } from "@/lib/security/turnstile";
 

@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { addProjectMember, clearOpportunities, closeTestDb, insertProcess } from "./helpers";
 
 test.beforeEach(clearOpportunities);

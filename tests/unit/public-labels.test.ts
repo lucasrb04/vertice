@@ -76,7 +76,9 @@ describe("scholarshipSummary", () => {
 describe("plainTextExcerpt", () => {
   it("remove marcadores de Markdown", () => {
     expect(
-      plainTextExcerpt("# Sobre\n\n**Forte**, *leve* e `código`.\n\n- [edital](https://a.com/x)\n- ![foto](https://a.com/y.png)"),
+      plainTextExcerpt(
+        "# Sobre\n\n**Forte**, *leve* e `código`.\n\n- [edital](https://a.com/x)\n- ![foto](https://a.com/y.png)",
+      ),
     ).toBe("Sobre Forte, leve e código. edital foto");
   });
 

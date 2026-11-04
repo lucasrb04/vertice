@@ -4,7 +4,15 @@ import { parseVitrineParams, vitrineHref } from "@/lib/public/search-params";
 describe("parseVitrineParams", () => {
   it("padrões", () => {
     expect(parseVitrineParams({})).toEqual({
-      q: "", categories: [], scholarship: null, course: null, tags: [], includeClosed: false, sort: "recent", page: 1, exact: false,
+      q: "",
+      categories: [],
+      scholarship: null,
+      course: null,
+      tags: [],
+      includeClosed: false,
+      sort: "recent",
+      page: 1,
+      exact: false,
     });
   });
   it("sort padrão depende de q", () => {
@@ -13,7 +21,10 @@ describe("parseVitrineParams", () => {
     expect(parseVitrineParams({ sort: "xx" }).sort).toBe("recent");
   });
   it("category repetida e inválida", () => {
-    expect(parseVitrineParams({ category: ["PET", "NOPE", "EXTENSION", "PET"] }).categories).toEqual(["PET", "EXTENSION"]);
+    expect(parseVitrineParams({ category: ["PET", "NOPE", "EXTENSION", "PET"] }).categories).toEqual([
+      "PET",
+      "EXTENSION",
+    ]);
     expect(parseVitrineParams({ category: "NOPE" }).categories).toEqual([]);
   });
   it("page inválida", () => {
@@ -72,7 +83,15 @@ describe("vitrineHref", () => {
     expect(vitrineHref(p)).toBe("/processos?category=PET&tags=python,cad&sort=popular");
   });
   it("round trip", () => {
-    const p = parseVitrineParams({ q: "C++ 100%", category: ["PET", "EXTENSION"], scholarship: "PAID", course: "CCO", tags: "a,b", encerrados: "1", sort: "deadline" });
+    const p = parseVitrineParams({
+      q: "C++ 100%",
+      category: ["PET", "EXTENSION"],
+      scholarship: "PAID",
+      course: "CCO",
+      tags: "a,b",
+      encerrados: "1",
+      sort: "deadline",
+    });
     const url = new URL("http://x" + vitrineHref(p));
     const raw: Record<string, string | string[]> = {};
     for (const k of new Set(url.searchParams.keys())) {

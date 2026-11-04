@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { applicationEvents, applications, opportunities, studentProfiles } from "@/db/schema";
 import { runSeed } from "@/db/seed";
-import { NotFoundError } from "@/lib/auth/errors";
 import { applyToOpportunity } from "@/lib/applications/service";
+import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError, RateLimitError, ValidationError } from "@/lib/domain-errors";
 import { updateOpportunity } from "@/lib/opportunities/service";
 import { applicationLimiter } from "@/lib/security/rate-limit";
@@ -84,9 +84,9 @@ describe("applyToOpportunity", () => {
 
   it("recusa curso de outra instituição", async () => {
     const { student, input } = await setup();
-    await expect(
-      applyToOpportunity(student, { ...input, courseId: crypto.randomUUID() }),
-    ).rejects.toBeInstanceOf(ValidationError);
+    await expect(applyToOpportunity(student, { ...input, courseId: crypto.randomUUID() })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
   });
 
   it("recusa processo encerrado, prazo vencido e projeto arquivado", async () => {

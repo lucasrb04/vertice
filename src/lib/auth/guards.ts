@@ -1,10 +1,10 @@
 import { and, eq } from "drizzle-orm";
-import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { projectMembers, projects, users } from "@/db/schema";
 import type { Project, ProjectRole, User } from "@/db/schema";
+import { projectMembers, projects, users } from "@/db/schema";
 import { getRequestIp, logAudit } from "@/lib/security/audit";
 import { NotFoundError, UnauthorizedError } from "./errors";
 import { getSessionUser } from "./session";

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { asc } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { searchZeroResults } from "@/db/schema";
 import { runSeed } from "@/db/seed";
@@ -29,7 +29,10 @@ describe("recordZeroResult", () => {
   it("outro dia cria nova linha", async () => {
     await recordZeroResult(instId, "robotica", NOW);
     await recordZeroResult(instId, "robotica", new Date("2026-11-03T15:00:00Z"));
-    expect((await rows()).map((r) => [r.day, r.count])).toEqual([["2026-11-02", 1], ["2026-11-03", 1]]);
+    expect((await rows()).map((r) => [r.day, r.count])).toEqual([
+      ["2026-11-02", 1],
+      ["2026-11-03", 1],
+    ]);
   });
 
   it("apaga linhas com mais de 90 dias e mantém a de exatamente 90", async () => {
@@ -41,9 +44,9 @@ describe("recordZeroResult", () => {
 
   it("teto diário: termo novo é descartado, termo existente continua somando", async () => {
     await recordZeroResult(instId, "existente", NOW);
-    await db.insert(searchZeroResults).values(
-      Array.from({ length: 999 }, (_, i) => ({ institutionId: instId, term: `t${i}`, day: "2026-11-02" })),
-    );
+    await db
+      .insert(searchZeroResults)
+      .values(Array.from({ length: 999 }, (_, i) => ({ institutionId: instId, term: `t${i}`, day: "2026-11-02" })));
     await recordZeroResult(instId, "novo", NOW);
     expect(await rows()).toHaveLength(1000);
     await recordZeroResult(instId, "existente", NOW);
@@ -52,7 +55,15 @@ describe("recordZeroResult", () => {
   });
 
   it("não grava e-mail, 6+ dígitos seguidos, vazio nem termo longo", async () => {
-    for (const q of ["fulano@unifei.edu.br", "matricula 2021001234", "123456", "123.456.789-00", "(35) 99999-1234", "   ", "a".repeat(121)]) {
+    for (const q of [
+      "fulano@unifei.edu.br",
+      "matricula 2021001234",
+      "123456",
+      "123.456.789-00",
+      "(35) 99999-1234",
+      "   ",
+      "a".repeat(121),
+    ]) {
       await recordZeroResult(instId, q, NOW);
     }
     expect(await rows()).toHaveLength(0);
@@ -69,7 +80,13 @@ describe("shouldLogZeroResult", () => {
     expect(shouldLogZeroResult(p({ q: "xyz" }), 1)).toBe(false);
     expect(shouldLogZeroResult(p({}), 0)).toBe(false);
     expect(shouldLogZeroResult(p({ q: "xyz", page: "2" }), 0)).toBe(false);
-    for (const f of <Record<string, string>[]>[{ category: "LAB_GROUP" }, { scholarship: "PAID" }, { course: "CCO" }, { tags: "python" }, { encerrados: "1" }]) {
+    for (const f of <Record<string, string>[]>[
+      { category: "LAB_GROUP" },
+      { scholarship: "PAID" },
+      { course: "CCO" },
+      { tags: "python" },
+      { encerrados: "1" },
+    ]) {
       expect(shouldLogZeroResult(p({ q: "xyz", ...f }), 0)).toBe(false);
     }
   });

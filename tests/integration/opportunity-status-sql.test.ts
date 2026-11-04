@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
-import { opportunities, projects } from "@/db/schema";
 import type { OpportunityStatus, ProjectStatus } from "@/db/schema";
+import { opportunities, projects } from "@/db/schema";
 import { runSeed } from "@/db/seed";
-import { getDefaultInstitution } from "@/lib/tenant";
 import { openOpportunitySql } from "@/lib/opportunities/status";
+import { getDefaultInstitution } from "@/lib/tenant";
 import { resetDb } from "../helpers/db";
 
 const now = new Date("2026-10-27T12:00:00Z");

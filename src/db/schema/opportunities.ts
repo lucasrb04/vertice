@@ -1,11 +1,19 @@
-import { boolean, check, date, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from "drizzle-orm/pg-core";
-
 import { sql } from "drizzle-orm";
 import {
-  opportunityStatusEnum,
-  opportunityTagRelationEnum,
-  scholarshipTypeEnum,
-} from "./enums";
+  boolean,
+  check,
+  date,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
+import { opportunityStatusEnum, opportunityTagRelationEnum, scholarshipTypeEnum } from "./enums";
 import { institutions } from "./institutions";
 import { projects } from "./projects";
 import { tags } from "./tags";
@@ -55,7 +63,7 @@ export const opportunities = pgTable(
     uniqueIndex("opportunities_inst_slug_idx").on(t.institutionId, t.slug),
     check("opportunities_has_channel", sql`${t.internalSelectionEnabled} OR ${t.externalUrl} IS NOT NULL`),
     index("opportunities_status_deadline_idx").on(t.institutionId, t.status, t.deadlineAt),
-  ]
+  ],
 );
 
 export const opportunityTags = pgTable(
@@ -70,5 +78,5 @@ export const opportunityTags = pgTable(
       .references(() => tags.id, { onDelete: "cascade" }),
     relationType: opportunityTagRelationEnum("relation_type").notNull(),
   },
-  (t) => [uniqueIndex("opp_tags_unique_idx").on(t.opportunityId, t.tagId, t.relationType)]
+  (t) => [uniqueIndex("opp_tags_unique_idx").on(t.opportunityId, t.tagId, t.relationType)],
 );

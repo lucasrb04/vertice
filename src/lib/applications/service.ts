@@ -16,9 +16,9 @@ import { isUniqueViolation } from "@/lib/db-errors";
 import { DomainError, fromZodError, RateLimitError } from "@/lib/domain-errors";
 import { isOpportunityOpen, opensInFuture } from "@/lib/opportunities/status";
 import { publicOpportunitySql } from "@/lib/public/queries";
-import { applicationLimiter } from "@/lib/security/rate-limit";
 import { lockProjectSearchDocuments } from "@/lib/search/index-documents";
-import { applySchema, type ApplyInput } from "@/lib/validation/application";
+import { applicationLimiter } from "@/lib/security/rate-limit";
+import { type ApplyInput, applySchema } from "@/lib/validation/application";
 
 export const APPLICATIONS_CLOSED = "As candidaturas deste processo foram encerradas.";
 export const NO_INTERNAL_SELECTION = "Este processo não recebe candidaturas pelo Vértice.";
@@ -83,15 +83,15 @@ export async function applyToOpportunity(
   try {
     return await db.transaction(async (tx) => {
       await lockProjectSearchDocuments(tx, target.projectId);
-      const [opp] = await tx
-        .select()
-        .from(opportunities)
-        .where(eq(opportunities.id, target.id))
-        .for("share");
-      const [project] = await tx.select({ status: projects.status }).from(projects).where(eq(projects.id, target.projectId));
+      const [opp] = await tx.select().from(opportunities).where(eq(opportunities.id, target.id)).for("share");
+      const [project] = await tx
+        .select({ status: projects.status })
+        .from(projects)
+        .where(eq(projects.id, target.projectId));
       if (!opp || !project || opp.status === "UNDER_REVIEW") throw new NotFoundError();
 
-      if (!isOpportunityOpen(opp, project.status, now)) throw new DomainError("OPPORTUNITY_CLOSED", APPLICATIONS_CLOSED);
+      if (!isOpportunityOpen(opp, project.status, now))
+        throw new DomainError("OPPORTUNITY_CLOSED", APPLICATIONS_CLOSED);
       if (!opp.internalSelectionEnabled) throw new DomainError("NO_INTERNAL_SELECTION", NO_INTERNAL_SELECTION);
       if (opensInFuture(opp.applicationsOpenOn, now)) throw new DomainError("NOT_OPEN_YET", NOT_OPEN_YET);
       // A pergunta pode ter sido criada depois da leitura lá de cima; vale a linha travada.

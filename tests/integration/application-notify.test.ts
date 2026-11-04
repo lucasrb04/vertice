@@ -1,7 +1,7 @@
 import { render } from "@react-email/render";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { db } from "@/db";
-import { eq } from "drizzle-orm";
 import { applications, users } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { resetDb } from "../helpers/db";

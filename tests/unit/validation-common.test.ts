@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  HTTPS_ONLY,
   dayString,
+  HTTPS_ONLY,
   httpsUrl,
   optionalHttpsUrl,
   parseBrlToCents,
@@ -10,12 +10,18 @@ import {
 
 describe("httpsUrl", () => {
   it("aceita e apara link com espaços e protocolo em maiúsculas", () => {
-    expect(httpsUrl(500).parse("  HTTPS://unifei.edu.br/edital.pdf ")).toBe(
-      "HTTPS://unifei.edu.br/edital.pdf",
-    );
+    expect(httpsUrl(500).parse("  HTTPS://unifei.edu.br/edital.pdf ")).toBe("HTTPS://unifei.edu.br/edital.pdf");
   });
   it("recusa protocolos que não são https", () => {
-    for (const bad of ["http://unifei.edu.br", "javascript:alert(1)", "data:text/html,x", "unifei.edu.br", "ftp://x", "https:/admin", "https:admin"])
+    for (const bad of [
+      "http://unifei.edu.br",
+      "javascript:alert(1)",
+      "data:text/html,x",
+      "unifei.edu.br",
+      "ftp://x",
+      "https:/admin",
+      "https:admin",
+    ])
       expect(httpsUrl(500).safeParse(bad).success).toBe(false);
   });
   it("usa a mensagem fixa", () => {

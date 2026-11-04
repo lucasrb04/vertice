@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HomeRow } from "@/components/vitrine/home-row";
 import { SearchBox } from "@/components/vitrine/search-box";
+import type { ProjectCategory } from "@/lib/projects/labels";
 import { CATEGORY_LABELS } from "@/lib/public/labels";
 import { listHomeRows } from "@/lib/public/queries";
 import { getDefaultInstitution } from "@/lib/tenant";
-import type { ProjectCategory } from "@/lib/projects/labels";
 
 // Prazos e contagens mudam com o relógio: nunca pré-renderizar.
 export const dynamic = "force-dynamic";
@@ -32,8 +32,8 @@ export default async function Home() {
               Encontre o projeto que vai impulsionar sua trajetória.
             </h1>
             <p className="mt-3 max-w-2xl text-pretty text-stone-600">
-              Iniciação científica, extensão, equipes de competição, PETs e empresas juniores da UNIFEI em um só
-              lugar, com prazos e requisitos. Sem precisar de conta.
+              Iniciação científica, extensão, equipes de competição, PETs e empresas juniores da UNIFEI em um só lugar,
+              com prazos e requisitos. Sem precisar de conta.
             </p>
             <div className="mt-6 max-w-2xl">
               <SearchBox autoFocusShortcut />
@@ -67,7 +67,9 @@ export default async function Home() {
       <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:py-10">
         {openCount === 0 ? (
           <div className="rounded-lg border border-stone-200 bg-white px-5 py-8">
-            <h2 className="text-lg font-semibold tracking-[-0.01em] text-stone-900 [word-spacing:0.06em]">Nenhum processo aberto agora</h2>
+            <h2 className="text-lg font-semibold tracking-[-0.01em] text-stone-900 [word-spacing:0.06em]">
+              Nenhum processo aberto agora
+            </h2>
             <p className="mt-1 max-w-prose text-sm text-stone-600">
               Quando um projeto da UNIFEI abrir inscrições, ele aparece aqui. Faz parte de um projeto? Publique o
               primeiro processo.

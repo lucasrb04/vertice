@@ -1,7 +1,7 @@
-import { createElement, type ReactElement } from "react";
 import { render } from "@react-email/render";
+import { createElement, type ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { parseEnv, type Env } from "@/env";
+import { type Env, parseEnv } from "@/env";
 
 const sendMock = vi.fn();
 const batchMock = vi.fn();
@@ -39,7 +39,11 @@ const FROM = "Vértice <nao-responda@example.com>";
 const withKey: Env = parseEnv({ ...base, RESEND_API_KEY: "re_fake", EMAIL_FROM: FROM });
 const noKey: Env = parseEnv(base);
 
-const msg = (react: ReactElement = createElement("p", null, "oi")) => ({ to: "aluno@unifei.edu.br", subject: "Assunto", react });
+const msg = (react: ReactElement = createElement("p", null, "oi")) => ({
+  to: "aluno@unifei.edu.br",
+  subject: "Assunto",
+  react,
+});
 
 describe("env de e-mail", () => {
   it("produção sem RESEND_API_KEY ou EMAIL_FROM lança", () => {
@@ -81,7 +85,10 @@ describe("sendEmail", () => {
   it("erro devolvido ou lançado pelo provedor vira false, sem dados do aluno no log", async () => {
     const secret = "Maria Souza aluno@unifei.edu.br mensagem-secreta";
     const react = createElement("p", null, secret);
-    sendMock.mockResolvedValueOnce({ data: null, error: { name: "validation_error", message: secret, statusCode: 422 } });
+    sendMock.mockResolvedValueOnce({
+      data: null,
+      error: { name: "validation_error", message: secret, statusCode: 422 },
+    });
     expect(await sendEmail(msg(react), withKey)).toBe(false);
     sendMock.mockRejectedValueOnce(new Error(secret));
     expect(await sendEmail(msg(react), withKey)).toBe(false);
@@ -92,7 +99,10 @@ describe("sendEmail", () => {
 });
 
 describe("limite do provedor", () => {
-  const rateLimited = { data: null, error: { name: "rate_limit_exceeded", message: "aluno@unifei.edu.br", statusCode: 429 } };
+  const rateLimited = {
+    data: null,
+    error: { name: "rate_limit_exceeded", message: "aluno@unifei.edu.br", statusCode: 429 },
+  };
   const accepted = { data: { id: "1" }, error: null };
 
   beforeEach(() => {
@@ -168,11 +178,7 @@ describe("limite do provedor", () => {
       error: null,
     });
     const count = await sendEmailBatch(
-      [
-        { ...msg(createElement(Broken)), to: "maria@unifei.edu.br" },
-        msg(),
-        { ...msg(), to: "bia@unifei.edu.br" },
-      ],
+      [{ ...msg(createElement(Broken)), to: "maria@unifei.edu.br" }, msg(), { ...msg(), to: "bia@unifei.edu.br" }],
       withKey,
     );
     expect(count).toBe(1);

@@ -10,7 +10,16 @@ const IC = ["python-ic", "ic-fisica", "ic-quimica", "ic-visao", "pibic-distribui
 const PROG = ["programacao-competitiva", "programacao-embarcada"];
 const CAFE = ["cafe-ciencia", "cafe-qualidade"];
 const ENG = ["eng-biomedica", "eng-fotovoltaica", "eng-aeronautica"];
-const BAIRRO = ["robotica-educacional", "vizinho-solidario", "caminho-trilhas", "carinho-hospital", "horta-comunitaria", "oficinas-idosos", "inscricoes-secretaria", "acolhimento-familias"];
+const BAIRRO = [
+  "robotica-educacional",
+  "vizinho-solidario",
+  "caminho-trilhas",
+  "carinho-hospital",
+  "horta-comunitaria",
+  "oficinas-idosos",
+  "inscricoes-secretaria",
+  "acolhimento-familias",
+];
 
 export const queries: EvalQuery[] = [
   // exata

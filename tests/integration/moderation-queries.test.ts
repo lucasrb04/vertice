@@ -3,9 +3,14 @@ import { db } from "@/db";
 import { reports } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
-import { hideTarget, restoreTarget } from "@/lib/moderation/service";
-import { AUTO_REVIEW_NOTICE, getHiddenReasons, listReportQueue, searchModerationTargets } from "@/lib/moderation/queries";
+import {
+  AUTO_REVIEW_NOTICE,
+  getHiddenReasons,
+  listReportQueue,
+  searchModerationTargets,
+} from "@/lib/moderation/queries";
 import { reportTarget } from "@/lib/moderation/reports";
+import { hideTarget, restoreTarget } from "@/lib/moderation/service";
 import { reportLimiter } from "@/lib/security/rate-limit";
 import { getDefaultInstitution } from "@/lib/tenant";
 import { resetDb } from "../helpers/db";
@@ -99,10 +104,19 @@ describe("listReportQueue sem teto", () => {
     const project = await mkProject({ name: "Projeto com muitos processos" });
     const total = 105;
     const ids: string[] = [];
-    for (let i = 0; i < total; i++) ids.push((await mkOpportunity(project.id, { title: `Processo ${String(i).padStart(3, "0")}` })).id);
-    await db.insert(reports).values(
-      ids.map((targetId) => ({ institutionId: inst, targetType: "OPPORTUNITY" as const, targetId, reporterUserId: reporter!.id, reasonCode: "SPAM" as const })),
-    );
+    for (let i = 0; i < total; i++)
+      ids.push((await mkOpportunity(project.id, { title: `Processo ${String(i).padStart(3, "0")}` })).id);
+    await db
+      .insert(reports)
+      .values(
+        ids.map((targetId) => ({
+          institutionId: inst,
+          targetType: "OPPORTUNITY" as const,
+          targetId,
+          reporterUserId: reporter!.id,
+          reasonCode: "SPAM" as const,
+        })),
+      );
     const queue = await listReportQueue(admin!);
     expect(queue).toHaveLength(total);
   });
@@ -114,7 +128,11 @@ describe("getHiddenReasons", () => {
   it("hideTarget real: o projeto mostra o motivo gravado pelo admin", async () => {
     const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
     const project = await mkProject();
-    await hideTarget(admin!, { targetType: "PROJECT", targetId: project.id, reason: "Conteúdo fora das regras da plataforma." });
+    await hideTarget(admin!, {
+      targetType: "PROJECT",
+      targetId: project.id,
+      reason: "Conteúdo fora das regras da plataforma.",
+    });
 
     const reasons = await getHiddenReasons(inst, [{ targetType: "PROJECT", targetId: project.id }]);
     expect(reasons.get(`PROJECT:${project.id}`)).toBe("Conteúdo fora das regras da plataforma.");
@@ -128,7 +146,11 @@ describe("getHiddenReasons", () => {
     const visible = await mkOpportunity(project.id, { title: "Visível" });
 
     await hideTarget(admin!, { targetType: "OPPORTUNITY", targetId: byAdmin.id, reason: "Primeiro motivo do admin." });
-    await restoreTarget(admin!, { targetType: "OPPORTUNITY", targetId: byAdmin.id, reason: "Restaurado para revisão." });
+    await restoreTarget(admin!, {
+      targetType: "OPPORTUNITY",
+      targetId: byAdmin.id,
+      reason: "Restaurado para revisão.",
+    });
     await hideTarget(admin!, { targetType: "OPPORTUNITY", targetId: byAdmin.id, reason: "Segundo motivo do admin." });
     for (let i = 0; i < 5; i++) {
       const u = await mkUser(`rep${seq++}@unifei.edu.br`);
@@ -161,7 +183,11 @@ describe("searchModerationTargets", () => {
     const project = await mkProject({ name: "Laboratório de Xilogravura" });
     const open = await mkOpportunity(project.id, { title: "Bolsista de Xilogravura" });
     const hidden = await mkOpportunity(project.id, { title: "Estágio em xilogravura digital" });
-    await hideTarget(admin!, { targetType: "OPPORTUNITY", targetId: hidden.id, reason: "Conteúdo impróprio confirmado." });
+    await hideTarget(admin!, {
+      targetType: "OPPORTUNITY",
+      targetId: hidden.id,
+      reason: "Conteúdo impróprio confirmado.",
+    });
 
     const rows = await searchModerationTargets(admin!, "LABORATÓRIO");
     expect(rows.map((r) => r.targetId)).toEqual([project.id]);

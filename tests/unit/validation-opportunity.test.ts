@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  NO_CHANNEL,
   makeOpportunitySchema,
   makeWizardSchema,
+  NO_CHANNEL,
   type OpportunityFormValues,
 } from "@/lib/validation/opportunity";
 import { validOpportunityInput, validProjectInput } from "../helpers/inputs";
@@ -59,7 +59,9 @@ describe("makeOpportunitySchema", () => {
     expect(issueMessages(s, v({ scholarshipValue: "abc" }))).toContain("Valor inválido.");
   });
   it("normaliza opcionais vazios para null", () => {
-    const out = s.parse(v({ roleArea: "", fundingAgency: "", availabilityRequirement: "", applicationsOpenOn: "", resultOn: "" }));
+    const out = s.parse(
+      v({ roleArea: "", fundingAgency: "", availabilityRequirement: "", applicationsOpenOn: "", resultOn: "" }),
+    );
     expect(out.roleArea).toBeNull();
     expect(out.fundingAgency).toBeNull();
     expect(out.availabilityRequirement).toBeNull();

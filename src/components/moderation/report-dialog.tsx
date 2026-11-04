@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Flag } from "lucide-react";
+import { useState } from "react";
 import { reportAction } from "@/actions/report.actions";
 import type { ActionResult } from "@/actions/result";
 import { Field, FormMessage } from "@/components/projects/field";
@@ -19,10 +19,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  REPORT_DESCRIPTION_MAX,
-  REPORT_REASONS,
-  REPORT_REASON_LABELS,
   type ModerationTargetType,
+  REPORT_DESCRIPTION_MAX,
+  REPORT_REASON_LABELS,
+  REPORT_REASONS,
   type ReportReason,
 } from "@/lib/validation/moderation";
 

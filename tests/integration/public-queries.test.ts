@@ -8,9 +8,9 @@ import {
   getPublicProject,
   listFilterOptions,
   listHomeRows,
-  searchOpportunities,
   PAGE_SIZE,
   ROW_LIMIT,
+  searchOpportunities,
 } from "@/lib/public/queries";
 import { parseVitrineParams } from "@/lib/public/search-params";
 import { getDefaultInstitution } from "@/lib/tenant";
@@ -23,8 +23,7 @@ let inst: string;
 
 const search = (raw: Record<string, string | string[]>, now?: Date) =>
   searchOpportunities(inst, parseVitrineParams(raw), now);
-const titles = async (raw: Record<string, string | string[]>) =>
-  (await search(raw)).items.map((i) => i.title);
+const titles = async (raw: Record<string, string | string[]>) => (await search(raw)).items.map((i) => i.title);
 
 beforeEach(async () => {
   await resetDb();
@@ -567,7 +566,11 @@ describe("filtros disponíveis", () => {
     const closed = await mkOpportunity(ok.id, { deadlineAt: new Date(Date.now() - D) });
     const publicTag = await mkTag("Visivel");
     await tagOpportunity(visible.id, publicTag!.id);
-    for (const [name, opp] of [["Revisao", review], ["Suspenso", suspended], ["Encerrado", closed]] as const) {
+    for (const [name, opp] of [
+      ["Revisao", review],
+      ["Suspenso", suspended],
+      ["Encerrado", closed],
+    ] as const) {
       const t = await mkTag(name, { usageCount: 99 });
       await tagOpportunity(opp.id, t!.id);
     }

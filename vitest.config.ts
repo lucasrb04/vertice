@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { parseEnv } from "node:util";
-import { defineConfig } from "vitest/config";
 import tsconfigPaths from "vite-tsconfig-paths";
+import { defineConfig } from "vitest/config";
 
 const testEnv = parseEnv(readFileSync(".env.test", "utf8"));
 

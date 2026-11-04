@@ -2,21 +2,30 @@ import { and, eq, inArray } from "drizzle-orm";
 import { db, type Tx } from "@/db";
 import { opportunities, projectMembers, projects, reports, users } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
-import { publicOpportunitySql } from "@/lib/public/queries";
 import { DomainError, fromZodError, RateLimitError } from "@/lib/domain-errors";
+import { publicOpportunitySql } from "@/lib/public/queries";
 import { lockProjectSearchDocuments, scheduleVocabularyRebuild } from "@/lib/search/index-documents";
 import { reportLimiter } from "@/lib/security/rate-limit";
-import { reportSchema, type ModerationTargetType, type ReportInput } from "@/lib/validation/moderation";
+import { type ModerationTargetType, type ReportInput, reportSchema } from "@/lib/validation/moderation";
 import { applyAutomaticReview, type ModerationTarget } from "./service";
 
 export const REPORT_RECEIVED = "Recebemos sua denúncia.";
 export const REPORT_RATE_LIMITED = "Muitas denúncias hoje. Tente de novo amanhã.";
 export const REPORT_OWN_PROJECT = "Você faz parte da equipe deste projeto e não pode denunciá-lo.";
 
-export type ReportResult = { autoHidden: boolean; institutionId: string; targetType: ModerationTargetType; targetId: string };
+export type ReportResult = {
+  autoHidden: boolean;
+  institutionId: string;
+  targetType: ModerationTargetType;
+  targetId: string;
+};
 
 /** Projeto do alvo, dentro da instituição; nulo se não existe ou é de outra. */
-async function targetProjectId(tx: Tx | typeof db, target: ModerationTarget, institutionId: string): Promise<string | null> {
+async function targetProjectId(
+  tx: Tx | typeof db,
+  target: ModerationTarget,
+  institutionId: string,
+): Promise<string | null> {
   if (target.targetType === "PROJECT") {
     const [row] = await tx
       .select({ id: projects.id })
@@ -81,7 +90,14 @@ export async function reportTarget(user: AuthUser, input: ReportInput): Promise<
     // Repetida enquanto pendente: o índice único parcial descarta, e a resposta é a mesma.
     await tx
       .insert(reports)
-      .values({ institutionId: user.institutionId, targetType, targetId, reporterUserId: user.id, reasonCode, reason: description })
+      .values({
+        institutionId: user.institutionId,
+        targetType,
+        targetId,
+        reporterUserId: user.id,
+        reasonCode,
+        reason: description,
+      })
       .onConflictDoNothing();
     return applyAutomaticReview(tx, target);
   });

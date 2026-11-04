@@ -285,8 +285,7 @@ export async function runDemoSeed(now: Date = new Date()): Promise<void> {
   await rebuildSearch(institutionId);
 }
 
-const isDirectRun =
-  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+const isDirectRun = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isDirectRun) {
   runDemoSeed()

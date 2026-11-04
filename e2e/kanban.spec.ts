@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 import {
   addProjectMember,
   clearOpportunities,
@@ -156,7 +156,9 @@ test("celular: colunas em lista, sem rolagem horizontal da página", async ({ pa
   await page.setViewportSize({ width: 375, height: 700 });
   await page.goto(`/projetos/${project.id}/processos/${opportunity.id}/candidatos`);
   await expect(page.getByRole("heading", { name: "Inscrito" })).toBeVisible();
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
   expect(overflow).toBe(0);
 });
 
@@ -199,7 +201,9 @@ test("candidato que virou REVIEWER vê o próprio card sem controles", async ({ 
   await expect(page.getByRole("button", { name: `Mover para (${bia.name})` })).toBeVisible();
 
   await page.getByRole("button", { name: `Mover para (${bia.name})` }).click();
-  await expect(page.getByRole("dialog")).toContainText("O aluno recebe um e-mail e vê a mensagem em Minhas candidaturas.");
+  await expect(page.getByRole("dialog")).toContainText(
+    "O aluno recebe um e-mail e vê a mensagem em Minhas candidaturas.",
+  );
 });
 
 test("arquivar cita os candidatos em andamento e o aluno vê Projeto arquivado", async ({ page }) => {

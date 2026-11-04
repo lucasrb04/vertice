@@ -1,9 +1,16 @@
-import { and, asc, desc, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, type SQL, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { courses, opportunities, opportunityTags, projects, searchDocuments, tags } from "@/db/schema";
-import type { ProjectCategory, ScholarshipType } from "@/lib/projects/labels";
 import { closedOnDate, isOpportunityOpen, openOpportunitySql } from "@/lib/opportunities/status";
-import { groupTsQuery, planSearch, wholeWordRegex, wordStartRegex, type SearchPlan, type TermGroup } from "@/lib/search/query";
+import type { ProjectCategory, ScholarshipType } from "@/lib/projects/labels";
+import {
+  groupTsQuery,
+  planSearch,
+  type SearchPlan,
+  type TermGroup,
+  wholeWordRegex,
+  wordStartRegex,
+} from "@/lib/search/query";
 import { defaultSort, type VitrineParams } from "./search-params";
 
 export { normalizeQuery } from "@/lib/search/corrector";
@@ -65,7 +72,9 @@ function unindexedSimilarity(q: string): SQL[] {
   if ((q.match(/[a-z]/g)?.length ?? 0) < 4) return [];
   const similar = (col: unknown) => sql`word_similarity(${q}::text, ${norm(col)}) > ${SIMILARITY_THRESHOLD}`;
   const similarTag = hasTag((name) => sql`word_similarity(${q}::text, ${name}) > ${SIMILARITY_THRESHOLD}`);
-  return [sql`(${searchDocuments.opportunityId} IS NULL AND ${anyOf([similar(opportunities.title), similar(projects.name), similarTag])})`];
+  return [
+    sql`(${searchDocuments.opportunityId} IS NULL AND ${anyOf([similar(opportunities.title), similar(projects.name), similarTag])})`,
+  ];
 }
 
 /**
@@ -139,7 +148,12 @@ function searchSql(plan: SearchPlan): { where: SQL; order: SQL[] } {
   return { where, order: [...onlyCorrected, tier, ...rank] };
 }
 
-function filtersSql(institutionId: string, p: VitrineParams, now: Date, search: ReturnType<typeof searchSql> | null): SQL {
+function filtersSql(
+  institutionId: string,
+  p: VitrineParams,
+  now: Date,
+  search: ReturnType<typeof searchSql> | null,
+): SQL {
   const conds: SQL[] = [eq(opportunities.institutionId, institutionId), publicOpportunitySql()];
   if (!p.includeClosed) conds.push(openOpportunitySql(now));
   if (search) conds.push(search.where);
@@ -217,7 +231,10 @@ async function fetchCards(opts: {
   const { rows: tagRows } = await db.execute<{ opportunity_id: string; name: string }>(sql`
     select ot.opportunity_id, t.name
     from opportunity_tags ot join tags t on t.id = ot.tag_id
-    where ot.opportunity_id in (${sql.join(rows.map((r) => sql`${r.id}`), sql`, `)})
+    where ot.opportunity_id in (${sql.join(
+      rows.map((r) => sql`${r.id}`),
+      sql`, `,
+    )})
     order by ${RELATION_ORDER}, t.name, t.id
   `);
   const byOpp = new Map<string, string[]>();
@@ -450,7 +467,13 @@ export async function getPublicProject(institutionId: string, slug: string, now:
       status: projects.status,
     })
     .from(projects)
-    .where(and(eq(projects.institutionId, institutionId), eq(projects.slug, slug), inArray(projects.status, ["ACTIVE", "ARCHIVED"])));
+    .where(
+      and(
+        eq(projects.institutionId, institutionId),
+        eq(projects.slug, slug),
+        inArray(projects.status, ["ACTIVE", "ARCHIVED"]),
+      ),
+    );
   if (!project) return null;
 
   const where = and(

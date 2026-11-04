@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { applyToOpportunityAction } from "@/actions/application.actions";
 import type { ActionResult } from "@/actions/result";
 import { Field, FormMessage } from "@/components/projects/field";
@@ -19,7 +19,12 @@ export type ApplyFormInitial = { courseId: string; currentSemester: string; prof
 type Requirements = { minSemester: number | null; maxSemester: number | null; targetCourseIds: string[] };
 
 /** Requisitos não atendidos viram aviso: quem decide é a equipe do projeto. */
-function warnings(req: Requirements, courseId: string, semester: string, courseNames: Record<string, string>): string[] {
+function warnings(
+  req: Requirements,
+  courseId: string,
+  semester: string,
+  courseNames: Record<string, string>,
+): string[] {
   const out: string[] = [];
   const n = Number(semester);
   if (semester && req.minSemester !== null && n < req.minSemester) {
@@ -143,7 +148,10 @@ export function ApplyForm({
           </Field>
         </div>
         {notices.length > 0 && (
-          <ul role="status" className="space-y-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <ul
+            role="status"
+            className="space-y-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+          >
             {notices.map((n) => (
               <li key={n}>{n} Você ainda pode se candidatar; a equipe decide.</li>
             ))}
@@ -155,11 +163,21 @@ export function ApplyForm({
         <section className="rounded-lg border border-stone-200 bg-white p-5">
           <Field
             label={question}
-            hint={<span className="font-mono">{answer.length}/{ANSWER_MAX}</span>}
+            hint={
+              <span className="font-mono">
+                {answer.length}/{ANSWER_MAX}
+              </span>
+            }
             errors={errorsFor(errors, "answerText")}
           >
             {(p) => (
-              <Textarea {...p} value={answer} onChange={(e) => setAnswer(e.target.value)} maxLength={ANSWER_MAX} rows={5} />
+              <Textarea
+                {...p}
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                maxLength={ANSWER_MAX}
+                rows={5}
+              />
             )}
           </Field>
         </section>

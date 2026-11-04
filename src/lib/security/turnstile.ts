@@ -1,4 +1,4 @@
-import { getEnv, type Env } from "@/env";
+import { type Env, getEnv } from "@/env";
 import { E2E_TURNSTILE_TOKEN } from "./turnstile-constants";
 
 /** Chaves públicas de teste da Cloudflare (sempre passam). Só valem fora de produção. */

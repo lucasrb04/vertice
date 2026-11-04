@@ -1,5 +1,6 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { isAllowedEmail, normalizeEmail } from "@/lib/auth/email-policy";
+
 const D = ["unifei.edu.br"];
 
 describe("isAllowedEmail", () => {

@@ -9,10 +9,7 @@ export function EmptyResults({ filtered }: { filtered: boolean }) {
           : "Quando um projeto da UNIFEI abrir inscrições, ele aparece aqui."}
       </p>
       {filtered && (
-        <a
-          href="/processos"
-          className="mt-4 inline-block text-sm font-medium text-brand underline underline-offset-4"
-        >
+        <a href="/processos" className="mt-4 inline-block text-sm font-medium text-brand underline underline-offset-4">
           Limpar busca e filtros
         </a>
       )}

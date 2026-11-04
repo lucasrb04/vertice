@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { HTTPS_ONLY } from "../src/lib/validation/common";
 
 async function loginAs(page: Page, email: string, name: string) {

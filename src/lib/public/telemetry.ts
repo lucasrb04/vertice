@@ -2,9 +2,9 @@ import { createHmac } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { opportunities, opportunityExternalClicks } from "@/db/schema";
-import { getEnv, type Env } from "@/env";
-import { createRateLimiter } from "@/lib/security/rate-limit";
+import { type Env, getEnv } from "@/env";
 import { logError } from "@/lib/log";
+import { createRateLimiter } from "@/lib/security/rate-limit";
 import { todayInSaoPaulo } from "@/lib/time";
 
 export function getVisitorHashSecret(env: Env = getEnv()): string {

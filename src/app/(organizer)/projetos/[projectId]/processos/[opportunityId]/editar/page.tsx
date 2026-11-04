@@ -15,7 +15,12 @@ export default async function EditOpportunityPage({
 }) {
   const { projectId, opportunityId } = await params;
   const { user, project } = await loadProjectEditPage(projectId);
-  const { values, tagNames, isOpen, hasApplications } = await loadOpportunityValuesPage(user, project.id, opportunityId, "edit");
+  const { values, tagNames, isOpen, hasApplications } = await loadOpportunityValuesPage(
+    user,
+    project.id,
+    opportunityId,
+    "edit",
+  );
   const courses = isOpen ? await listCourses(project.institutionId) : [];
 
   return (

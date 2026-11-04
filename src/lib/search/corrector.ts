@@ -16,18 +16,39 @@ const MIN_CANDIDATE_STEM = 4; // Sigla curta tem radical que colide com palavras
  * candidato (`arte -> ate`). `portuguese.stop` não é legível por SQL, daí a lista.
  */
 export const UNACCENTED_STOPWORDS = [
-  "ate", "nao", "tambem", "voce", "voces", "estao", "estavamos", "estiveramos", "estivessemos", "hao",
-  "houveramos", "houvessemos", "houvera", "houverao", "houveriamos", "sao", "eramos", "foramos", "fossemos",
-  "sera", "serao", "seriamos", "tinhamos", "tiveramos", "tivessemos", "tera", "terao", "teriamos",
+  "ate",
+  "nao",
+  "tambem",
+  "voce",
+  "voces",
+  "estao",
+  "estavamos",
+  "estiveramos",
+  "estivessemos",
+  "hao",
+  "houveramos",
+  "houvessemos",
+  "houvera",
+  "houverao",
+  "houveriamos",
+  "sao",
+  "eramos",
+  "foramos",
+  "fossemos",
+  "sera",
+  "serao",
+  "seriamos",
+  "tinhamos",
+  "tiveramos",
+  "tivessemos",
+  "tera",
+  "terao",
+  "teriamos",
 ];
 
 /** Mesma normalização do SQL (sem acentos, minúsculas), usada para o termo do usuário. */
 export function normalizeQuery(q: string): string {
-  return q
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .trim();
+  return q.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 }
 
 export type QueryToken = {
@@ -92,7 +113,8 @@ export function stripDiminutive(word: string): string[] {
   return [...new Set(forms)].filter((f) => f.length >= MIN_STEM && !(z === "" && stem.length < 2));
 }
 
-const isCorrectable = (t: QueryToken) => !t.quoted && /^\p{L}+$/u.test(t.text) && t.normalized.length >= MIN_LETTERS && t.normalized.length <= MAX_LETTERS;
+const isCorrectable = (t: QueryToken) =>
+  !t.quoted && /^\p{L}+$/u.test(t.text) && t.normalized.length >= MIN_LETTERS && t.normalized.length <= MAX_LETTERS;
 
 /** Sinônimos curados da instituição. A tabela é curta e curada: vale ler inteira. */
 export function loadSynonyms(institutionId: string) {
@@ -109,10 +131,7 @@ async function unknownWords(institutionId: string, words: string[]): Promise<str
       .from(searchVocabulary)
       .where(and(eq(searchVocabulary.institutionId, institutionId), inArray(searchVocabulary.word, words))),
     loadSynonyms(institutionId),
-    db
-      .select({ slug: tagAliases.aliasSlug })
-      .from(tagAliases)
-      .where(eq(tagAliases.institutionId, institutionId)),
+    db.select({ slug: tagAliases.aliasSlug }).from(tagAliases).where(eq(tagAliases.institutionId, institutionId)),
   ]);
   const known = new Set([
     ...UNACCENTED_STOPWORDS,
@@ -182,7 +201,9 @@ async function nearestWord(institutionId: string, word: string): Promise<string 
 
 async function correctWord(institutionId: string, token: QueryToken): Promise<string | null> {
   if (await isStopwordOrDerivation(institutionId, token)) return null;
-  return (await undoDiminutive(institutionId, token.normalized)) ?? (await nearestWord(institutionId, token.normalized));
+  return (
+    (await undoDiminutive(institutionId, token.normalized)) ?? (await nearestWord(institutionId, token.normalized))
+  );
 }
 
 /** Reescreve a consulta como digitada: trechos entre aspas e palavras com símbolo ficam como estão. */
@@ -205,7 +226,12 @@ export async function correctQuery(institutionId: string, q: string): Promise<Co
   const tokens = tokenize(q);
   const candidates = tokens.filter(isCorrectable);
   const unknown = candidates.length
-    ? new Set(await unknownWords(institutionId, candidates.map((t) => t.normalized)))
+    ? new Set(
+        await unknownWords(
+          institutionId,
+          candidates.map((t) => t.normalized),
+        ),
+      )
     : new Set<string>();
 
   const fixes = new Map<string, string>();
@@ -215,5 +241,10 @@ export async function correctQuery(institutionId: string, q: string): Promise<Co
     if (fix) fixes.set(token.normalized, fix);
     result.push(fix ? { ...token, text: fix, normalized: fix, corrected: true } : token);
   }
-  return { original: q, corrected: fixes.size ? rewrite(q.normalize("NFC"), fixes) : null, terms: result.map((t) => t.text), tokens: result };
+  return {
+    original: q,
+    corrected: fixes.size ? rewrite(q.normalize("NFC"), fixes) : null,
+    terms: result.map((t) => t.text),
+    tokens: result,
+  };
 }

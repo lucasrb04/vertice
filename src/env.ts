@@ -20,8 +20,16 @@ const schema = z
       .enum(["true", "false"])
       .default("false")
       .transform((v) => v === "true"),
-    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().trim().optional().transform((v) => (v ? v : undefined)),
-    TURNSTILE_SECRET_KEY: z.string().trim().optional().transform((v) => (v ? v : undefined)),
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v ? v : undefined)),
+    TURNSTILE_SECRET_KEY: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v ? v : undefined)),
     // Segredo do HMAC que anonimiza visitantes (cliques/visualizações). Obrigatório em produção.
     VISITOR_HASH_SECRET: z
       .string()
@@ -30,8 +38,16 @@ const schema = z
       .optional()
       .or(z.literal("").transform(() => undefined)),
     // Resend: sem chave não há envio (dev, testes e build). Chave e remetente são obrigatórios em produção.
-    RESEND_API_KEY: z.string().trim().optional().transform((v) => (v ? v : undefined)),
-    EMAIL_FROM: z.string().trim().optional().transform((v) => (v ? v : undefined)),
+    RESEND_API_KEY: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v ? v : undefined)),
+    EMAIL_FROM: z
+      .string()
+      .trim()
+      .optional()
+      .transform((v) => (v ? v : undefined)),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === "production") {
@@ -59,9 +75,7 @@ export type Env = z.output<typeof schema>;
 export function parseEnv(raw: Record<string, string | undefined>): Env {
   const result = schema.safeParse(raw);
   if (!result.success) {
-    const details = result.error.issues
-      .map((i) => `${i.path.join(".") || "(raiz)"}: ${i.message}`)
-      .join("; ");
+    const details = result.error.issues.map((i) => `${i.path.join(".") || "(raiz)"}: ${i.message}`).join("; ");
     throw new Error(`Variáveis de ambiente inválidas: ${details}`);
   }
   return result.data;

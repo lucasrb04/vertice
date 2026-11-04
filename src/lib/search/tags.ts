@@ -14,7 +14,5 @@ export function normalizeTagSlug(input: string): string {
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-  return slug
-    .slice(0, MAX_TAG_SLUG_LENGTH)
-    .replace(/^-+|-+$/g, "");
+  return slug.slice(0, MAX_TAG_SLUG_LENGTH).replace(/^-+|-+$/g, "");
 }

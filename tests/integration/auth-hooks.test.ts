@@ -1,16 +1,23 @@
-import { beforeEach, describe, it, expect } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { runSeed } from "@/db/seed";
+import type { AuthPolicyError } from "@/lib/auth/errors";
+import { beforeSessionCreate, beforeUserCreate } from "@/lib/auth/hooks";
 import { getDefaultInstitution } from "@/lib/tenant";
-import { beforeUserCreate, beforeSessionCreate } from "@/lib/auth/hooks";
-import { AuthPolicyError } from "@/lib/auth/errors";
 import { resetDb } from "../helpers/db";
 
-const code = (p: Promise<unknown>) => p.then(() => null, (e) => (e as AuthPolicyError).code);
+const code = (p: Promise<unknown>) =>
+  p.then(
+    () => null,
+    (e) => (e as AuthPolicyError).code,
+  );
 
 describe("beforeUserCreate", () => {
-  beforeEach(async () => { await resetDb(); await runSeed(); });
+  beforeEach(async () => {
+    await resetDb();
+    await runSeed();
+  });
 
   it("aceita @unifei.edu.br verificado, normaliza e atribui a instituição padrão", async () => {
     const inst = await getDefaultInstitution();
@@ -21,7 +28,9 @@ describe("beforeUserCreate", () => {
     expect(await code(beforeUserCreate({ email: "a@gmail.com", emailVerified: true }))).toBe("DOMAIN_NOT_ALLOWED");
   });
   it("recusa sufixo parecido", async () => {
-    expect(await code(beforeUserCreate({ email: "a@evilunifei.edu.br", emailVerified: true }))).toBe("DOMAIN_NOT_ALLOWED");
+    expect(await code(beforeUserCreate({ email: "a@evilunifei.edu.br", emailVerified: true }))).toBe(
+      "DOMAIN_NOT_ALLOWED",
+    );
   });
   it("recusa e-mail não verificado", async () => {
     expect(await code(beforeUserCreate({ email: "a@unifei.edu.br", emailVerified: false }))).toBe("EMAIL_NOT_VERIFIED");
@@ -34,16 +43,25 @@ describe("beforeUserCreate", () => {
 });
 
 describe("beforeSessionCreate", () => {
-  beforeEach(async () => { await resetDb(); await runSeed(); });
+  beforeEach(async () => {
+    await resetDb();
+    await runSeed();
+  });
 
   it("recusa usuário banido", async () => {
     const inst = await getDefaultInstitution();
-    const [u] = await db.insert(users).values({ institutionId: inst.id, name: "B", email: "b@unifei.edu.br", emailVerified: true, isBanned: true }).returning();
+    const [u] = await db
+      .insert(users)
+      .values({ institutionId: inst.id, name: "B", email: "b@unifei.edu.br", emailVerified: true, isBanned: true })
+      .returning();
     expect(await code(beforeSessionCreate({ userId: u.id }))).toBe("ACCOUNT_SUSPENDED");
   });
   it("aceita usuário ativo", async () => {
     const inst = await getDefaultInstitution();
-    const [u] = await db.insert(users).values({ institutionId: inst.id, name: "A", email: "a@unifei.edu.br", emailVerified: true }).returning();
+    const [u] = await db
+      .insert(users)
+      .values({ institutionId: inst.id, name: "A", email: "a@unifei.edu.br", emailVerified: true })
+      .returning();
     await expect(beforeSessionCreate({ userId: u.id })).resolves.toBeUndefined();
   });
 });

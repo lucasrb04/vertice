@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { getProjectPanel, listCourses, listMembers, listMyProjects, listProjectsUserCanPublishIn } from "@/lib/projects/queries";
-import { authorizeProjectRole, type AuthUser } from "@/lib/auth/guards";
 import { db } from "@/db";
 import { applications } from "@/db/schema";
 import { runSeed } from "@/db/seed";
+import { type AuthUser, authorizeProjectRole } from "@/lib/auth/guards";
+import { hideTarget } from "@/lib/moderation/service";
+import {
+  getProjectPanel,
+  listCourses,
+  listMembers,
+  listMyProjects,
+  listProjectsUserCanPublishIn,
+} from "@/lib/projects/queries";
 import { resetDb } from "../helpers/db";
 import { addMember, mkOpportunity, mkProject, mkUser } from "../helpers/fixtures";
-import { hideTarget } from "@/lib/moderation/service";
 
 const H = 3_600_000;
 
@@ -21,8 +27,14 @@ describe("consultas do painel", () => {
     const project = (await mkProject())!;
     await addMember(project.id, user.id, "OWNER");
     const now = new Date();
-    const open2 = (await mkOpportunity(project.id, { title: "Aberto B", deadlineAt: new Date(now.getTime() + 48 * H) }))!;
-    const open1 = (await mkOpportunity(project.id, { title: "Aberto A", deadlineAt: new Date(now.getTime() + 24 * H) }))!;
+    const open2 = (await mkOpportunity(project.id, {
+      title: "Aberto B",
+      deadlineAt: new Date(now.getTime() + 48 * H),
+    }))!;
+    const open1 = (await mkOpportunity(project.id, {
+      title: "Aberto A",
+      deadlineAt: new Date(now.getTime() + 24 * H),
+    }))!;
     const expiredDeadline = new Date(now.getTime() - 48 * H);
     const expired = (await mkOpportunity(project.id, { title: "Vencido", deadlineAt: expiredDeadline }))!;
     const closedAt = new Date(now.getTime() - 2 * H);
@@ -93,7 +105,11 @@ describe("consultas do painel", () => {
     await addMember(project.id, owner.id, "OWNER");
     const hidden = (await mkOpportunity(project.id, { title: "Oculto" }))!;
     const open = (await mkOpportunity(project.id, { title: "Aberto" }))!;
-    await hideTarget(admin as AuthUser, { targetType: "OPPORTUNITY", targetId: hidden.id, reason: "Bolsa anunciada não existe." });
+    await hideTarget(admin as AuthUser, {
+      targetType: "OPPORTUNITY",
+      targetId: hidden.id,
+      reason: "Bolsa anunciada não existe.",
+    });
 
     let panel = await getProjectPanel(await authorizeProjectRole(owner as AuthUser, project.id, ["OWNER"]));
     expect(panel.open.map((o) => o.id)).toEqual([open.id]);
@@ -102,7 +118,11 @@ describe("consultas do painel", () => {
     expect(panel.closed[0]).toMatchObject({ hidden: true, hiddenReason: "Bolsa anunciada não existe." });
     expect(panel.hiddenReason).toBeNull();
 
-    await hideTarget(admin as AuthUser, { targetType: "PROJECT", targetId: project.id, reason: "Projeto fora das regras." });
+    await hideTarget(admin as AuthUser, {
+      targetType: "PROJECT",
+      targetId: project.id,
+      reason: "Projeto fora das regras.",
+    });
     panel = await getProjectPanel(
       await authorizeProjectRole(owner as AuthUser, project.id, ["OWNER"], { allowInactive: true }),
     );

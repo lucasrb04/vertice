@@ -3,8 +3,8 @@ import { db } from "@/db";
 import { institutions, users } from "@/db/schema";
 import { getEnv } from "@/env";
 import { getDefaultInstitution } from "@/lib/tenant";
-import { AuthPolicyError } from "./errors";
 import { isAllowedEmail, normalizeEmail } from "./email-policy";
+import { AuthPolicyError } from "./errors";
 
 export type NewUserPolicyFields = {
   email: string;
@@ -16,10 +16,7 @@ export type NewUserPolicyFields = {
  * Executado antes de criar o usuário (primeiro login). Exige domínio permitido pela instituição
  * padrão (igualdade exata, D31) e e-mail verificado pelo Google (D32).
  */
-export async function beforeUserCreate(user: {
-  email: string;
-  emailVerified: boolean;
-}): Promise<NewUserPolicyFields> {
+export async function beforeUserCreate(user: { email: string; emailVerified: boolean }): Promise<NewUserPolicyFields> {
   const email = normalizeEmail(user.email);
   const institution = await getDefaultInstitution();
   if (!isAllowedEmail(email, institution.allowedEmailDomains)) {

@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { applications, opportunities, opportunityTags, projects, tags } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError } from "@/lib/domain-errors";
 import {
-  OPPORTUNITY_CLOSED,
   closeOpportunity,
   createOpportunity,
   getOpportunityFormValues,
+  OPPORTUNITY_CLOSED,
   updateOpportunity,
 } from "@/lib/opportunities/service";
 import { tagCreationLimiter } from "@/lib/security/rate-limit";
@@ -58,7 +58,9 @@ describe("createOpportunity", () => {
     await addMember(project.id, owner.id, "OWNER");
     const opp = await mkOpportunity(project.id);
     await expect(createOpportunity(owner, project.id, validOpportunityInput())).rejects.toBeInstanceOf(NotFoundError);
-    await expect(updateOpportunity(owner, project.id, opp.id, validOpportunityInput())).rejects.toBeInstanceOf(NotFoundError);
+    await expect(updateOpportunity(owner, project.id, opp.id, validOpportunityInput())).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
     await expect(closeOpportunity(owner, project.id, opp.id)).rejects.toBeInstanceOf(NotFoundError);
   });
 });
@@ -68,9 +70,13 @@ describe("updateOpportunity / closeOpportunity", () => {
     const { owner, project: a } = await setup();
     const b = await mkProject();
     const oppB = await mkOpportunity(b.id);
-    await expect(updateOpportunity(owner, a.id, oppB.id, validOpportunityInput({ title: "Título invadido" }))).rejects.toBeInstanceOf(NotFoundError);
+    await expect(
+      updateOpportunity(owner, a.id, oppB.id, validOpportunityInput({ title: "Título invadido" })),
+    ).rejects.toBeInstanceOf(NotFoundError);
     await expect(closeOpportunity(owner, a.id, oppB.id)).rejects.toBeInstanceOf(NotFoundError);
-    await expect(updateOpportunity(owner, a.id, "não-é-uuid", validOpportunityInput())).rejects.toBeInstanceOf(NotFoundError);
+    await expect(updateOpportunity(owner, a.id, "não-é-uuid", validOpportunityInput())).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
     const after = await get(oppB.id);
     expect(after.title).toBe("Vaga de teste");
     expect(after.status).toBe("OPEN");
@@ -142,7 +148,10 @@ describe("ocultação concorrente", () => {
       project.id,
       () => createOpportunity(owner, project.id, validOpportunityInput()),
       async (tx) => {
-        await tx.update(projects).set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" }).where(eq(projects.id, project.id));
+        await tx
+          .update(projects)
+          .set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" })
+          .where(eq(projects.id, project.id));
       },
     );
     expect(result.status).toBe("rejected");
@@ -157,7 +166,10 @@ describe("ocultação concorrente", () => {
       project.id,
       () => updateOpportunity(owner, project.id, opp.id, validOpportunityInput({ title: "Título Novo" })),
       async (tx) => {
-        await tx.update(projects).set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" }).where(eq(projects.id, project.id));
+        await tx
+          .update(projects)
+          .set({ status: "SUSPENDED", statusBeforeModeration: "ACTIVE" })
+          .where(eq(projects.id, project.id));
       },
     );
     expect(result.status).toBe("rejected");
@@ -222,13 +234,20 @@ describe("getOpportunityFormValues", () => {
 describe("updateOpportunity: seleção pela plataforma", () => {
   it("desligar com candidatura existente é recusado; sem candidaturas funciona", async () => {
     const { owner, project } = await setup();
-    const input = validOpportunityInput({ externalUrl: "", internalSelectionEnabled: true, customQuestion: "Por quê?" });
+    const input = validOpportunityInput({
+      externalUrl: "",
+      internalSelectionEnabled: true,
+      customQuestion: "Por quê?",
+    });
     const { opportunityId } = await createOpportunity(owner, project.id, input);
     expect((await get(opportunityId)).customQuestion).toBe("Por quê?");
 
     const student = await mkUser("aluno@unifei.edu.br");
     await db.insert(applications).values({ opportunityId, userId: student.id });
-    const off = validOpportunityInput({ externalUrl: "https://unifei.edu.br/edital.pdf", internalSelectionEnabled: false });
+    const off = validOpportunityInput({
+      externalUrl: "https://unifei.edu.br/edital.pdf",
+      internalSelectionEnabled: false,
+    });
     const err = await updateOpportunity(owner, project.id, opportunityId, off).catch((e) => e);
     expect(err).toBeInstanceOf(DomainError);
     expect(err.code).toBe("HAS_APPLICATIONS");
@@ -299,6 +318,8 @@ describe("updateOpportunity: pergunta com candidaturas", () => {
     expect(duplicate.hasApplications).toBe(false);
 
     const fresh = await createOpportunity(owner, project.id, withQuestion("Por quê?"));
-    expect((await getOpportunityFormValues(owner, project.id, fresh.opportunityId, "edit")).hasApplications).toBe(false);
+    expect((await getOpportunityFormValues(owner, project.id, fresh.opportunityId, "edit")).hasApplications).toBe(
+      false,
+    );
   });
 });

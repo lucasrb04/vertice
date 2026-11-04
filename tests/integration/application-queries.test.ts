@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { applicationEvents, applications } from "@/db/schema";
 import { runSeed } from "@/db/seed";
@@ -55,9 +55,29 @@ describe("listMyApplications", () => {
     const reviewer = await mkUser(`rev${seq++}@unifei.edu.br`);
     const app = await apply(me.id, opp.id, at(0));
     await db.insert(applicationEvents).values([
-      { applicationId: app.id, fromStatus: "APPLIED", toStatus: "IN_REVIEW", actorUserId: reviewer.id, createdAt: at(1) },
-      { applicationId: app.id, fromStatus: "IN_REVIEW", toStatus: "INTERVIEW", message: "Entrevista dia 10.", actorUserId: reviewer.id, createdAt: at(2) },
-      { applicationId: app.id, fromStatus: "INTERVIEW", toStatus: "ACCEPTED", message: "Parabéns!", actorUserId: reviewer.id, createdAt: at(3) },
+      {
+        applicationId: app.id,
+        fromStatus: "APPLIED",
+        toStatus: "IN_REVIEW",
+        actorUserId: reviewer.id,
+        createdAt: at(1),
+      },
+      {
+        applicationId: app.id,
+        fromStatus: "IN_REVIEW",
+        toStatus: "INTERVIEW",
+        message: "Entrevista dia 10.",
+        actorUserId: reviewer.id,
+        createdAt: at(2),
+      },
+      {
+        applicationId: app.id,
+        fromStatus: "INTERVIEW",
+        toStatus: "ACCEPTED",
+        message: "Parabéns!",
+        actorUserId: reviewer.id,
+        createdAt: at(3),
+      },
     ]);
     await db.update(applications).set({ status: "ACCEPTED" }).where(eq(applications.id, app.id));
 
@@ -120,8 +140,22 @@ describe("listMyApplications: dois alunos e projeto arquivado", () => {
     const mine = await apply(me.id, opp.id, at(0));
     const theirs = await apply(other.id, opp.id, at(1));
     await db.insert(applicationEvents).values([
-      { applicationId: mine.id, fromStatus: "APPLIED", toStatus: "IN_REVIEW", message: "Para mim.", actorUserId: reviewer.id, createdAt: at(2) },
-      { applicationId: theirs.id, fromStatus: "APPLIED", toStatus: "REJECTED", message: "Para o outro.", actorUserId: reviewer.id, createdAt: at(3) },
+      {
+        applicationId: mine.id,
+        fromStatus: "APPLIED",
+        toStatus: "IN_REVIEW",
+        message: "Para mim.",
+        actorUserId: reviewer.id,
+        createdAt: at(2),
+      },
+      {
+        applicationId: theirs.id,
+        fromStatus: "APPLIED",
+        toStatus: "REJECTED",
+        message: "Para o outro.",
+        actorUserId: reviewer.id,
+        createdAt: at(3),
+      },
     ]);
 
     const list = await listMyApplications(me);

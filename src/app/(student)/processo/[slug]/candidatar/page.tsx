@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplyForm } from "@/components/applications/apply-form";
 import { Button } from "@/components/ui/button";
-import { requireAuthPage } from "@/lib/auth/guards";
 import { getApplyContext } from "@/lib/applications/queries";
+import { requireAuthPage } from "@/lib/auth/guards";
 import { opensInFuture } from "@/lib/opportunities/status";
 import { listCourses } from "@/lib/projects/queries";
 import { getPublicOpportunity } from "@/lib/public/queries";
@@ -36,10 +36,7 @@ export default async function CandidatarPage({ params }: { params: Promise<{ slu
   if (!found || !found.opportunity.internalSelectionEnabled) notFound();
   const { opportunity, project, isOpen } = found;
 
-  const [ctx, courses] = await Promise.all([
-    getApplyContext(user, opportunity.id),
-    listCourses(user.institutionId),
-  ]);
+  const [ctx, courses] = await Promise.all([getApplyContext(user, opportunity.id), listCourses(user.institutionId)]);
 
   let blocked: React.ReactNode = null;
   if (ctx.alreadyApplied) {

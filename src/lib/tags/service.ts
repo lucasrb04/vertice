@@ -3,8 +3,8 @@ import { db, type Tx } from "@/db";
 import { opportunityTags, tagAliases, tags } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
 import { RateLimitError, ValidationError } from "@/lib/domain-errors";
-import { tagCreationLimiter } from "@/lib/security/rate-limit";
 import { normalizeTagSlug } from "@/lib/search/tags";
+import { tagCreationLimiter } from "@/lib/security/rate-limit";
 import { TAG_GROUPS, type TagRef } from "@/lib/validation/opportunity";
 
 export const TAG_RATE_LIMIT = "Você criou muitas tags novas na última hora. Tente de novo mais tarde.";
@@ -92,7 +92,14 @@ export async function syncOpportunityTags(
         const name = nameBySlug.get(slug)!;
         const [created] = await tx
           .insert(tags)
-          .values({ institutionId, name, normalizedSlug: slug, category: "TOPIC", isVerified: false, createdByUserId: userId })
+          .values({
+            institutionId,
+            name,
+            normalizedSlug: slug,
+            category: "TOPIC",
+            isVerified: false,
+            createdByUserId: userId,
+          })
           .onConflictDoNothing({ target: [tags.institutionId, tags.normalizedSlug] })
           .returning({ id: tags.id });
         if (created) {
@@ -122,9 +129,12 @@ export async function syncOpportunityTags(
 
   // 5. Substitui linhas e ajusta usage_count pela diferença de tags distintas.
   const before = new Set(
-    (await tx.select({ tagId: opportunityTags.tagId }).from(opportunityTags).where(eq(opportunityTags.opportunityId, opportunityId))).map(
-      (r) => r.tagId,
-    ),
+    (
+      await tx
+        .select({ tagId: opportunityTags.tagId })
+        .from(opportunityTags)
+        .where(eq(opportunityTags.opportunityId, opportunityId))
+    ).map((r) => r.tagId),
   );
   const after = new Set(rows.map((r) => r.tagId));
 
@@ -134,9 +144,15 @@ export async function syncOpportunityTags(
   const added = [...after].filter((id) => !before.has(id));
   const removed = [...before].filter((id) => !after.has(id));
   if (added.length > 0) {
-    await tx.update(tags).set({ usageCount: sql`${tags.usageCount} + 1` }).where(inArray(tags.id, added));
+    await tx
+      .update(tags)
+      .set({ usageCount: sql`${tags.usageCount} + 1` })
+      .where(inArray(tags.id, added));
   }
   if (removed.length > 0) {
-    await tx.update(tags).set({ usageCount: sql`GREATEST(${tags.usageCount} - 1, 0)` }).where(inArray(tags.id, removed));
+    await tx
+      .update(tags)
+      .set({ usageCount: sql`GREATEST(${tags.usageCount} - 1, 0)` })
+      .where(inArray(tags.id, removed));
   }
 }

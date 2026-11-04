@@ -1,8 +1,8 @@
 import { makeSignature } from "better-auth/crypto";
 import { getEnv } from "@/env";
 import { auth } from "./auth";
-import { fromAPIError } from "./errors";
 import { normalizeEmail } from "./email-policy";
+import { fromAPIError } from "./errors";
 
 /** Login de teste (D33): só com ENABLE_TEST_AUTH=true e fora de produção. */
 export function isTestAuthEnabled(): boolean {
@@ -26,10 +26,7 @@ export async function createTestSession(input: {
     const existing = await ctx.internalAdapter.findUserByEmail(email);
     const user =
       existing?.user ??
-      (await ctx.internalAdapter.createUser(
-        { email, name: input.name, emailVerified: true },
-        { method: "test-auth" },
-      ));
+      (await ctx.internalAdapter.createUser({ email, name: input.name, emailVerified: true }, { method: "test-auth" }));
     const session = await ctx.internalAdapter.createSession(user.id);
     return { userId: user.id, sessionToken: session.token };
   } catch (err) {

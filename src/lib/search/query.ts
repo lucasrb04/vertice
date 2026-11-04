@@ -1,8 +1,8 @@
-import { and, eq, inArray, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, type SQL, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { tagAliases, tags } from "@/db/schema";
 import { logError } from "@/lib/log";
-import { correctQuery, loadSynonyms, normalizeQuery, tokenize, type QueryToken } from "./corrector";
+import { correctQuery, loadSynonyms, normalizeQuery, type QueryToken, tokenize } from "./corrector";
 import { normalizeTagSlug } from "./tags";
 
 /** Uma palavra da consulta e o que vale por ela: basta casar uma das variantes. */
@@ -41,7 +41,10 @@ function addVariant(group: TermGroup, text: string) {
 }
 
 async function loadStems(words: string[]): Promise<Map<string, string>> {
-  const values = sql.join(words.map((w) => sql`(${w}::text)`), sql`, `);
+  const values = sql.join(
+    words.map((w) => sql`(${w}::text)`),
+    sql`, `,
+  );
   const { rows } = await db.execute<{ word: string; stem: string | null }>(sql`
     select v.word, (ts_lexize('portuguese_stem', v.word))[1] as stem from (values ${values}) as v(word)
   `);
@@ -71,7 +74,10 @@ async function addSynonyms(institutionId: string, tokens: QueryToken[], groups: 
     for (const from of members) {
       const fromWords = from.split(" ");
       words.forEach((w, i) => {
-        const hit = fromWords.length > 1 ? fromWords.includes(w) && sentence.includes(` ${from} `) : w !== "|" && sameStem(w, from);
+        const hit =
+          fromWords.length > 1
+            ? fromWords.includes(w) && sentence.includes(` ${from} `)
+            : w !== "|" && sameStem(w, from);
         if (hit) members.filter((to) => to !== from).forEach((to) => addVariant(groups[i], to));
       });
     }
@@ -80,14 +86,26 @@ async function addSynonyms(institutionId: string, tokens: QueryToken[], groups: 
 
 /** `tag_aliases`: slug da palavra, ou da consulta inteira, leva ao nome canônico da tag. */
 async function addTagAliases(institutionId: string, tokens: QueryToken[], groups: TermGroup[]) {
-  const open = tokens.flatMap((t, i) => (t.quoted ? [] : [{ i, slug: normalizeTagSlug(t.text) }])).filter((t) => t.slug);
+  const open = tokens
+    .flatMap((t, i) => (t.quoted ? [] : [{ i, slug: normalizeTagSlug(t.text) }]))
+    .filter((t) => t.slug);
   if (!open.length) return;
-  const whole = normalizeTagSlug(tokens.filter((t) => !t.quoted).map((t) => t.text).join(" "));
+  const whole = normalizeTagSlug(
+    tokens
+      .filter((t) => !t.quoted)
+      .map((t) => t.text)
+      .join(" "),
+  );
   const rows = await db
     .select({ slug: tagAliases.aliasSlug, name: tags.name })
     .from(tagAliases)
     .innerJoin(tags, eq(tags.id, tagAliases.canonicalTagId))
-    .where(and(eq(tagAliases.institutionId, institutionId), inArray(tagAliases.aliasSlug, [...new Set([whole, ...open.map((t) => t.slug)])])));
+    .where(
+      and(
+        eq(tagAliases.institutionId, institutionId),
+        inArray(tagAliases.aliasSlug, [...new Set([whole, ...open.map((t) => t.slug)])]),
+      ),
+    );
   for (const { slug, name } of rows) {
     for (const { i, slug: own } of open) {
       if (slug === own || slug === whole) addVariant(groups[i], name);
@@ -108,14 +126,20 @@ async function correctedOrPlain(institutionId: string, q: string, exact: boolean
 }
 
 /** Devolve `null` quando `q` normaliza para vazio (sem busca). */
-export async function planSearch(institutionId: string, q: string, opts: { exact: boolean }): Promise<SearchPlan | null> {
+export async function planSearch(
+  institutionId: string,
+  q: string,
+  opts: { exact: boolean },
+): Promise<SearchPlan | null> {
   const literal = normalizeQuery(q.replace(/["“”]/g, " ")).replace(/\s+/g, " ");
   if (!literal) return null;
 
   const { tokens, corrected } = await correctedOrPlain(institutionId, q, opts.exact);
 
   // Uma palavra corrigida pode repetir outra da consulta.
-  const distinct = tokens.filter((t, i) => tokens.findIndex((o) => o.normalized === t.normalized && o.quoted === t.quoted) === i);
+  const distinct = tokens.filter(
+    (t, i) => tokens.findIndex((o) => o.normalized === t.normalized && o.quoted === t.quoted) === i,
+  );
   const groups = distinct.map(groupOf);
   await addSynonyms(institutionId, distinct, groups);
   await addTagAliases(institutionId, distinct, groups);

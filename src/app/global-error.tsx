@@ -22,7 +22,15 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               borderRadius: "0.375rem",
             }}
           >
-            <p style={{ margin: 0, fontFamily: "ui-monospace, monospace", fontSize: "0.75rem", color: "#78716c", textTransform: "uppercase" }}>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "ui-monospace, monospace",
+                fontSize: "0.75rem",
+                color: "#78716c",
+                textTransform: "uppercase",
+              }}
+            >
               Erro
             </p>
             <h1 style={{ margin: "0.5rem 0 0", fontSize: "1.5rem" }}>Algo deu errado</h1>
@@ -32,7 +40,14 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
             <button
               type="button"
               onClick={reset}
-              style={{ marginTop: "1.5rem", padding: "0.5rem 1rem", border: "1px solid #e7e5e4", borderRadius: "0.375rem", background: "#fff", cursor: "pointer" }}
+              style={{
+                marginTop: "1.5rem",
+                padding: "0.5rem 1rem",
+                border: "1px solid #e7e5e4",
+                borderRadius: "0.375rem",
+                background: "#fff",
+                cursor: "pointer",
+              }}
             >
               Tentar de novo
             </button>

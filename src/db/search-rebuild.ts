@@ -8,8 +8,7 @@ export async function rebuildSearch(institutionId: string): Promise<void> {
   await rebuildSearchVocabulary(institutionId);
 }
 
-const isDirectRun =
-  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+const isDirectRun = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isDirectRun) {
   db.select({ id: institutions.id })

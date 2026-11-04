@@ -1,15 +1,8 @@
 import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
-import {
-  applicationEvents,
-  applications,
-  opportunities,
-  projectMembers,
-  projects,
-  studentProfiles,
-} from "@/db/schema";
+import { applicationEvents, applications, opportunities, projectMembers, projects, studentProfiles } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
-import { IN_PROGRESS_STATUSES, type ApplicationStatus } from "./labels";
+import { type ApplicationStatus, IN_PROGRESS_STATUSES } from "./labels";
 
 /** Estado do aluno diante de um processo, para a página de candidatura. */
 export async function getApplyContext(user: AuthUser, opportunityId: string) {
@@ -97,7 +90,8 @@ export async function listMyApplications(user: AuthUser): Promise<MyApplication[
   return rows.map(({ opportunityStatus, opportunitySlug, projectStatus, ...row }) => ({
     ...row,
     projectArchived: projectStatus === "ARCHIVED" && IN_PROGRESS_STATUSES.includes(row.status),
-    opportunitySlug: opportunityStatus === "UNDER_REVIEW" || !["ACTIVE", "ARCHIVED"].includes(projectStatus) ? null : opportunitySlug,
+    opportunitySlug:
+      opportunityStatus === "UNDER_REVIEW" || !["ACTIVE", "ARCHIVED"].includes(projectStatus) ? null : opportunitySlug,
     messages: byApplication.get(row.id) ?? [],
   }));
 }

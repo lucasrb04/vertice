@@ -37,7 +37,13 @@ export async function recordZeroResult(institutionId: string, rawQuery: string, 
   const incremented = await db
     .update(searchZeroResults)
     .set({ count: sql`${searchZeroResults.count} + 1` })
-    .where(and(eq(searchZeroResults.institutionId, institutionId), eq(searchZeroResults.term, term), eq(searchZeroResults.day, day)))
+    .where(
+      and(
+        eq(searchZeroResults.institutionId, institutionId),
+        eq(searchZeroResults.term, term),
+        eq(searchZeroResults.day, day),
+      ),
+    )
     .returning({ id: searchZeroResults.id });
   if (incremented.length === 0) {
     const [{ n }] = await db

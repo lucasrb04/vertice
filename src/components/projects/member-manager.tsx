@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   addMemberAction,
   changeMemberRoleAction,
@@ -23,7 +23,11 @@ const ASSIGNABLE: AssignableRole[] = ["ADMIN", "REVIEWER"];
 
 export type MemberItem = { userId: string; name: string; email: string; role: Role };
 
-const failed = (): ActionResult => ({ ok: false, error: "RULE", message: "Não foi possível concluir agora. Tente de novo." });
+const failed = (): ActionResult => ({
+  ok: false,
+  error: "RULE",
+  message: "Não foi possível concluir agora. Tente de novo.",
+});
 
 function AddMemberForm({ projectId }: { projectId: string }) {
   const router = useRouter();
@@ -161,7 +165,10 @@ export function MemberManager({
           {members.map((m) => {
             const editable = canManage && m.role !== "OWNER";
             return (
-              <li key={m.userId} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <li
+                key={m.userId}
+                className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div className="min-w-0">
                   <p className="font-medium text-stone-900">{m.name}</p>
                   <p className="truncate font-mono text-xs text-stone-600">{m.email}</p>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { vitrineHref, type VitrineParams } from "@/lib/public/search-params";
+import { type VitrineParams, vitrineHref } from "@/lib/public/search-params";
 import { cn } from "@/lib/utils";
 
 const linkClass =
@@ -18,21 +18,18 @@ function pageList(page: number, count: number): (number | null)[] {
 }
 
 /** `prefetch={false}`: o prefetch de /processos?q= gastaria o limite de buscas do visitante. */
-export function Pagination({
-  params,
-  page,
-  pageCount,
-}: {
-  params: VitrineParams;
-  page: number;
-  pageCount: number;
-}) {
+export function Pagination({ params, page, pageCount }: { params: VitrineParams; page: number; pageCount: number }) {
   if (pageCount <= 1) return null;
   const href = (p: number) => vitrineHref(params, { page: p });
   return (
     <nav aria-label="Paginação" className="flex flex-wrap items-center justify-center gap-1.5">
       {page > 1 ? (
-        <Link href={href(page - 1)} prefetch={false} rel="prev" className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}>
+        <Link
+          href={href(page - 1)}
+          prefetch={false}
+          rel="prev"
+          className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}
+        >
           Anterior
         </Link>
       ) : null}
@@ -60,7 +57,12 @@ export function Pagination({
         ),
       )}
       {page < pageCount ? (
-        <Link href={href(page + 1)} prefetch={false} rel="next" className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}>
+        <Link
+          href={href(page + 1)}
+          prefetch={false}
+          rel="next"
+          className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}
+        >
           Próxima
         </Link>
       ) : null}

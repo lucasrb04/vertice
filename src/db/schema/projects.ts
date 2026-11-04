@@ -27,7 +27,7 @@ export const projects = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [uniqueIndex("projects_inst_slug_idx").on(t.institutionId, t.slug)]
+  (t) => [uniqueIndex("projects_inst_slug_idx").on(t.institutionId, t.slug)],
 );
 
 export const projectMembers = pgTable(
@@ -43,5 +43,5 @@ export const projectMembers = pgTable(
     role: projectMemberRoleEnum("role").notNull().default("OWNER"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [uniqueIndex("project_members_unique_idx").on(t.projectId, t.userId)]
+  (t) => [uniqueIndex("project_members_unique_idx").on(t.projectId, t.userId)],
 );

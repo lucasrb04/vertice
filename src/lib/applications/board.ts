@@ -3,11 +3,11 @@ import { z } from "zod";
 import { db } from "@/db";
 import { applicationEvents, applications, courses, opportunities, projects, studentProfiles, users } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
-import { authorizeProjectRole, type AuthUser, type ProjectAccess } from "@/lib/auth/guards";
+import { type AuthUser, authorizeProjectRole, type ProjectAccess } from "@/lib/auth/guards";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
 import { ALL_ROLES, effectiveMembership } from "@/lib/projects/permissions";
 import { lockProjectSearchDocuments } from "@/lib/search/index-documents";
-import { moveSchema, type MoveInput } from "@/lib/validation/application";
+import { type MoveInput, moveSchema } from "@/lib/validation/application";
 import { APPLICATION_STATUSES, type ApplicationStatus } from "./labels";
 
 export const PROJECT_READ_ONLY = "Este projeto não está ativo: o quadro é só leitura.";
@@ -189,7 +189,12 @@ export async function moveApplications(user: AuthUser, input: MoveInput): Promis
           // Sem mensagem, a última enviada continua valendo.
           ...(message ? { organizerFeedback: message } : {}),
         })
-        .where(inArray(applications.id, movable.map((r) => r.id)));
+        .where(
+          inArray(
+            applications.id,
+            movable.map((r) => r.id),
+          ),
+        );
       await tx.insert(applicationEvents).values(
         movable.map((r) => ({
           applicationId: r.id,

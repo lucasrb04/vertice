@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { listMyApplications } from "@/lib/applications/queries";
 import { APPLICATION_STATUS_LABELS } from "@/lib/applications/labels";
+import { listMyApplications } from "@/lib/applications/queries";
 import { requireAuthPage } from "@/lib/auth/guards";
 import { formatDay } from "@/lib/time";
 

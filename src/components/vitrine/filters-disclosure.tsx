@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 
 /**
  * `<details>` dos filtros. `open` fica em estado: o servidor reenvia `defaultOpen` a cada navegação

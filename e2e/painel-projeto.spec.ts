@@ -1,8 +1,8 @@
-import { test, expect, type Browser, type Page } from "@playwright/test";
+import { type Browser, expect, type Page, test } from "@playwright/test";
 import { SYSTEM_ADMIN_READ_ONLY } from "../src/lib/projects/labels";
 import { MEMBER_NO_ACCOUNT } from "../src/lib/projects/members";
-import { addProcess, closeTestDb, insertReport } from "./helpers";
 import { formatDay, todayInSaoPaulo } from "../src/lib/time";
+import { addProcess, closeTestDb, insertReport } from "./helpers";
 
 test.afterAll(closeTestDb);
 
@@ -85,7 +85,9 @@ test("duplicar abre formulário pré-preenchido sem prazo", async ({ page }) => 
   await expect(page.getByLabel("Prazo final de inscrição")).toHaveValue("");
   // A tag copiada aparece com o nome, não como "Tag".
   await page.getByRole("main").getByText("Tags", { exact: true }).click();
-  await expect(page.getByRole("list", { name: "Tags escolhidas: Tema" }).getByText("Python", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("list", { name: "Tags escolhidas: Tema" }).getByText("Python", { exact: true }),
+  ).toBeVisible();
 });
 
 test("REVIEWER vê o painel sem botões de edição", async ({ page, browser }) => {
@@ -97,7 +99,9 @@ test("REVIEWER vê o painel sem botões de edição", async ({ page, browser }) 
   await loginAs(page, "dono.revisor@unifei.edu.br", "Dono Revisor");
   const projectId = await publishProject(page, "Projeto Revisor", "Processo visto pelo revisor");
   await addMemberByEmail(page, projectId, "revisor@unifei.edu.br", "Revisor");
-  await expect(page.getByRole("region", { name: "Membros do projeto" }).getByText("revisor@unifei.edu.br")).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Membros do projeto" }).getByText("revisor@unifei.edu.br"),
+  ).toBeVisible();
 
   await reviewer.goto(`/projetos/${projectId}`);
   const main = reviewer.getByRole("main");

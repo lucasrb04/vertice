@@ -1,4 +1,4 @@
-import { db, type Db, type Tx } from "@/db";
+import { type Db, db, type Tx } from "@/db";
 import { auditLogs } from "@/db/schema";
 import { getRequestIp } from "./request-ip";
 

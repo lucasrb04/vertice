@@ -6,13 +6,7 @@ import { useState } from "react";
  * Select de ordenação controlado: acompanha a URL (voltar no histórico) sem remontar, o que
  * perderia o foco. O `change` nativo continua subindo até o formulário, onde o `AutoSubmit` escuta.
  */
-export function SortSelect({
-  value,
-  options,
-}: {
-  value: string;
-  options: { value: string; label: string }[];
-}) {
+export function SortSelect({ value, options }: { value: string; options: { value: string; label: string }[] }) {
   const [current, setCurrent] = useState(value);
   const [prev, setPrev] = useState(value);
   // Ajuste de estado na renderização: a prop mudou (navegação), então o estado local a segue.

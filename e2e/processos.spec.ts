@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { clearOpportunities, closeTestDb, daysFromNow, insertProcess, rebuildSearchIndex } from "./helpers";
 
 test.beforeEach(clearOpportunities);
@@ -8,7 +8,8 @@ const cards = (page: import("@playwright/test").Page) => page.locator("main ul >
 const titles = (page: import("@playwright/test").Page) => cards(page).locator("h3").allTextContents();
 
 // O envio automático só existe após a hidratação; interagir antes disso não submete.
-const hydrated = (page: import("@playwright/test").Page) => page.locator("form[data-js]").waitFor({ state: "attached" });
+const hydrated = (page: import("@playwright/test").Page) =>
+  page.locator("form[data-js]").waitFor({ state: "attached" });
 
 test("busca sem acento acha título com acento", async ({ page }) => {
   await insertProcess({ title: "Equipe de Robótica" });
@@ -168,7 +169,11 @@ test.describe("celular, com JavaScript", () => {
     await expect(sort.locator("option:checked")).toHaveText("Prazo mais próximo");
 
     // O envio automático usa `replace`; uma navegação com `push` cria o histórico para voltar.
-    await page.evaluate(() => (window as unknown as { next: { router: { push(href: string): void } } }).next.router.push("/processos?sort=popular"));
+    await page.evaluate(() =>
+      (window as unknown as { next: { router: { push(href: string): void } } }).next.router.push(
+        "/processos?sort=popular",
+      ),
+    );
     await expect(sort.locator("option:checked")).toHaveText("Mais procurados");
     await page.goBack();
     await expect(page).toHaveURL(/sort=deadline/);

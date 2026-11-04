@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
 import { Body, Container, Head, Hr, Html, Preview, Section, Text } from "@react-email/components";
+import type { ReactNode } from "react";
 
 const font = "Georgia, 'Times New Roman', serif";
 
@@ -10,7 +10,9 @@ export function EmailLayout({ preview, children }: { preview: string; children: 
       <Head />
       <Preview>{preview}</Preview>
       <Body style={{ backgroundColor: "#fafaf9", margin: 0, padding: "24px 0", fontFamily: font, color: "#1c1917" }}>
-        <Container style={{ backgroundColor: "#ffffff", border: "1px solid #e7e5e4", padding: "24px", maxWidth: "560px" }}>
+        <Container
+          style={{ backgroundColor: "#ffffff", border: "1px solid #e7e5e4", padding: "24px", maxWidth: "560px" }}
+        >
           <Text style={{ margin: 0, fontSize: "18px", fontWeight: 700 }}>Vértice</Text>
           <Hr style={{ borderColor: "#e7e5e4", margin: "16px 0" }} />
           <Section>{children}</Section>

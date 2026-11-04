@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { parseEnv } from "@/env";
 
 const base = {
@@ -21,8 +21,7 @@ describe("parseEnv", () => {
     expect(parseEnv({ ...base, ENABLE_TEST_AUTH: "true" }).ENABLE_TEST_AUTH).toBe(true);
   });
   it("recusa ENABLE_TEST_AUTH em produção", () => {
-    expect(() => parseEnv({ ...base, NODE_ENV: "production", ENABLE_TEST_AUTH: "true" }))
-      .toThrow(/ENABLE_TEST_AUTH/);
+    expect(() => parseEnv({ ...base, NODE_ENV: "production", ENABLE_TEST_AUTH: "true" })).toThrow(/ENABLE_TEST_AUTH/);
   });
   it("aceita produção com ENABLE_TEST_AUTH=false", () => {
     const env = parseEnv({
@@ -47,8 +46,9 @@ describe("parseEnv", () => {
     expect(() => parseEnv({ ...base, BETTER_AUTH_SECRET: "curto" })).toThrow(/BETTER_AUTH_SECRET/);
   });
   it("normaliza INITIAL_ADMIN_EMAIL para minúsculas", () => {
-    expect(parseEnv({ ...base, INITIAL_ADMIN_EMAIL: "Admin@UNIFEI.edu.br" }).INITIAL_ADMIN_EMAIL)
-      .toBe("admin@unifei.edu.br");
+    expect(parseEnv({ ...base, INITIAL_ADMIN_EMAIL: "Admin@UNIFEI.edu.br" }).INITIAL_ADMIN_EMAIL).toBe(
+      "admin@unifei.edu.br",
+    );
   });
   it("recusa produção sem as chaves do Turnstile", () => {
     expect(() => parseEnv({ ...base, NODE_ENV: "production" })).toThrow(

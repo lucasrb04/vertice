@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { PROJECT_CATEGORIES } from "@/lib/validation/project";
 import type { ProjectCategory } from "@/lib/projects/labels";
+import { PROJECT_CATEGORIES } from "@/lib/validation/project";
 
 export const VITRINE_SORTS = ["relevance", "recent", "deadline", "popular"] as const;
 export type VitrineSort = (typeof VITRINE_SORTS)[number];
@@ -40,7 +40,10 @@ export function defaultSort(q: string): VitrineSort {
 // Postgres rejeita \0 em texto (22021); removemos antes de qualquer validação.
 const clean = (s: string) => s.replace(/\u0000/g, "");
 
-const qSchema = z.string().transform((s) => clean(s).trim().slice(0, MAX_Q).trim()).catch("");
+const qSchema = z
+  .string()
+  .transform((s) => clean(s).trim().slice(0, MAX_Q).trim())
+  .catch("");
 const categorySchema = z.enum(PROJECT_CATEGORIES);
 const scholarshipSchema = z.enum(["PAID", "VOLUNTARY"]).nullable().catch(null);
 const courseSchema = z
@@ -88,7 +91,17 @@ export function parseVitrineParams(raw: RawParams): VitrineParams {
 
   const page = pageSchema.parse(first(raw.page) ?? "");
 
-  return { q, categories, scholarship, course, tags, includeClosed: first(raw.encerrados) === "1", sort, page, exact: first(raw.corrigir) === "0" };
+  return {
+    q,
+    categories,
+    scholarship,
+    course,
+    tags,
+    includeClosed: first(raw.encerrados) === "1",
+    sort,
+    page,
+    exact: first(raw.corrigir) === "0",
+  };
 }
 
 /** Monta o link de `/processos` omitindo padrões. Mudar qualquer filtro volta à página 1. */

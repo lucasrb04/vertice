@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Children, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Children, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,15 +11,7 @@ const SCROLL_FRACTION = 0.85;
  * Rolagem nativa: sem JS continua rolável por toque, trackpad, barra e teclado.
  * Os botões só aparecem depois de medir que há o que rolar.
  */
-export function Carousel({
-  label,
-  header,
-  children,
-}: {
-  label: string;
-  header?: ReactNode;
-  children: ReactNode;
-}) {
+export function Carousel({ label, header, children }: { label: string; header?: ReactNode; children: ReactNode }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [can, setCan] = useState({ prev: false, next: false });
 

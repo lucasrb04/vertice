@@ -22,7 +22,7 @@ export const applications = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [uniqueIndex("applications_opp_user_idx").on(t.opportunityId, t.userId)]
+  (t) => [uniqueIndex("applications_opp_user_idx").on(t.opportunityId, t.userId)],
 );
 
 // Histórico de movimentações no Kanban (com a mensagem enviada por e-mail ao aluno)
@@ -39,7 +39,7 @@ export const applicationEvents = pgTable(
     actorUserId: uuid("actor_user_id").references(() => users.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [index("application_events_app_idx").on(t.applicationId, t.createdAt)]
+  (t) => [index("application_events_app_idx").on(t.applicationId, t.createdAt)],
 );
 
 // Botão "Já me inscrevi neste edital" (vagas EXTERNAL) — aparece em "Minhas Candidaturas"
@@ -55,7 +55,7 @@ export const externalApplicationMarks = pgTable(
       .references(() => opportunities.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [uniqueIndex("ext_marks_user_opp_idx").on(t.userId, t.opportunityId)]
+  (t) => [uniqueIndex("ext_marks_user_opp_idx").on(t.userId, t.opportunityId)],
 );
 
 // Deduplicação de cliques no edital externo. visitorHash = HMAC(segredo, IP + User-Agent);
@@ -70,5 +70,5 @@ export const opportunityExternalClicks = pgTable(
     visitorHash: varchar("visitor_hash", { length: 64 }).notNull(),
     day: date("day").notNull(),
   },
-  (t) => [uniqueIndex("ext_clicks_unique_idx").on(t.opportunityId, t.visitorHash, t.day)]
+  (t) => [uniqueIndex("ext_clicks_unique_idx").on(t.opportunityId, t.visitorHash, t.day)],
 );

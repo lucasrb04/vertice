@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
+import { describe, expect, it } from "vitest";
+import { isLocalDatabaseUrl } from "@/db/seed-demo";
 import { createRateLimiter } from "@/lib/security/rate-limit";
 import { isSearchRateLimited, SEARCH_LIMIT_PER_MINUTE } from "@/lib/security/search-limit";
 import { proxy } from "@/proxy";
-import { isLocalDatabaseUrl } from "@/db/seed-demo";
 
 const newLimiter = () => createRateLimiter({ limit: SEARCH_LIMIT_PER_MINUTE, windowMs: 60_000 });
 const ipHeaders = (ip: string) => new Headers({ "x-forwarded-for": ip });

@@ -19,7 +19,8 @@ export default async function NewOpportunityPage({
   const { user, project } = await loadProjectEditPage(projectId);
   if (Array.isArray(duplicar)) notFound();
 
-  const source = duplicar !== undefined ? await loadOpportunityValuesPage(user, project.id, duplicar, "duplicate") : null;
+  const source =
+    duplicar !== undefined ? await loadOpportunityValuesPage(user, project.id, duplicar, "duplicate") : null;
   const courses = await listCourses(project.institutionId);
 
   return (

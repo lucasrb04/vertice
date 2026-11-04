@@ -2,7 +2,7 @@ import { and, countDistinct, eq, isNull } from "drizzle-orm";
 import { db, type Tx } from "@/db";
 import { opportunities, projects, reports } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
-import { authorizeSystemAdmin, type AuthUser } from "@/lib/auth/guards";
+import { type AuthUser, authorizeSystemAdmin } from "@/lib/auth/guards";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
 import {
   lockProjectSearchDocuments,
@@ -10,8 +10,8 @@ import {
   refreshSearchDocument,
   scheduleVocabularyRebuild,
 } from "@/lib/search/index-documents";
-import { logAudit, type AuditAction } from "@/lib/security/audit";
-import { moderationActionSchema, type ModerationTargetType } from "@/lib/validation/moderation";
+import { type AuditAction, logAudit } from "@/lib/security/audit";
+import { type ModerationTargetType, moderationActionSchema } from "@/lib/validation/moderation";
 
 /** Denúncias pendentes de usuários distintos que tiram o alvo do ar (D18). */
 export const REPORT_THRESHOLD = 5;
@@ -49,7 +49,11 @@ export const isHidden = (targetType: ModerationTargetType, status: Status) => HI
  * Trava do projeto primeiro e linha do alvo depois, na ordem de `lockProjectSearchDocuments`.
  * `institutionId` nulo só na revisão automática, que parte de uma denúncia já gravada.
  */
-async function lockTarget(tx: Tx, target: ModerationTarget, institutionId: string | null): Promise<LockedTarget | null> {
+async function lockTarget(
+  tx: Tx,
+  target: ModerationTarget,
+  institutionId: string | null,
+): Promise<LockedTarget | null> {
   if (target.targetType === "PROJECT") {
     await lockProjectSearchDocuments(tx, target.targetId);
     const [row] = await tx
@@ -60,7 +64,9 @@ async function lockTarget(tx: Tx, target: ModerationTarget, institutionId: strin
         statusBeforeModeration: projects.statusBeforeModeration,
       })
       .from(projects)
-      .where(and(eq(projects.id, target.targetId), institutionId ? eq(projects.institutionId, institutionId) : undefined))
+      .where(
+        and(eq(projects.id, target.targetId), institutionId ? eq(projects.institutionId, institutionId) : undefined),
+      )
       .for("update");
     return row ?? null;
   }
@@ -68,7 +74,12 @@ async function lockTarget(tx: Tx, target: ModerationTarget, institutionId: strin
   const [ref] = await tx
     .select({ projectId: opportunities.projectId })
     .from(opportunities)
-    .where(and(eq(opportunities.id, target.targetId), institutionId ? eq(opportunities.institutionId, institutionId) : undefined));
+    .where(
+      and(
+        eq(opportunities.id, target.targetId),
+        institutionId ? eq(opportunities.institutionId, institutionId) : undefined,
+      ),
+    );
   if (!ref) return null;
   await lockProjectSearchDocuments(tx, ref.projectId);
   const [row] = await tx
@@ -117,14 +128,24 @@ async function resolvePendingReports(tx: Tx, target: ModerationTarget, instituti
   return rows.length;
 }
 
-type AdminStep = (tx: Tx, target: ModerationTarget, row: LockedTarget) => Promise<{
+type AdminStep = (
+  tx: Tx,
+  target: ModerationTarget,
+  row: LockedTarget,
+) => Promise<{
   action: AuditAction;
   newStatus: Status;
   metadata?: Record<string, unknown>;
 }>;
 
 /** Guard, Zod, trava, passo, auditoria e reindexação numa transação; vocabulário depois do commit. */
-async function runAdminAction(name: string, admin: AuthUser, input: unknown, opts: Opts, step: AdminStep): Promise<void> {
+async function runAdminAction(
+  name: string,
+  admin: AuthUser,
+  input: unknown,
+  opts: Opts,
+  step: AdminStep,
+): Promise<void> {
   const ipAddress = opts.ipAddress ?? null;
   await authorizeSystemAdmin(admin, { path: `moderation:${name}`, ipAddress });
   const parsed = moderationActionSchema.safeParse(input);
@@ -153,7 +174,11 @@ async function runAdminAction(name: string, admin: AuthUser, input: unknown, opt
 }
 
 /** Projeto vira `SUSPENDED`; processo vira `UNDER_REVIEW`, pois o enum dele não tem `SUSPENDED` (spec §5). */
-export async function hideTarget(admin: AuthUser, input: ModerationTarget & { reason: string }, opts: Opts = {}): Promise<void> {
+export async function hideTarget(
+  admin: AuthUser,
+  input: ModerationTarget & { reason: string },
+  opts: Opts = {},
+): Promise<void> {
   await runAdminAction("hideTarget", admin, input, opts, async (tx, target, row) => {
     const newStatus: Status = target.targetType === "PROJECT" ? "SUSPENDED" : "UNDER_REVIEW";
     if (row.status === newStatus) throw new DomainError("ALREADY_HIDDEN", "Este item já está oculto pela moderação.");
@@ -165,7 +190,11 @@ export async function hideTarget(admin: AuthUser, input: ModerationTarget & { re
 }
 
 /** Volta ao estado guardado e resolve as denúncias pendentes: novas começam do zero (spec §7). */
-export async function restoreTarget(admin: AuthUser, input: ModerationTarget & { reason: string }, opts: Opts = {}): Promise<void> {
+export async function restoreTarget(
+  admin: AuthUser,
+  input: ModerationTarget & { reason: string },
+  opts: Opts = {},
+): Promise<void> {
   await runAdminAction("restoreTarget", admin, input, opts, async (tx, target, row) => {
     if (!isHidden(target.targetType, row.status)) {
       throw new DomainError("NOT_HIDDEN", "Este item não está oculto pela moderação.");
@@ -178,10 +207,15 @@ export async function restoreTarget(admin: AuthUser, input: ModerationTarget & {
 }
 
 /** Resolve as denúncias pendentes sem mudar o estado do alvo. */
-export async function dismissReports(admin: AuthUser, input: ModerationTarget & { reason: string }, opts: Opts = {}): Promise<void> {
+export async function dismissReports(
+  admin: AuthUser,
+  input: ModerationTarget & { reason: string },
+  opts: Opts = {},
+): Promise<void> {
   await runAdminAction("dismissReports", admin, input, opts, async (tx, target, row) => {
     const resolvedReports = await resolvePendingReports(tx, target, row.institutionId);
-    if (resolvedReports === 0) throw new DomainError("NO_PENDING_REPORTS", "Não há denúncias pendentes para este item.");
+    if (resolvedReports === 0)
+      throw new DomainError("NO_PENDING_REPORTS", "Não há denúncias pendentes para este item.");
     return { action: "REPORTS_DISMISSED", newStatus: row.status, metadata: { resolvedReports } };
   });
 }

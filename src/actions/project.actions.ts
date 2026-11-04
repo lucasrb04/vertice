@@ -7,7 +7,7 @@ import { requireAuth } from "@/lib/auth/guards";
 import { archiveProject, createProjectWithOpportunity, updateProject } from "@/lib/projects/service";
 import { getRequestIp } from "@/lib/security/audit";
 import { TurnstileFailedError, verifyTurnstile } from "@/lib/security/turnstile";
-import { runAction, type ActionResult } from "./result";
+import { type ActionResult, runAction } from "./result";
 
 const turnstileTokenSchema = z.string().max(2048);
 

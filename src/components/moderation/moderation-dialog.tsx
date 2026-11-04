@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { moderationAction, type ModerationActionKind } from "@/actions/moderation.actions";
+import { type ModerationActionKind, moderationAction } from "@/actions/moderation.actions";
 import type { ActionResult } from "@/actions/result";
 import { Field, FormMessage } from "@/components/projects/field";
 import { errorsFor, type FieldErrors } from "@/components/projects/form-errors";
@@ -18,7 +18,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { MODERATION_REASON_MAX, MODERATION_REASON_MIN, type ModerationTargetType } from "@/lib/validation/moderation";
 
-const COPY: Record<ModerationActionKind, { trigger: string; title: string; description: string; submit: string; outline: boolean }> = {
+const COPY: Record<
+  ModerationActionKind,
+  { trigger: string; title: string; description: string; submit: string; outline: boolean }
+> = {
   hide: {
     trigger: "Ocultar",
     title: "Ocultar",

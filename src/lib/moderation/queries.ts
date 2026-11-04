@@ -1,9 +1,9 @@
-import { and, asc, desc, eq, inArray, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { auditLogs, opportunities, projects, reports } from "@/db/schema";
-import { authorizeSystemAdmin, type AuthUser } from "@/lib/auth/guards";
-import { isHidden } from "./service";
+import { type AuthUser, authorizeSystemAdmin } from "@/lib/auth/guards";
 import type { ModerationTargetType, ReportReason } from "@/lib/validation/moderation";
+import { isHidden } from "./service";
 
 type Status = typeof projects.$inferSelect.status | typeof opportunities.$inferSelect.status;
 
@@ -46,7 +46,12 @@ async function loadRows(
     .where(and(eq(projects.institutionId, institutionId), filter.projects))
     .orderBy(asc(projects.name));
   const opportunityQuery = db
-    .select({ targetId: opportunities.id, name: opportunities.title, projectName: projects.name, status: opportunities.status })
+    .select({
+      targetId: opportunities.id,
+      name: opportunities.title,
+      projectName: projects.name,
+      status: opportunities.status,
+    })
     .from(opportunities)
     .innerJoin(projects, eq(projects.id, opportunities.projectId))
     .where(and(eq(opportunities.institutionId, institutionId), filter.opportunities))
@@ -61,7 +66,12 @@ async function loadRows(
 
 const pendingOf = (institutionId: string) =>
   db
-    .select({ targetType: reports.targetType, targetId: reports.targetId, reasonCode: reports.reasonCode, reason: reports.reason })
+    .select({
+      targetType: reports.targetType,
+      targetId: reports.targetId,
+      reasonCode: reports.reasonCode,
+      reason: reports.reason,
+    })
     .from(reports)
     .where(and(eq(reports.institutionId, institutionId), isNull(reports.resolvedAt)));
 
@@ -73,11 +83,21 @@ export async function listReportQueue(admin: AuthUser): Promise<QueueItem[]> {
   await authorizeSystemAdmin(admin, { path: "moderation:listReportQueue", ipAddress: null });
   const pending = await pendingOf(admin.institutionId);
 
-  type Group = { targetType: ModerationTargetType; targetId: string; reasons: Map<ReportReason, number>; descriptions: string[] };
+  type Group = {
+    targetType: ModerationTargetType;
+    targetId: string;
+    reasons: Map<ReportReason, number>;
+    descriptions: string[];
+  };
   const grouped = new Map<Key, Group>();
   for (const r of pending) {
     const key = keyOf(r);
-    const g: Group = grouped.get(key) ?? { targetType: r.targetType, targetId: r.targetId, reasons: new Map(), descriptions: [] };
+    const g: Group = grouped.get(key) ?? {
+      targetType: r.targetType,
+      targetId: r.targetId,
+      reasons: new Map(),
+      descriptions: [],
+    };
     g.reasons.set(r.reasonCode, (g.reasons.get(r.reasonCode) ?? 0) + 1);
     const text = r.reason?.trim();
     if (text) g.descriptions.push(text);
@@ -85,7 +105,8 @@ export async function listReportQueue(admin: AuthUser): Promise<QueueItem[]> {
   }
   if (grouped.size === 0) return [];
 
-  const ids = (type: ModerationTargetType) => [...grouped.values()].filter((g) => g.targetType === type).map((g) => g.targetId);
+  const ids = (type: ModerationTargetType) =>
+    [...grouped.values()].filter((g) => g.targetType === type).map((g) => g.targetId);
   const projectIds = ids("PROJECT");
   const opportunityIds = ids("OPPORTUNITY");
   const rows = await loadRows(admin.institutionId, {
@@ -129,7 +150,11 @@ export async function searchModerationTargets(admin: AuthUser, q: string): Promi
 
   const counts = new Map<Key, number>();
   for (const r of await pendingOf(admin.institutionId)) counts.set(keyOf(r), (counts.get(keyOf(r)) ?? 0) + 1);
-  return found.map((r) => ({ ...r, hidden: isHidden(r.targetType, r.status), pendingCount: counts.get(keyOf(r)) ?? 0 }));
+  return found.map((r) => ({
+    ...r,
+    hidden: isHidden(r.targetType, r.status),
+    pendingCount: counts.get(keyOf(r)) ?? 0,
+  }));
 }
 
 /** Texto do aviso quando a ocultação veio da revisão automática, que não tem motivo escrito. */

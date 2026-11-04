@@ -1,12 +1,12 @@
 "use server";
 
-import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { requireAuth } from "@/lib/auth/guards";
 import { dismissReports, hideTarget, restoreTarget } from "@/lib/moderation/service";
 import { getRequestIp } from "@/lib/security/audit";
 import type { ModerationActionInput } from "@/lib/validation/moderation";
-import { runAction, type ActionResult } from "./result";
+import { type ActionResult, runAction } from "./result";
 
 const SERVICES = { hide: hideTarget, restore: restoreTarget, dismiss: dismissReports } as const;
 const DONE = {

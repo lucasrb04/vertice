@@ -7,7 +7,7 @@ import { applyToOpportunity } from "@/lib/applications/service";
 import { requireAuth } from "@/lib/auth/guards";
 import { notifyApplicationReceived, notifyStatusChanged } from "@/lib/email/notify";
 import type { MoveInput } from "@/lib/validation/application";
-import { runAction, type ActionResult } from "./result";
+import { type ActionResult, runAction } from "./result";
 
 export async function applyToOpportunityAction(input: unknown): Promise<ActionResult<{ opportunitySlug: string }>> {
   return runAction(async () => {
@@ -29,7 +29,9 @@ export async function applyToOpportunityAction(input: unknown): Promise<ActionRe
   });
 }
 
-export async function moveApplicationsAction(input: unknown): Promise<ActionResult<{ moved: number; skipped: number }>> {
+export async function moveApplicationsAction(
+  input: unknown,
+): Promise<ActionResult<{ moved: number; skipped: number }>> {
   return runAction(async () => {
     const user = await requireAuth();
     const data = input as MoveInput;

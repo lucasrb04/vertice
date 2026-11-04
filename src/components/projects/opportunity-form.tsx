@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { type ReactNode, useState } from "react";
 import { createOpportunityAction, updateOpportunityAction } from "@/actions/opportunity.actions";
 import type { ActionResult } from "@/actions/result";
 import { TagCombobox } from "@/components/tags/tag-combobox";
@@ -10,9 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { deadlineLabel, SCHOLARSHIP_LABELS, type ProjectCategory, type ScholarshipType } from "@/lib/projects/labels";
+import { deadlineLabel, type ProjectCategory, SCHOLARSHIP_LABELS, type ScholarshipType } from "@/lib/projects/labels";
 import { todayInSaoPaulo } from "@/lib/time";
-import { TAG_GROUPS, type OpportunityFormValues, type TagGroup, type TagRef } from "@/lib/validation/opportunity";
+import { type OpportunityFormValues, TAG_GROUPS, type TagGroup, type TagRef } from "@/lib/validation/opportunity";
 import { Field, FormMessage } from "./field";
 import { errorsFor, type FieldErrors } from "./form-errors";
 
@@ -32,7 +32,13 @@ const FUNDING_SUGGESTIONS: Partial<Record<ProjectCategory, string[]>> = {
   SCIENTIFIC_INIT: ["PIBIC", "FAPEMIG", "CNPq"],
 };
 
-type DayField = "deadline" | "applicationsOpenOn" | "interviewStartsOn" | "interviewEndsOn" | "resultOn" | "activitiesStartOn";
+type DayField =
+  | "deadline"
+  | "applicationsOpenOn"
+  | "interviewStartsOn"
+  | "interviewEndsOn"
+  | "resultOn"
+  | "activitiesStartOn";
 
 type OpportunityDraft = {
   title: string;
@@ -230,10 +236,7 @@ export function OpportunityForm({
   }
 
   const toggleCourse = (id: string, checked: boolean) =>
-    set(
-      "targetCourseIds",
-      checked ? [...draft.targetCourseIds, id] : draft.targetCourseIds.filter((c) => c !== id),
-    );
+    set("targetCourseIds", checked ? [...draft.targetCourseIds, id] : draft.targetCourseIds.filter((c) => c !== id));
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">

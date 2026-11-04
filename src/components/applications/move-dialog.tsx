@@ -1,16 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { moveApplicationsAction } from "@/actions/application.actions";
 import type { ActionResult } from "@/actions/result";
 import { Field, FormMessage } from "@/components/projects/field";
 import { errorsFor, type FieldErrors } from "@/components/projects/form-errors";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { APPLICATION_STATUSES, APPLICATION_STATUS_LABELS, type ApplicationStatus } from "@/lib/applications/labels";
+import { APPLICATION_STATUS_LABELS, APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/applications/labels";
 import { MOVE_MESSAGE_MAX } from "@/lib/validation/application";
 
 export type MoveTarget = {
@@ -109,7 +116,13 @@ export function MoveDialog({
             errors={errorsFor(errors, "message")}
           >
             {(p) => (
-              <Textarea {...p} rows={4} maxLength={MOVE_MESSAGE_MAX} value={text} onChange={(e) => setText(e.target.value)} />
+              <Textarea
+                {...p}
+                rows={4}
+                maxLength={MOVE_MESSAGE_MAX}
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
             )}
           </Field>
           <FormMessage message={message} />

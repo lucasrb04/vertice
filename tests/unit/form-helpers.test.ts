@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { deadlineLabel } from "@/lib/projects/labels";
-import { addTagRef, removeTagRef, tagRefKey } from "@/components/tags/tag-refs";
 import { errorsFor, splitPrefixedErrors } from "@/components/projects/form-errors";
+import { addTagRef, removeTagRef, tagRefKey } from "@/components/tags/tag-refs";
+import { deadlineLabel } from "@/lib/projects/labels";
 
 const ID_A = "8f6b1c2e-1d3a-4c5b-9e7f-0a1b2c3d4e5f";
 

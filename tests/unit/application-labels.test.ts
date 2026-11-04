@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { APPLICATION_STATUSES, APPLICATION_STATUS_LABELS } from "@/lib/applications/labels";
+import { APPLICATION_STATUS_LABELS, APPLICATION_STATUSES } from "@/lib/applications/labels";
 
 describe("rótulos de candidatura", () => {
   it("ordem e textos das etapas", () => {

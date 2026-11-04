@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { vitrineHref, type VitrineParams } from "@/lib/public/search-params";
+import { type VitrineParams, vitrineHref } from "@/lib/public/search-params";
 
 /**
  * Faixa de correção da busca (spec §5.5). Links comuns: funciona sem JavaScript. O texto corrigido mantém

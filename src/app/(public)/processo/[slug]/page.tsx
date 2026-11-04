@@ -13,23 +13,17 @@ import { SafeMarkdown } from "@/components/vitrine/safe-markdown";
 import { Schedule } from "@/components/vitrine/schedule";
 import { getMyApplicationId } from "@/lib/applications/queries";
 import { getSessionUser } from "@/lib/auth/session";
+import { logError } from "@/lib/log";
 import { canReport } from "@/lib/moderation/reports";
 import { opensInFuture, opensOnLabel } from "@/lib/opportunities/status";
 import { deadlineLabel } from "@/lib/projects/labels";
-import {
-  CATEGORY_LABELS,
-  deadlineChip,
-  formatCents,
-  plainTextExcerpt,
-  scholarshipSummary,
-} from "@/lib/public/labels";
+import { CATEGORY_LABELS, deadlineChip, formatCents, plainTextExcerpt, scholarshipSummary } from "@/lib/public/labels";
 import { getPublicOpportunity } from "@/lib/public/queries";
 import { getVisitorHashSecret, recordView, visitorHash } from "@/lib/public/telemetry";
 import { getRequestIp } from "@/lib/security/audit";
 import { getDefaultInstitution } from "@/lib/tenant";
 import { formatDay } from "@/lib/time";
 import { cn } from "@/lib/utils";
-import { logError } from "@/lib/log";
 import { isHttps } from "@/lib/validation/common";
 
 // Prazos e estado aberto/encerrado mudam com o relógio: nunca pré-renderizar.
@@ -142,12 +136,16 @@ export default async function ProcessoPage({ params }: Props) {
           {isOpen ? (
             <div className="space-y-3 rounded-lg border border-stone-200 bg-white p-4">
               {opensLater && (
-                <p className="font-mono text-sm font-medium text-stone-900">{opensOnLabel(opportunity.applicationsOpenOn!)}</p>
+                <p className="font-mono text-sm font-medium text-stone-900">
+                  {opensOnLabel(opportunity.applicationsOpenOn!)}
+                </p>
               )}
               <p className={cn("font-mono text-sm font-medium", urgency!.urgent ? "text-amber-700" : "text-stone-900")}>
                 {urgency!.text}
               </p>
-              <p className="font-mono text-xs leading-relaxed text-stone-600">{deadlineLabel(opportunity.deadlineAt)}</p>
+              <p className="font-mono text-xs leading-relaxed text-stone-600">
+                {deadlineLabel(opportunity.deadlineAt)}
+              </p>
               {opportunity.internalSelectionEnabled &&
                 (myApplicationId ? (
                   <Button asChild size="lg" className="w-full">
@@ -165,7 +163,12 @@ export default async function ProcessoPage({ params }: Props) {
                   </Button>
                 ))}
               {editalHref && (
-                <Button asChild size="lg" variant={opportunity.internalSelectionEnabled ? "outline" : "default"} className="w-full">
+                <Button
+                  asChild
+                  size="lg"
+                  variant={opportunity.internalSelectionEnabled ? "outline" : "default"}
+                  className="w-full"
+                >
                   <a href={editalHref} target="_blank" rel="nofollow noopener">
                     Acessar edital
                   </a>

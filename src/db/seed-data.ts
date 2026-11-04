@@ -32,15 +32,41 @@ export const COURSES: { code: string; name: string; institute: string }[] = [
 type SeedTag = { name: string; category: "AREA" | "SKILL" };
 
 const areas = [
-  "Inteligência Artificial", "Ciência de Dados", "Desenvolvimento Web", "Sistemas Embarcados",
-  "Aeroespacial", "Automobilística", "Robótica", "Energias Renováveis", "Sustentabilidade",
-  "Gestão de Projetos", "Finanças", "Automação Industrial", "Física Aplicada", "Biotecnologia",
+  "Inteligência Artificial",
+  "Ciência de Dados",
+  "Desenvolvimento Web",
+  "Sistemas Embarcados",
+  "Aeroespacial",
+  "Automobilística",
+  "Robótica",
+  "Energias Renováveis",
+  "Sustentabilidade",
+  "Gestão de Projetos",
+  "Finanças",
+  "Automação Industrial",
+  "Física Aplicada",
+  "Biotecnologia",
 ];
 
 const skills = [
-  "Python", "TypeScript", "React", "C", "C++", "ROS", "SolidWorks", "AutoCAD", "MATLAB", "ANSYS",
-  "Design de PCB", "Altium", "Impressão 3D", "Power BI", "Marketing Digital", "Gestão de Pessoas",
-  "Redação Científica", "Inglês Técnico",
+  "Python",
+  "TypeScript",
+  "React",
+  "C",
+  "C++",
+  "ROS",
+  "SolidWorks",
+  "AutoCAD",
+  "MATLAB",
+  "ANSYS",
+  "Design de PCB",
+  "Altium",
+  "Impressão 3D",
+  "Power BI",
+  "Marketing Digital",
+  "Gestão de Pessoas",
+  "Redação Científica",
+  "Inglês Técnico",
 ];
 
 export const TAGS: SeedTag[] = [

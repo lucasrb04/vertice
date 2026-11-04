@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { clearOpportunities, closeTestDb, daysFromNow, insertProcess } from "./helpers";
 
 const SLOGAN = "Encontre o projeto que vai impulsionar sua trajetória.";
@@ -64,7 +64,12 @@ test("carrosséis mostram processos abertos, com ordem e link Ver todos", async 
     weeklyHours: 12,
     minSemester: 3,
     viewsCount: 4,
-    project: { name: "Laboratório de Robótica Móvel", acronym: "LRM", hasInstitutionalBadge: true, category: "SCIENTIFIC_INIT" },
+    project: {
+      name: "Laboratório de Robótica Móvel",
+      acronym: "LRM",
+      hasInstitutionalBadge: true,
+      category: "SCIENTIFIC_INIT",
+    },
   });
   await insertProcess({ title: "Processo sem procura" });
   await insertProcess({ title: "Processo vencido", deadlineAt: daysFromNow(-1), viewsCount: 50 });
@@ -197,8 +202,7 @@ test("com poucos processos não há botões de rolagem", async ({ page }) => {
 test.describe("celular de 360 px", () => {
   test.use({ viewport: { width: 360, height: 740 } });
 
-  const noPageOverflow = (page: Page) =>
-    page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+  const noPageOverflow = (page: Page) => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 
   test("visitante: carrossel rola dentro de si, sem rolagem da página", async ({ page }) => {
     await insertMany(8);
@@ -250,7 +254,10 @@ test("sem processos abertos mostra o estado vazio com convite para publicar", as
   await insertProcess({ title: "Processo vencido", deadlineAt: daysFromNow(-1) });
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Nenhum processo aberto agora" })).toBeVisible();
-  await expect(page.getByRole("main").getByRole("link", { name: "Publicar processo" })).toHaveAttribute("href", "/publicar");
+  await expect(page.getByRole("main").getByRole("link", { name: "Publicar processo" })).toHaveAttribute(
+    "href",
+    "/publicar",
+  );
   await expect(page.getByRole("region")).toHaveCount(0);
   await expect(page.getByText(/processos? abertos?$/)).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 1, name: SLOGAN })).toBeVisible();

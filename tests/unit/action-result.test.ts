@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runAction } from "@/actions/result";
 import { DomainError } from "@/lib/domain-errors";
 
-const SECRET = 'insert into users values ($1) params: maria@unifei.edu.br';
+const SECRET = "insert into users values ($1) params: maria@unifei.edu.br";
 
 class DrizzleQueryError extends Error {
   constructor(cause: unknown) {

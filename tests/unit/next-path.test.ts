@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { signInErrorPath, safeNextPath } from "@/lib/auth/next-path";
+import { safeNextPath, signInErrorPath } from "@/lib/auth/next-path";
 
 describe("safeNextPath", () => {
   it("aceita caminho interno", () => {

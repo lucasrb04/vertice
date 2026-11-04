@@ -1,7 +1,7 @@
 import { and, count, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, type Tx } from "@/db";
-import { applications, opportunities, opportunityTags, tags as tagsTable, type ProjectStatus } from "@/db/schema";
+import { applications, opportunities, opportunityTags, type ProjectStatus, tags as tagsTable } from "@/db/schema";
 import { NotFoundError } from "@/lib/auth/errors";
 import type { AuthUser } from "@/lib/auth/guards";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
@@ -11,14 +11,15 @@ import { refreshSearchDocument, scheduleVocabularyRebuild } from "@/lib/search/i
 import { syncOpportunityTags } from "@/lib/tags/service";
 import { dayFromDeadline, deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
 import {
-  TAG_GROUPS,
   makeOpportunitySchema,
   type OpportunityFormValues,
   type OpportunityInput,
+  type TAG_GROUPS,
 } from "@/lib/validation/opportunity";
 import { isOpportunityOpen } from "./status";
 
-export const OPPORTUNITY_CLOSED = "Este processo já foi encerrado e não pode ser alterado. Duplique-o para abrir um novo ciclo.";
+export const OPPORTUNITY_CLOSED =
+  "Este processo já foi encerrado e não pode ser alterado. Duplique-o para abrir um novo ciclo.";
 
 export const HAS_APPLICATIONS = "Este processo já tem candidaturas.";
 
@@ -37,7 +38,10 @@ const uuidSchema = z.uuid();
 const normalizeQuestion = (question: string | null) => question?.trim() || null;
 
 async function countApplications(client: Pick<Tx, "select">, opportunityId: string): Promise<number> {
-  const [{ n }] = await client.select({ n: count() }).from(applications).where(eq(applications.opportunityId, opportunityId));
+  const [{ n }] = await client
+    .select({ n: count() })
+    .from(applications)
+    .where(eq(applications.opportunityId, opportunityId));
   return n;
 }
 
@@ -162,7 +166,11 @@ export async function getOpportunityFormValues(
     .from(opportunityTags)
     .innerJoin(tagsTable, eq(tagsTable.id, opportunityTags.tagId))
     .where(eq(opportunityTags.opportunityId, o.id));
-  const tags: Record<(typeof TAG_GROUPS)[number], { id: string }[]> = { THEME: [], DESIRED_SKILL: [], DEVELOPED_SKILL: [] };
+  const tags: Record<(typeof TAG_GROUPS)[number], { id: string }[]> = {
+    THEME: [],
+    DESIRED_SKILL: [],
+    DEVELOPED_SKILL: [],
+  };
   const tagNames: Record<string, string> = {};
   for (const r of tagRows) {
     tags[r.relationType].push({ id: r.tagId });

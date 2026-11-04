@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { isSearchRateLimited } from "@/lib/security/search-limit";
 
 export const RATE_LIMITED_HTML = `<!doctype html>

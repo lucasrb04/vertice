@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluate, ndcgAt, normalizedPrecisionAt, precisionAt, type EvalRun } from "../search-eval/metrics";
+import { type EvalRun, evaluate, ndcgAt, normalizedPrecisionAt, precisionAt } from "../search-eval/metrics";
 
 describe("precisionAt", () => {
   it("conta acertos no topo k dividido por k", () => {

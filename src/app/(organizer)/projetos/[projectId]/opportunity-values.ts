@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import type { AuthUser } from "@/lib/auth/guards";
 import { NotFoundError } from "@/lib/auth/errors";
+import type { AuthUser } from "@/lib/auth/guards";
 import { getOpportunityFormValues } from "@/lib/opportunities/service";
 
 /** `getOpportunityFormValues` para páginas: processo inexistente, de outro projeto ou uuid inválido → 404. */

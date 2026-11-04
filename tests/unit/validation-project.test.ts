@@ -14,7 +14,14 @@ describe("projectInputSchema", () => {
   });
   it("normaliza opcionais vazios para null", () => {
     const out = projectInputSchema.parse(
-      validProjectInput({ websiteUrl: "", instagramUrl: "", acronym: "", institute: "", advisorName: "", description: "" }),
+      validProjectInput({
+        websiteUrl: "",
+        instagramUrl: "",
+        acronym: "",
+        institute: "",
+        advisorName: "",
+        description: "",
+      }),
     );
     expect(out.websiteUrl).toBeNull();
     expect(out.instagramUrl).toBeNull();

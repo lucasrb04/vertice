@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { POST } from "@/app/api/test-auth/login/route";
 import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
 import { runSeed } from "@/db/seed";
-import { POST } from "@/app/api/test-auth/login/route";
 import { auth } from "@/lib/auth/auth";
 import { resetDb } from "../helpers/db";
 
@@ -15,8 +15,14 @@ const loginRequest = (body: unknown) =>
   });
 
 describe("POST /api/test-auth/login", () => {
-  beforeEach(async () => { await resetDb(); await runSeed(); });
-  afterEach(() => { vi.unstubAllEnvs(); vi.resetModules(); });
+  beforeEach(async () => {
+    await resetDb();
+    await runSeed();
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
 
   it("cria sessão para e-mail @unifei.edu.br e emite o cookie do Better-Auth", async () => {
     const res = await POST(loginRequest({ email: "aluno@unifei.edu.br", name: "Aluno" }));

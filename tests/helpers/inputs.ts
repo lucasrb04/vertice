@@ -1,6 +1,6 @@
+import { todayInSaoPaulo } from "@/lib/time";
 import type { OpportunityFormValues } from "@/lib/validation/opportunity";
 import type { ProjectFormValues } from "@/lib/validation/project";
-import { todayInSaoPaulo } from "@/lib/time";
 
 function addDays(day: string, days: number): string {
   const d = new Date(`${day}T00:00:00Z`);
@@ -24,9 +24,7 @@ export function validProjectInput(overrides: Partial<ProjectFormValues> = {}): P
   };
 }
 
-export function validOpportunityInput(
-  overrides: Partial<OpportunityFormValues> = {},
-): OpportunityFormValues {
+export function validOpportunityInput(overrides: Partial<OpportunityFormValues> = {}): OpportunityFormValues {
   return {
     title: "Processo seletivo 2026/2 - Suspensão",
     description: "Atuar no projeto do subsistema de suspensão.",

@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { auditLogs, sessions, users } from "@/db/schema";
 import { runSeed } from "@/db/seed";

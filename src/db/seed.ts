@@ -2,8 +2,8 @@ import { pathToFileURL } from "node:url";
 import { and, eq, sql } from "drizzle-orm";
 import { closeDb, db } from "@/db";
 import { courses, institutions, searchSynonyms, tags, users } from "@/db/schema";
-import { COURSES, INSTITUTION, SYNONYMS, TAGS } from "@/db/seed-data";
 import { rebuildSearch } from "@/db/search-rebuild";
+import { COURSES, INSTITUTION, SYNONYMS, TAGS } from "@/db/seed-data";
 import { getEnv } from "@/env";
 import { normalizeTagSlug } from "@/lib/search/tags";
 
@@ -65,8 +65,7 @@ export async function runSeed(options: { initialAdminEmail?: string } = {}): Pro
   await rebuildSearch(institutionId);
 }
 
-const isDirectRun =
-  process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
+const isDirectRun = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 if (isDirectRun) {
   runSeed()

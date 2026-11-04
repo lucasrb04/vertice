@@ -1,11 +1,17 @@
-import { beforeEach, describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { auditLogs, projectMembers } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError, ValidationError } from "@/lib/domain-errors";
-import { MEMBER_NO_ACCOUNT, addMember as addMemberTo, changeMemberRole, leaveProject, removeMember } from "@/lib/projects/members";
+import {
+  addMember as addMemberTo,
+  changeMemberRole,
+  leaveProject,
+  MEMBER_NO_ACCOUNT,
+  removeMember,
+} from "@/lib/projects/members";
 import { resetDb } from "../helpers/db";
 import { addMember, mkForeignInstitution, mkProject, mkUser } from "../helpers/fixtures";
 
@@ -26,8 +32,17 @@ async function setup() {
 }
 
 const roleOf = async (projectId: string, userId: string) =>
-  (await db.select().from(projectMembers).where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId))))[0]?.role;
-const audits = async (action: string) => db.select().from(auditLogs).where(eq(auditLogs.action, action as never));
+  (
+    await db
+      .select()
+      .from(projectMembers)
+      .where(and(eq(projectMembers.projectId, projectId), eq(projectMembers.userId, userId)))
+  )[0]?.role;
+const audits = async (action: string) =>
+  db
+    .select()
+    .from(auditLogs)
+    .where(eq(auditLogs.action, action as never));
 
 describe("members service", () => {
   it("OWNER adiciona ADMIN e REVIEWER por e-mail (case-insensitive)", async () => {
@@ -40,13 +55,20 @@ describe("members service", () => {
     expect(await roleOf(project.id, r.id)).toBe("REVIEWER");
     const logs = await audits("PROJECT_MEMBER_ADDED");
     expect(logs).toHaveLength(2);
-    expect(logs[0]).toMatchObject({ actorUserId: owner.id, targetType: "PROJECT", targetId: project.id, institutionId: project.institutionId });
+    expect(logs[0]).toMatchObject({
+      actorUserId: owner.id,
+      targetType: "PROJECT",
+      targetId: project.id,
+      institutionId: project.institutionId,
+    });
     expect(logs.map((l) => l.metadata)).toContainEqual({ memberUserId: a.id, role: "ADMIN" });
   });
 
   it("já é membro -> ALREADY_MEMBER", async () => {
     const { owner, project } = await setup();
-    await expect(addMemberTo(owner, project.id, { email: "rev@unifei.edu.br", role: "ADMIN" })).rejects.toMatchObject({ code: "ALREADY_MEMBER" });
+    await expect(addMemberTo(owner, project.id, { email: "rev@unifei.edu.br", role: "ADMIN" })).rejects.toMatchObject({
+      code: "ALREADY_MEMBER",
+    });
   });
 
   it("e-mail sem conta, banido e de outra instituição recebem a mesma mensagem", async () => {
@@ -80,7 +102,11 @@ describe("members service", () => {
     const { owner, reviewer, project } = await setup();
     await changeMemberRole(owner, project.id, reviewer.id, "ADMIN");
     expect(await roleOf(project.id, reviewer.id)).toBe("ADMIN");
-    expect((await audits("PROJECT_MEMBER_ROLE_CHANGED"))[0].metadata).toEqual({ memberUserId: reviewer.id, from: "REVIEWER", to: "ADMIN" });
+    expect((await audits("PROJECT_MEMBER_ROLE_CHANGED"))[0].metadata).toEqual({
+      memberUserId: reviewer.id,
+      from: "REVIEWER",
+      to: "ADMIN",
+    });
     await removeMember(owner, project.id, reviewer.id);
     expect(await roleOf(project.id, reviewer.id)).toBeUndefined();
     expect(await audits("PROJECT_MEMBER_REMOVED")).toHaveLength(1);
@@ -92,9 +118,14 @@ describe("members service", () => {
 
   it("OWNER não pode ser rebaixado, removido nem sair", async () => {
     const { owner, project } = await setup();
-    await expect(changeMemberRole(owner, project.id, owner.id, "ADMIN")).rejects.toMatchObject({ code: "OWNER_IMMUTABLE" });
+    await expect(changeMemberRole(owner, project.id, owner.id, "ADMIN")).rejects.toMatchObject({
+      code: "OWNER_IMMUTABLE",
+    });
     await expect(removeMember(owner, project.id, owner.id)).rejects.toMatchObject({ code: "OWNER_IMMUTABLE" });
-    await expect(leaveProject(owner, project.id)).rejects.toMatchObject({ code: "OWNER_IMMUTABLE", userMessage: "O dono do projeto não pode sair dele." });
+    await expect(leaveProject(owner, project.id)).rejects.toMatchObject({
+      code: "OWNER_IMMUTABLE",
+      userMessage: "O dono do projeto não pode sair dele.",
+    });
     expect(await roleOf(project.id, owner.id)).toBe("OWNER");
   });
 
@@ -110,13 +141,17 @@ describe("members service", () => {
   it("papel OWNER não é atribuível", async () => {
     const { owner, project } = await setup();
     await mkUser("x@unifei.edu.br");
-    await expect(addMemberTo(owner, project.id, { email: "x@unifei.edu.br", role: "OWNER" })).rejects.toBeInstanceOf(ValidationError);
+    await expect(addMemberTo(owner, project.id, { email: "x@unifei.edu.br", role: "OWNER" })).rejects.toBeInstanceOf(
+      ValidationError,
+    );
   });
 
   it("SYSTEM_ADMIN sem membership não gerencia membros", async () => {
     const { project, reviewer } = await setup();
     const sys = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
-    await expect(addMemberTo(sys, project.id, { email: "rev@unifei.edu.br", role: "ADMIN" })).rejects.toBeInstanceOf(NotFoundError);
+    await expect(addMemberTo(sys, project.id, { email: "rev@unifei.edu.br", role: "ADMIN" })).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
     await expect(removeMember(sys, project.id, reviewer.id)).rejects.toBeInstanceOf(NotFoundError);
   });
 });

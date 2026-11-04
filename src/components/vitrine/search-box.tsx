@@ -35,9 +35,7 @@ export function SearchBox({
   }, [autoFocusShortcut]);
 
   const Wrapper = embedded ? "div" : "form";
-  const wrapperProps = embedded
-    ? { role: "search" }
-    : { action: "/processos", method: "get", role: "search" };
+  const wrapperProps = embedded ? { role: "search" } : { action: "/processos", method: "get", role: "search" };
 
   return (
     <Wrapper {...wrapperProps} className="flex flex-col gap-2 sm:flex-row">

@@ -1,7 +1,7 @@
 import { and, asc, count, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { applications, courses, opportunities, projectMembers, projects, users } from "@/db/schema";
 import type { ProjectCategory, ProjectRole, ProjectStatus } from "@/db/schema";
+import { applications, courses, opportunities, projectMembers, projects, users } from "@/db/schema";
 import { IN_PROGRESS_STATUSES } from "@/lib/applications/labels";
 import type { AuthUser, ProjectAccess } from "@/lib/auth/guards";
 import { getHiddenReasons } from "@/lib/moderation/queries";
@@ -78,14 +78,22 @@ export async function getProjectPanel(
   const rows = await db
     .select()
     .from(opportunities)
-    .where(and(eq(opportunities.projectId, access.project.id), eq(opportunities.institutionId, access.project.institutionId)));
+    .where(
+      and(
+        eq(opportunities.projectId, access.project.id),
+        eq(opportunities.institutionId, access.project.institutionId),
+      ),
+    );
 
   const counts = access.membership
     ? await db
         .select({
           opportunityId: applications.opportunityId,
           total: count(),
-          inProgress: sql<number>`count(*) filter (where ${inArray(applications.status, [...IN_PROGRESS_STATUSES])})`.mapWith(Number),
+          inProgress:
+            sql<number>`count(*) filter (where ${inArray(applications.status, [...IN_PROGRESS_STATUSES])})`.mapWith(
+              Number,
+            ),
         })
         .from(applications)
         .innerJoin(opportunities, eq(opportunities.id, applications.opportunityId))
@@ -98,9 +106,13 @@ export async function getProjectPanel(
   const projectHidden = isHidden("PROJECT", access.project.status);
   const hiddenTargets = [
     ...(projectHidden ? [{ targetType: "PROJECT" as const, targetId: access.project.id }] : []),
-    ...rows.filter((o) => isHidden("OPPORTUNITY", o.status)).map((o) => ({ targetType: "OPPORTUNITY" as const, targetId: o.id })),
+    ...rows
+      .filter((o) => isHidden("OPPORTUNITY", o.status))
+      .map((o) => ({ targetType: "OPPORTUNITY" as const, targetId: o.id })),
   ];
-  const reasons = hiddenTargets.length ? await getHiddenReasons(access.project.institutionId, hiddenTargets) : new Map();
+  const reasons = hiddenTargets.length
+    ? await getHiddenReasons(access.project.institutionId, hiddenTargets)
+    : new Map();
 
   const open: PanelOpportunity[] = [];
   const closed: PanelOpportunity[] = [];

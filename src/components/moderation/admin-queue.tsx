@@ -7,10 +7,16 @@ import { PROJECT_STATUS_LABELS } from "@/lib/projects/labels";
 import { REPORT_REASON_LABELS } from "@/lib/validation/moderation";
 
 const TYPE_LABELS = { PROJECT: "Projeto", OPPORTUNITY: "Processo" } as const;
-const OPPORTUNITY_STATUS_LABELS = { OPEN: "Aberto", PAUSED: "Pausado", UNDER_REVIEW: "Oculto pela moderação", CLOSED: "Encerrado" } as const;
+const OPPORTUNITY_STATUS_LABELS = {
+  OPEN: "Aberto",
+  PAUSED: "Pausado",
+  UNDER_REVIEW: "Oculto pela moderação",
+  CLOSED: "Encerrado",
+} as const;
 
 function statusLabel(row: TargetRow): string {
-  if (row.targetType === "OPPORTUNITY") return OPPORTUNITY_STATUS_LABELS[row.status as keyof typeof OPPORTUNITY_STATUS_LABELS];
+  if (row.targetType === "OPPORTUNITY")
+    return OPPORTUNITY_STATUS_LABELS[row.status as keyof typeof OPPORTUNITY_STATUS_LABELS];
   return row.hidden ? "Oculto pela moderação" : PROJECT_STATUS_LABELS[row.status as keyof typeof PROJECT_STATUS_LABELS];
 }
 
@@ -73,7 +79,10 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
         ) : (
           <ul className="space-y-3">
             {queue.map((item) => (
-              <li key={`${item.targetType}:${item.targetId}`} className="rounded-lg border border-stone-200 bg-white p-4">
+              <li
+                key={`${item.targetType}:${item.targetId}`}
+                className="rounded-lg border border-stone-200 bg-white p-4"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <Heading row={item} />
                   <p className="font-mono text-sm text-stone-900">

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/log";
 import { getPublicOpportunity } from "@/lib/public/queries";
 import { getVisitorHashSecret, recordExternalClick, visitorHash } from "@/lib/public/telemetry";
 import { getRequestIp } from "@/lib/security/audit";
-import { logError } from "@/lib/log";
 import { getDefaultInstitution } from "@/lib/tenant";
 
 const notFound = () => new NextResponse("Não encontrado", { status: 404 });
@@ -25,11 +25,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ slug: strin
   if (target.protocol !== "https:") return notFound();
 
   try {
-    const hash = visitorHash(
-      getRequestIp(request.headers),
-      request.headers.get("user-agent"),
-      getVisitorHashSecret(),
-    );
+    const hash = visitorHash(getRequestIp(request.headers), request.headers.get("user-agent"), getVisitorHashSecret());
     await recordExternalClick(result.opportunity.id, hash);
   } catch (error) {
     logError("[telemetria] falha ao registrar clique no edital", error);

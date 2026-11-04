@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -33,13 +33,7 @@ export function Field({
   const errorId = `${id}-error`;
   const describedBy = [hint ? hintId : null, errors.length > 0 ? errorId : null].filter(Boolean).join(" ");
   return (
-    <div
-      className={cn(
-        "space-y-1.5",
-        highlight && "rounded-lg border border-brand/30 bg-brand/5 p-3",
-        className,
-      )}
-    >
+    <div className={cn("space-y-1.5", highlight && "rounded-lg border border-brand/30 bg-brand/5 p-3", className)}>
       <Label htmlFor={id} className="text-stone-800">
         {label}
         {optional && <span className="text-xs font-normal text-stone-500">opcional</span>}

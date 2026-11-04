@@ -1,9 +1,9 @@
 import { and, eq, gt, inArray, like, sql } from "drizzle-orm";
 import { db, type Tx } from "@/db";
-import { isUniqueViolation } from "@/lib/db-errors";
 import { courses, opportunities, projectMembers, projects } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
-import { DomainError, RateLimitError, ValidationError, fromZodError } from "@/lib/domain-errors";
+import { isUniqueViolation } from "@/lib/db-errors";
+import { DomainError, fromZodError, RateLimitError, ValidationError } from "@/lib/domain-errors";
 import {
   lockProjectSearchDocuments,
   refreshProjectSearchDocuments,
@@ -16,8 +16,8 @@ import { syncOpportunityTags } from "@/lib/tags/service";
 import { deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
 import type { OpportunityInput } from "@/lib/validation/opportunity";
 import { makeWizardSchema } from "@/lib/validation/opportunity";
-import { projectInputSchema, type ProjectInput } from "@/lib/validation/project";
-import { EDITOR_ROLES, OWNER_ONLY, loadProjectForWrite } from "./permissions";
+import { type ProjectInput, projectInputSchema } from "@/lib/validation/project";
+import { EDITOR_ROLES, loadProjectForWrite, OWNER_ONLY } from "./permissions";
 
 export const PROJECT_RATE_LIMIT = "Você atingiu o limite de 3 projetos criados por dia. Tente de novo amanhã.";
 export const PROJECT_NOT_ACTIVE = "Este projeto não está mais ativo e não pode ser alterado.";
@@ -59,7 +59,11 @@ function suffixOf(slug: string, base: string): number {
   return slug === base ? 1 : Number(slug.slice(base.length + 1)) || 1;
 }
 
-export async function assertCoursesBelongToInstitution(tx: Tx, institutionId: string, courseIds: string[]): Promise<void> {
+export async function assertCoursesBelongToInstitution(
+  tx: Tx,
+  institutionId: string,
+  courseIds: string[],
+): Promise<void> {
   if (courseIds.length === 0) return;
   const found = await tx
     .select({ id: courses.id })
@@ -165,7 +169,13 @@ export async function updateProject(user: AuthUser, projectId: string, input: un
     const changed = await tx
       .update(projects)
       .set({ ...data, updatedAt: new Date() })
-      .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId), eq(projects.status, "ACTIVE")))
+      .where(
+        and(
+          eq(projects.id, project.id),
+          eq(projects.institutionId, project.institutionId),
+          eq(projects.status, "ACTIVE"),
+        ),
+      )
       .returning({ id: projects.id });
     if (changed.length === 0) throw projectNotActive();
     await refreshProjectSearchDocuments(tx, project.id);
@@ -181,7 +191,13 @@ export async function archiveProject(user: AuthUser, projectId: string): Promise
     const changed = await tx
       .update(projects)
       .set({ status: "ARCHIVED", updatedAt: new Date() })
-      .where(and(eq(projects.id, project.id), eq(projects.institutionId, project.institutionId), eq(projects.status, "ACTIVE")))
+      .where(
+        and(
+          eq(projects.id, project.id),
+          eq(projects.institutionId, project.institutionId),
+          eq(projects.status, "ACTIVE"),
+        ),
+      )
       .returning({ id: projects.id });
     if (changed.length === 0) throw projectNotActive();
     await refreshProjectSearchDocuments(tx, project.id);

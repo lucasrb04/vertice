@@ -1,8 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
-import { runSeed } from "@/db/seed";
 import { opportunityTags, tagAliases, tags } from "@/db/schema";
+import { runSeed } from "@/db/seed";
 import { NotFoundError } from "@/lib/auth/errors";
 import { RateLimitError, ValidationError } from "@/lib/domain-errors";
 import { tagCreationLimiter } from "@/lib/security/rate-limit";
@@ -111,12 +111,21 @@ describe("tags service", () => {
     await db.update(tags).set({ usageCount: 0 }).where(eq(tags.id, python.id));
     await sync({});
     expect((await bySlug("python")).usageCount).toBe(0);
-    expect(await db.select().from(opportunityTags).where(and(eq(opportunityTags.opportunityId, opp.id)))).toHaveLength(0);
+    expect(
+      await db
+        .select()
+        .from(opportunityTags)
+        .where(and(eq(opportunityTags.opportunityId, opp.id))),
+    ).toHaveLength(0);
   });
 
   it("31ª tag nova na hora é recusada", async () => {
     const { sync } = await setup();
-    await sync({ THEME: Array.from({ length: 10 }, (_, i) => ({ name: `Nova A${i}` })), DESIRED_SKILL: Array.from({ length: 10 }, (_, i) => ({ name: `Nova B${i}` })), DEVELOPED_SKILL: Array.from({ length: 10 }, (_, i) => ({ name: `Nova C${i}` })) });
+    await sync({
+      THEME: Array.from({ length: 10 }, (_, i) => ({ name: `Nova A${i}` })),
+      DESIRED_SKILL: Array.from({ length: 10 }, (_, i) => ({ name: `Nova B${i}` })),
+      DEVELOPED_SKILL: Array.from({ length: 10 }, (_, i) => ({ name: `Nova C${i}` })),
+    });
     await expect(sync({ THEME: [{ name: "Nova extra" }] })).rejects.toBeInstanceOf(RateLimitError);
   });
 

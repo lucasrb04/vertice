@@ -17,5 +17,5 @@ export const auditLogs = pgTable(
     ipAddress: varchar("ip_address", { length: 64 }),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => [index("audit_logs_created_idx").on(t.institutionId, t.createdAt)]
+  (t) => [index("audit_logs_created_idx").on(t.institutionId, t.createdAt)],
 );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { SignOutButton } from "@/components/layout/sign-out-button";
-import { resolveActiveUser } from "@/lib/auth/guards";
 import { UnauthorizedError } from "@/lib/auth/errors";
+import { resolveActiveUser } from "@/lib/auth/guards";
 import { getSessionUser } from "@/lib/auth/session";
 
 async function getHeaderUser(): Promise<{ name: string } | null> {

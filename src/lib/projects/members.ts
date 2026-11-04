@@ -6,7 +6,7 @@ import { NotFoundError } from "@/lib/auth/errors";
 import type { AuthUser } from "@/lib/auth/guards";
 import { isUniqueViolation } from "@/lib/db-errors";
 import { DomainError, fromZodError } from "@/lib/domain-errors";
-import { ALL_ROLES, OWNER_ONLY, loadProjectForWrite } from "@/lib/projects/permissions";
+import { ALL_ROLES, loadProjectForWrite, OWNER_ONLY } from "@/lib/projects/permissions";
 import { logAudit } from "@/lib/security/audit";
 
 /** Mesma mensagem para e-mail inexistente, banido ou de outra instituição: não revela nenhum dos três. */
@@ -90,7 +90,8 @@ export async function changeMemberRole(
       .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, targetId)))
       .limit(1);
     if (!member) throw new NotFoundError();
-    if (member.role === "OWNER") throw new DomainError("OWNER_IMMUTABLE", "O dono do projeto não pode ser alterado aqui.");
+    if (member.role === "OWNER")
+      throw new DomainError("OWNER_IMMUTABLE", "O dono do projeto não pode ser alterado aqui.");
     await tx
       .update(projectMembers)
       .set({ role: newRole.data })
@@ -120,8 +121,11 @@ export async function removeMember(user: AuthUser, projectId: string, memberUser
       .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, targetId)))
       .limit(1);
     if (!member) throw new NotFoundError();
-    if (member.role === "OWNER") throw new DomainError("OWNER_IMMUTABLE", "O dono do projeto não pode ser alterado aqui.");
-    await tx.delete(projectMembers).where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, targetId)));
+    if (member.role === "OWNER")
+      throw new DomainError("OWNER_IMMUTABLE", "O dono do projeto não pode ser alterado aqui.");
+    await tx
+      .delete(projectMembers)
+      .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, targetId)));
     await logAudit(
       {
         institutionId: project.institutionId,
@@ -141,7 +145,9 @@ export async function leaveProject(user: AuthUser, projectId: string): Promise<v
   if (membership.role === "OWNER") throw new DomainError("OWNER_IMMUTABLE", "O dono do projeto não pode sair dele.");
 
   await db.transaction(async (tx) => {
-    await tx.delete(projectMembers).where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, user.id)));
+    await tx
+      .delete(projectMembers)
+      .where(and(eq(projectMembers.projectId, project.id), eq(projectMembers.userId, user.id)));
     await logAudit(
       {
         institutionId: project.institutionId,

@@ -5,7 +5,7 @@ import { requireAuth } from "@/lib/auth/guards";
 import { notifyReviewAlert } from "@/lib/email/notify";
 import { REPORT_RECEIVED, reportTarget } from "@/lib/moderation/reports";
 import type { ReportInput } from "@/lib/validation/moderation";
-import { runAction, type ActionResult } from "./result";
+import { type ActionResult, runAction } from "./result";
 
 /** A resposta não diz se a denúncia é nova, repetida ou se o alvo existe (spec §4). */
 export async function reportAction(input: unknown): Promise<ActionResult<{ message: string }>> {

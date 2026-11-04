@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 
 async function loginAs(page: Page, email: string, name: string) {
   const res = await page.request.post("/api/test-auth/login", { data: { email, name } });
@@ -46,7 +46,10 @@ test("rota inexistente usa a mesma página 404 de /admin", async ({ page }) => {
 test("fontes do Design System aplicadas por font-heading, font-sans e font-mono", async ({ page }) => {
   await page.goto("/rota-que-nao-existe");
   const family = (selector: string) =>
-    page.locator(selector).first().evaluate((el) => getComputedStyle(el).fontFamily);
+    page
+      .locator(selector)
+      .first()
+      .evaluate((el) => getComputedStyle(el).fontFamily);
   expect(await family("h1")).toMatch(/Plus Jakarta Sans/);
   expect(await family("body")).toMatch(/Inter/);
   expect(await family(".font-mono")).toMatch(/JetBrains Mono/);

@@ -21,16 +21,12 @@ export function closedChip(closedOn: Date | null): DeadlineChip {
 
 export function requirementsSummary(card: { courseCount: number; minSemester: number | null }): string {
   const { courseCount, minSemester } = card;
-  const courses =
-    courseCount === 0 ? "Todos os cursos" : courseCount === 1 ? "1 curso" : `${courseCount} cursos`;
+  const courses = courseCount === 0 ? "Todos os cursos" : courseCount === 1 ? "1 curso" : `${courseCount} cursos`;
   return minSemester ? `${courses} · A partir do ${minSemester}º período` : courses;
 }
 
 /** Rótulo de bolsa para o card, onde "Ambos" sozinho não faria sentido. */
-export function scholarshipSummary(card: {
-  scholarshipType: ScholarshipType;
-  fundingAgency: string | null;
-}): string {
+export function scholarshipSummary(card: { scholarshipType: ScholarshipType; fundingAgency: string | null }): string {
   const bolsa = card.fundingAgency ? `Bolsa ${card.fundingAgency}` : null;
   switch (card.scholarshipType) {
     case "PAID":

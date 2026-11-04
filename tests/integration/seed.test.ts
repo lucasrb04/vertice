@@ -1,8 +1,8 @@
-import { beforeEach, describe, it, expect } from "vitest";
-import { eq, count } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
+import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
-import { institutions, courses, tags, users } from "@/db/schema";
+import { courses, institutions, tags, users } from "@/db/schema";
 import { runSeed } from "@/db/seed";
 import { COURSES, TAGS } from "@/db/seed-data";
 import { resetDb } from "../helpers/db";
@@ -40,7 +40,9 @@ describe("runSeed", () => {
   it("promove INITIAL_ADMIN_EMAIL existente a SYSTEM_ADMIN", async () => {
     await runSeed();
     const [inst] = await db.select().from(institutions);
-    await db.insert(users).values({ institutionId: inst.id, name: "Admin", email: "admin@unifei.edu.br", emailVerified: true });
+    await db
+      .insert(users)
+      .values({ institutionId: inst.id, name: "Admin", email: "admin@unifei.edu.br", emailVerified: true });
     await runSeed({ initialAdminEmail: "admin@unifei.edu.br" });
     const [u] = await db.select().from(users).where(eq(users.email, "admin@unifei.edu.br"));
     expect(u.systemRole).toBe("SYSTEM_ADMIN");

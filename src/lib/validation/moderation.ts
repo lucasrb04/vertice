@@ -22,7 +22,12 @@ export const moderationActionSchema = z.object({
 export type ModerationActionInput = z.input<typeof moderationActionSchema>;
 
 /** Mesma lista do enum do banco: o tipo recusa motivo a mais, e o teste de unidade confere a igualdade. */
-export const REPORT_REASONS = ["SPAM", "FALSE_INFO", "INAPPROPRIATE", "OTHER"] as const satisfies readonly (typeof reportReasonEnum.enumValues)[number][];
+export const REPORT_REASONS = [
+  "SPAM",
+  "FALSE_INFO",
+  "INAPPROPRIATE",
+  "OTHER",
+] as const satisfies readonly (typeof reportReasonEnum.enumValues)[number][];
 export const REPORT_DESCRIPTION_MAX = 500;
 
 export type ReportReason = (typeof REPORT_REASONS)[number];
