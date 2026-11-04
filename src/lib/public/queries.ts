@@ -467,9 +467,9 @@ export async function getPublicProject(institutionId: string, slug: string, now:
   const closed = all
     .filter((c) => !c.isOpen)
     .sort((a, b) => (b.closedOn?.getTime() ?? 0) - (a.closedOn?.getTime() ?? 0));
-  const { id: _id, ...publicProject } = project;
-  void _id;
-  return { project: publicProject, open, closed };
+  // O id fica fora de `project`, que vai para a página; só o botão "Denunciar" o usa.
+  const { id: projectId, ...publicProject } = project;
+  return { project: publicProject, projectId, open, closed };
 }
 
 // ---------- filtros ----------

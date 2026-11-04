@@ -43,3 +43,6 @@ export const tagCreationLimiter = createRateLimiter({ limit: 30, windowMs: 3_600
 
 /** Candidaturas por usuário (D22). */
 export const applicationLimiter = createRateLimiter({ limit: 20, windowMs: 3_600_000 });
+
+/** Denúncias por usuário (spec §5). */
+export const reportLimiter = createRateLimiter({ limit: 10, windowMs: 86_400_000 });

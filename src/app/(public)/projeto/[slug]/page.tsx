@@ -2,8 +2,11 @@ import { BadgeCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import { ReportDialog } from "@/components/moderation/report-dialog";
 import { OpportunityCard } from "@/components/vitrine/opportunity-card";
 import { SafeMarkdown } from "@/components/vitrine/safe-markdown";
+import { getSessionUser } from "@/lib/auth/session";
+import { canReport } from "@/lib/moderation/reports";
 import { CATEGORY_LABELS } from "@/lib/public/labels";
 import { getPublicProject, type PublicCard } from "@/lib/public/queries";
 import { getDefaultInstitution } from "@/lib/tenant";
@@ -19,6 +22,18 @@ const loadProject = cache(async (slug: string) => {
   const institution = await getDefaultInstitution();
   return getPublicProject(institution.id, slug);
 });
+
+/** Se o visitante logado pode denunciar o projeto; sem sessão ou com sessão inválida, não. */
+async function viewerCanReport(projectId: string): Promise<boolean> {
+  try {
+    const sessionUser = await getSessionUser();
+    return sessionUser ? await canReport(sessionUser.id, { targetType: "PROJECT", targetId: projectId }) : false;
+  } catch {
+    // Sem o objeto do erro: o do Drizzle traz a consulta e os parâmetros.
+    console.error("[projeto] falha ao consultar a sessão");
+    return false;
+  }
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const result = await loadProject((await params).slug);
@@ -43,7 +58,9 @@ const LINK = "font-medium [overflow-wrap:anywhere] text-brand underline-offset-4
 export default async function ProjetoPage({ params }: Props) {
   const result = await loadProject((await params).slug);
   if (!result) notFound();
-  const { project, open, closed } = result;
+  const { project, projectId, open, closed } = result;
+  // Página pública: a sessão é só consultada, nunca exigida.
+  const reportable = await viewerCanReport(projectId);
 
   const details: [string, string][] = [];
   if (project.institute) details.push(["Instituto", project.institute]);
@@ -102,6 +119,7 @@ export default async function ProjetoPage({ params }: Props) {
             </a>
           </li>
         </ul>
+        {reportable && <ReportDialog targetType="PROJECT" targetId={projectId} />}
       </header>
 
       {project.description && (

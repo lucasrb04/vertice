@@ -1,11 +1,13 @@
 import { createElement } from "react";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { applications, opportunities, projects, users } from "@/db/schema";
 import { getEnv } from "@/env";
 import { APPLICATION_STATUS_LABELS, type ApplicationStatus } from "@/lib/applications/labels";
+import type { ModerationTargetType } from "@/lib/validation/moderation";
 import { sendEmail, sendEmailBatch } from "./send";
 import { ApplicationReceivedEmail } from "./templates/application-received";
+import { ReviewAlertEmail } from "./templates/review-alert";
 import { StatusChangedEmail } from "./templates/status-changed";
 
 const recipients = () =>
@@ -82,5 +84,54 @@ export async function notifyStatusChanged(
     await sendEmailBatch(emails);
   } catch {
     logFailure("os avisos de mudança de etapa");
+  }
+}
+
+const TARGET_LABELS: Record<ModerationTargetType, string> = { PROJECT: "Projeto", OPPORTUNITY: "Processo" };
+
+async function targetName(target: { institutionId: string; targetType: ModerationTargetType; targetId: string }) {
+  const [row] =
+    target.targetType === "PROJECT"
+      ? await db
+          .select({ name: projects.name })
+          .from(projects)
+          .where(and(eq(projects.id, target.targetId), eq(projects.institutionId, target.institutionId)))
+      : await db
+          .select({ name: opportunities.title })
+          .from(opportunities)
+          .where(and(eq(opportunities.id, target.targetId), eq(opportunities.institutionId, target.institutionId)));
+  return row?.name ?? null;
+}
+
+/** Alvo ocultado por denúncias: um e-mail a cada `SYSTEM_ADMIN` ativo da instituição. Nunca lança. */
+export async function notifyReviewAlert(target: {
+  institutionId: string;
+  targetType: ModerationTargetType;
+  targetId: string;
+}): Promise<void> {
+  try {
+    const name = await targetName(target);
+    if (!name) return;
+    const admins = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(
+        and(
+          eq(users.institutionId, target.institutionId),
+          eq(users.systemRole, "SYSTEM_ADMIN"),
+          eq(users.isBanned, false),
+        ),
+      );
+    const targetLabel = TARGET_LABELS[target.targetType];
+    const url = new URL("/admin", getEnv().NEXT_PUBLIC_APP_URL).toString();
+    await sendEmailBatch(
+      admins.map((admin) => ({
+        to: admin.email,
+        subject: `${targetLabel} em revisão por denúncias: ${name}`,
+        react: createElement(ReviewAlertEmail, { targetLabel, targetName: name, url }),
+      })),
+    );
+  } catch {
+    logFailure("o aviso de revisão automática");
   }
 }

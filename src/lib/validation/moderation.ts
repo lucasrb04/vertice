@@ -19,3 +19,30 @@ export const moderationActionSchema = z.object({
 });
 
 export type ModerationActionInput = z.input<typeof moderationActionSchema>;
+
+export const REPORT_REASONS = ["SPAM", "FALSE_INFO", "INAPPROPRIATE", "OTHER"] as const;
+export const REPORT_DESCRIPTION_MAX = 500;
+
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+export const REPORT_REASON_LABELS: Record<ReportReason, string> = {
+  SPAM: "Spam",
+  FALSE_INFO: "Informação falsa",
+  INAPPROPRIATE: "Conteúdo impróprio",
+  OTHER: "Outro",
+};
+
+/** Denúncia da comunidade (spec §5). Descrição em branco vira nula. */
+export const reportSchema = z.object({
+  targetType: z.enum(MODERATION_TARGETS),
+  targetId: z.uuid(),
+  reasonCode: z.enum(REPORT_REASONS, "Escolha um motivo."),
+  description: z
+    .string()
+    .trim()
+    .max(REPORT_DESCRIPTION_MAX, `A descrição deve ter no máximo ${REPORT_DESCRIPTION_MAX} caracteres.`)
+    .optional()
+    .transform((v) => v || null),
+});
+
+export type ReportInput = z.input<typeof reportSchema>;
