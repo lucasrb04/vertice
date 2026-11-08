@@ -8,6 +8,14 @@ const testEnv = parseEnv(readFileSync(".env.test", "utf8"));
 export default defineConfig({
   plugins: [tsconfigPaths()],
   test: {
+    // Unitários e integração somados numa medição só. Páginas e componentes ficam com os E2E.
+    coverage: {
+      provider: "v8",
+      include: ["src/lib/**", "src/actions/**", "src/db/**", "src/env.ts", "src/proxy.ts"],
+      exclude: ["src/db/seed-data.ts", "src/db/seed-demo.ts", "src/lib/email/templates/**", "src/db/schema/**"],
+      thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
+      reporter: ["text-summary", "text"],
+    },
     projects: [
       {
         extends: true,

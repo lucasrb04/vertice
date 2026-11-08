@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   closedChip,
   deadlineChip,
+  formatCents,
   plainTextExcerpt,
   requirementsSummary,
   scholarshipSummary,
+  semesterRange,
 } from "@/lib/public/labels";
 
 const now = new Date("2026-11-02T15:00:00Z"); // 12h em Brasília
@@ -92,5 +94,29 @@ describe("plainTextExcerpt", () => {
 
   it("mantém texto curto intacto", () => {
     expect(plainTextExcerpt("Curto.")).toBe("Curto.");
+  });
+});
+
+describe("formatCents", () => {
+  it("formata centavos como reais", () => {
+    expect(formatCents(70_000).replace(/\s/g, " ")).toBe("R$ 700,00");
+  });
+});
+
+describe("semesterRange", () => {
+  it("mínimo e máximo iguais viram um período só", () => {
+    expect(semesterRange(3, 3)).toBe("3º período");
+  });
+  it("faixa com mínimo e máximo", () => {
+    expect(semesterRange(3, 8)).toBe("Do 3º ao 8º período");
+  });
+  it("só mínimo", () => {
+    expect(semesterRange(3, null)).toBe("A partir do 3º período");
+  });
+  it("só máximo", () => {
+    expect(semesterRange(null, 8)).toBe("Até o 8º período");
+  });
+  it("sem restrição devolve null", () => {
+    expect(semesterRange(null, null)).toBeNull();
   });
 });

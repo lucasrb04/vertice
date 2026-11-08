@@ -20,7 +20,8 @@
     "db:seed": "tsx --env-file-if-exists=.env src/db/seed.ts",
     "db:seed:demo": "tsx --env-file-if-exists=.env src/db/seed-demo.ts",
     "db:search:rebuild": "tsx --env-file-if-exists=.env src/db/search-rebuild.ts",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",
@@ -49,6 +50,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^5.1.0",
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
