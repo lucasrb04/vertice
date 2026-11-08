@@ -9,7 +9,8 @@ test("entrar, ver painel, sair", async ({ page }) => {
   await loginAs(page, "aluno.teste@unifei.edu.br", "Aluno Teste");
   await page.goto("/painel");
   await expect(page.getByRole("heading", { name: "Olá, Aluno Teste" })).toBeVisible();
-  await page.getByRole("button", { name: "Sair" }).click();
+  await page.getByRole("button", { name: "Menu da conta de Aluno Teste" }).click();
+  await page.getByRole("menuitem", { name: "Sair" }).click();
   await page.waitForURL("/");
   await expect(page.getByRole("banner").getByRole("link", { name: "Entrar com Google" })).toBeVisible();
   await page.goto("/painel");

@@ -228,7 +228,7 @@ test.describe("celular de 360 px", () => {
     });
     expect(res.status()).toBe(200);
     await page.goto("/");
-    await expect(page.getByRole("banner").getByRole("button", { name: "Sair" })).toBeVisible();
+    await expect(page.getByRole("banner").getByRole("button", { name: /^Menu da conta de/ })).toBeVisible();
     expect(await noPageOverflow(page)).toBe(true);
   });
 });

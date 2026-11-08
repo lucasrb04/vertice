@@ -1,13 +1,18 @@
+import { eq } from "drizzle-orm";
 import Link from "next/link";
-import { SignOutButton } from "@/components/layout/sign-out-button";
+import { UserMenu, type UserMenuUser } from "@/components/layout/user-menu";
+import { db } from "@/db";
+import { users } from "@/db/schema";
 import { UnauthorizedError } from "@/lib/auth/errors";
 import { resolveActiveUser } from "@/lib/auth/guards";
 import { getSessionUser } from "@/lib/auth/session";
 
-async function getHeaderUser(): Promise<{ name: string } | null> {
+async function getHeaderUser(): Promise<UserMenuUser | null> {
   try {
     const user = await resolveActiveUser(await getSessionUser());
-    return { name: user.name };
+    // A foto do Google só serve ao avatar; fica fora do AuthUser que os guards usam.
+    const [row] = await db.select({ image: users.image }).from(users).where(eq(users.id, user.id)).limit(1);
+    return { name: user.name, email: user.email, image: row?.image ?? null, systemRole: user.systemRole };
   } catch (err) {
     if (err instanceof UnauthorizedError) return null;
     throw err;
@@ -28,13 +33,7 @@ export async function SiteHeader() {
           </Link>
         </div>
         {user ? (
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <Link href="/publicar" className="text-sm font-medium whitespace-nowrap text-stone-800 hover:text-brand">
-              Publicar processo
-            </Link>
-            <span className="hidden max-w-48 truncate text-sm text-stone-600 md:inline">{user.name}</span>
-            <SignOutButton />
-          </div>
+          <UserMenu user={user} />
         ) : (
           <Link href="/entrar" className="text-sm font-medium whitespace-nowrap text-stone-800 hover:text-brand">
             Entrar com Google

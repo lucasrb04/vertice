@@ -141,6 +141,39 @@ test("/painel lista Meus projetos", async ({ page }) => {
   await expect(page).toHaveURL(/\/publicar$/);
 });
 
+test("menu da conta leva de volta à gestão do projeto depois de publicar", async ({ page }) => {
+  await loginAs(page, "dono.menu@unifei.edu.br", "Dono do Menu");
+  const projectId = await publishProject(page, "Projeto do Menu", "Processo do menu");
+  await page.goto("/processos");
+
+  const menuButton = page.getByRole("banner").getByRole("button", { name: "Menu da conta de Dono do Menu" });
+  await menuButton.click();
+  const menu = page.getByRole("menu");
+  await expect(menu).toContainText("dono.menu@unifei.edu.br");
+  await expect(menu.getByRole("menuitem", { name: "Administração" })).toHaveCount(0);
+  await menu.getByRole("menuitem", { name: "Meus projetos" }).click();
+
+  await page.waitForURL("/painel");
+  await page.getByRole("link", { name: /Projeto do Menu/ }).click();
+  await page.waitForURL(`/projetos/${projectId}`);
+
+  // Teclado: Enter abre, seta desce, Esc fecha e devolve o foco ao botão.
+  await menuButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("menu")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await expect(menuButton).toBeFocused();
+});
+
+test("menu da conta mostra Administração só para admin", async ({ page }) => {
+  await loginAs(page, "admin@unifei.edu.br", "Admin");
+  await page.goto("/");
+  await page.getByRole("banner").getByRole("button", { name: "Menu da conta de Admin" }).click();
+  await page.getByRole("menuitem", { name: "Administração" }).click();
+  await page.waitForURL("/admin");
+});
+
 test("painel de projeto alheio é 404", async ({ page, browser }) => {
   await loginAs(page, "dono.alheio@unifei.edu.br", "Dono Alheio");
   const projectId = await publishProject(page, "Projeto Alheio", "Processo alheio");

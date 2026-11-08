@@ -38,7 +38,8 @@ async function fillOpportunityRequired(page: Page, title: string, url: string) {
 test("usuário sem projeto publica projeto e processo só com os obrigatórios", async ({ page }) => {
   await loginAs(page, "lider@unifei.edu.br", "Líder");
   await page.goto("/");
-  await page.getByRole("banner").getByRole("link", { name: "Publicar processo" }).click();
+  await page.getByRole("banner").getByRole("button", { name: "Menu da conta de Líder" }).click();
+  await page.getByRole("menuitem", { name: "Publicar processo" }).click();
   await expect(page).toHaveURL(/\/publicar$/);
 
   await fillProjectStep(page, "Equipe Baja Itajubá");
