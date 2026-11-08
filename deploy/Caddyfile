@@ -1,0 +1,15 @@
+# HTTPS automático (Let's Encrypt) para APP_DOMAIN.
+#
+# X-Forwarded-For é SOBRESCRITO com o IP da conexão (D44): o limite de buscas e a deduplicação de
+# cliques usam esse IP, e acrescentar ao valor do cliente deixaria qualquer um forjá-lo.
+# ATENÇÃO (spec §9): antes de ligar o proxy da Cloudflare (nuvem laranja), troque isto por
+# `trusted_proxies` com as faixas da Cloudflare e leia o IP de CF-Connecting-IP; senão todos os
+# visitantes passam a dividir um único limite.
+{$APP_DOMAIN} {
+	encode zstd gzip
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy app:3000 {
+		header_up X-Forwarded-For {remote_host}
+		header_up -X-Real-IP
+	}
+}

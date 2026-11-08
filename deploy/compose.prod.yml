@@ -1,0 +1,55 @@
+# Produção na VM da OCI (spec de deploy §5.4). Sempre chamado pelo deploy.sh com
+# `-p vertice --env-file /opt/vertice/.env` e IMAGE_TAG no ambiente.
+# Só o Caddy publica portas; o app e o Postgres não ficam expostos à internet.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    image: ghcr.io/lucasrb04/vertice-app:${IMAGE_TAG}
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Migrations, seed e rebuild da busca. Não sobe com o resto: só via `run --rm migrate <script>`.
+  migrate:
+    image: ghcr.io/lucasrb04/vertice-migrate:${IMAGE_TAG}
+    profiles: ["manual"]
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
