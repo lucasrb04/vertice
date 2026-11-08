@@ -26,3 +26,8 @@
 		header_up -X-Real-IP
 	}
 }
+
+# www: certificado próprio e redirecionamento permanente para o domínio principal, mantendo o caminho.
+www.{$APP_DOMAIN} {
+	redir https://{$APP_DOMAIN}{uri} permanent
+}

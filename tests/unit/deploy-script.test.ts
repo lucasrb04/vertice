@@ -16,7 +16,7 @@ echo "docker $* [IMAGE_TAG=\${IMAGE_TAG:-}]" >> "$CALLS"
 if [[ -n "\${FAIL_DOCKER:-}" && "$*" =~ $FAIL_DOCKER ]]; then exit 1; fi
 case "$1" in
   create) echo fake-container ;;
-  cp) touch "$3" ;;
+  cp) printf '%s' "\${CP_CONTENT:-conteudo}" > "$3" ;;
 esac
 exit 0
 `;
@@ -157,6 +157,22 @@ describe("deploy.sh", () => {
     const r = run(NEW, { env: { CURL_EXIT: "22" } });
     expect(r.code).toBe(5);
     expect(r.out).toContain("sem versão anterior");
+  });
+
+  it("Caddyfile alterado recria o caddy, porque o bind mount de arquivo não vê o arquivo novo", () => {
+    withEnvFile();
+    writeFileSync(join(dir, "Caddyfile"), "antigo");
+    const r = run(NEW, { env: { CP_CONTENT: "novo" } });
+    expect(r.code).toBe(0);
+    expect(r.docker.some((l) => l.includes("up -d --force-recreate caddy"))).toBe(true);
+  });
+
+  it("Caddyfile igual não recria o caddy", () => {
+    withEnvFile();
+    writeFileSync(join(dir, "Caddyfile"), "igual");
+    const r = run(NEW, { env: { CP_CONTENT: "igual" } });
+    expect(r.code).toBe(0);
+    expect(r.docker.some((l) => l.includes("--force-recreate"))).toBe(false);
   });
 
   it("sucesso grava RELEASE e roda o rebuild depois do up", () => {

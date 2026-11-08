@@ -67,6 +67,10 @@ describe("Caddyfile", () => {
     expect(caddyfile).toContain("header_up X-Forwarded-For {remote_host}");
   });
 
+  it("www tem certificado próprio e redireciona para o domínio principal, mantendo o caminho", () => {
+    expect(caddyfile).toMatch(/^www\.\{\$APP_DOMAIN\} \{\n\tredir https:\/\/\{\$APP_DOMAIN\}\{uri\} permanent\n\}$/m);
+  });
+
   it("registra os acessos sem o código e o state do OAuth na URL", () => {
     expect(caddyfile).toMatch(/^\s+log \{$/m);
     expect(caddyfile).toMatch(/request>uri query \{\s+delete code\s+delete state\s+\}/);

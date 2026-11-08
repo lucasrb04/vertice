@@ -68,10 +68,12 @@ dc() {
 
 # 1. Arquivos de produção da versão pedida, de dentro da imagem migrate.
 cid=$(docker create "$REGISTRY/vertice-migrate:$tag")
+caddyfile_before=$(sha256sum "$VERTICE_DIR/Caddyfile" 2>/dev/null || true)
 docker cp "$cid:/deploy/compose.prod.yml" "$VERTICE_DIR/compose.prod.yml"
 docker cp "$cid:/deploy/Caddyfile" "$VERTICE_DIR/Caddyfile"
 docker cp "$cid:/deploy/bin/backup.sh" "$VERTICE_DIR/bin/backup.sh"
 docker rm "$cid" >/dev/null
+caddyfile_after=$(sha256sum "$VERTICE_DIR/Caddyfile")
 
 # 2-3. Imagens novas, migrations e seed antes do app novo.
 export IMAGE_TAG=$tag
@@ -81,6 +83,8 @@ dc run --rm migrate db:seed || fail 4 "seed falhou; o app anterior continua no a
 
 # 4-5. App novo e verificação; sem resposta, volta para a versão anterior.
 dc up -d app caddy dozzle
+# O Caddyfile é montado como arquivo: o container segue vendo o antigo até ser recriado.
+if [[ $caddyfile_before != "$caddyfile_after" ]]; then dc up -d --force-recreate caddy; fi
 healthy=false
 for ((waited = 0; waited < HEALTH_TIMEOUT; waited += 2)); do
   if curl -fsS -o /dev/null --max-time 5 "$HEALTH_URL"; then
