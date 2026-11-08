@@ -57,7 +57,11 @@ function createAuth() {
     },
     user: {
       additionalFields: {
-        institutionId: { type: "string", required: true, input: false },
+        // `required: false` só para o Better-Auth: no primeiro login com Google ele valida os campos extras
+        // com os dados do provedor ANTES do hook databaseHooks.user.create.before, que é quem preenche
+        // institutionId; com `required: true` todo cadastro novo falhava com MISSING_FIELD. A garantia
+        // continua no hook (preenche ou recusa) e no NOT NULL da coluna users.institution_id.
+        institutionId: { type: "string", required: false, input: false },
         systemRole: { type: "string", required: false, defaultValue: "USER", input: false },
         isBanned: { type: "boolean", required: false, defaultValue: false, input: false },
       },
