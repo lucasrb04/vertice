@@ -4,6 +4,8 @@
 set -euo pipefail
 
 VERTICE_DIR=${VERTICE_DIR:-/opt/vertice}
+# Não depende da pasta de onde é chamado (o find falha se não puder voltar a ela, ex.: sudo -u deploy).
+cd "$VERTICE_DIR"
 out="$VERTICE_DIR/backups/vertice-$(date +%F).dump"
 
 umask 077

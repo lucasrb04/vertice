@@ -105,8 +105,9 @@ Resend (domínio verificado).
 
 ## 6. Operação
 
-- **Versão no ar:** `ssh vertice cat /opt/vertice/RELEASE`.
-- **Logs:** `ssh vertice 'cd /opt/vertice && sudo docker compose -p vertice logs -f app'`.
+- **Versão no ar:** `ssh vertice sudo cat /opt/vertice/RELEASE`.
+- **Logs:** `ssh vertice 'sudo docker compose -p vertice -f /opt/vertice/compose.prod.yml logs -f app'`.
+  O `/opt/vertice` é só do `deploy`: como `ubuntu`, use sempre caminhos absolutos com `sudo`, nunca `cd`.
 - **Rollback manual** para um SHA anterior (precisa da imagem no GHCR):
   `ssh vertice 'sudo -u deploy /opt/vertice/bin/deploy.sh <sha>'` (usa o `.env` que já está na VM).
 - **Rebuild da busca** que falhou (saída 6): mesmo comando com o SHA atual.
@@ -123,10 +124,11 @@ Restaurar num banco vazio (teste ou desastre):
 
 ```bash
 ssh vertice
-cd /opt/vertice
-sudo docker compose -p vertice --env-file .env -f compose.prod.yml exec -T postgres \
-  sh -c 'createdb -U "$POSTGRES_USER" restauracao && pg_restore -U "$POSTGRES_USER" -d restauracao --no-owner' \
-  < backups/vertice-AAAA-MM-DD.dump
+DC="sudo docker compose -p vertice --env-file /opt/vertice/.env -f /opt/vertice/compose.prod.yml"
+sudo cat /opt/vertice/backups/vertice-AAAA-MM-DD.dump | $DC exec -T postgres \
+  sh -c 'createdb -U "$POSTGRES_USER" restauracao && pg_restore -U "$POSTGRES_USER" -d restauracao --no-owner'
+# conferir e depois apagar o banco de teste:
+$DC exec -T postgres sh -c 'dropdb -U "$POSTGRES_USER" restauracao'
 ```
 
 Para trocar o banco de produção pelo backup, pare o app (`stop app`), restaure com `pg_restore --clean -d vertice` e
