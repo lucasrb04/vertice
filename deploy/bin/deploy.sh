@@ -76,7 +76,7 @@ docker rm "$cid" >/dev/null
 # 2-3. Imagens novas, migrations e seed antes do app novo.
 export IMAGE_TAG=$tag
 dc pull app migrate
-dc run --rm migrate db:migrate || fail 4 "migrations falharam; o app anterior continua no ar"
+dc run --rm migrate db:migrate:deploy || fail 4 "migrations falharam; o app anterior continua no ar"
 dc run --rm migrate db:seed || fail 4 "seed falhou; o app anterior continua no ar"
 
 # 4-5. App novo e verificação; sem resposta, volta para a versão anterior.

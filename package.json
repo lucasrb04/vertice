@@ -21,7 +21,8 @@
     "db:seed:demo": "tsx --env-file-if-exists=.env src/db/seed-demo.ts",
     "db:search:rebuild": "tsx --env-file-if-exists=.env src/db/search-rebuild.ts",
     "test:e2e": "playwright test",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "db:migrate:deploy": "tsx --env-file-if-exists=.env src/db/migrate.ts"
   },
   "dependencies": {
     "@react-email/components": "^1.0.12",
@@ -30,7 +31,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
-    "drizzle-kit": "^0.31.11",
     "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.61.0",
     "next": "16.4.3",
@@ -53,6 +53,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^5.1.0",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.3",
     "tailwindcss": "^4",

@@ -136,7 +136,7 @@ describe("deploy.sh", () => {
   it("migrate falho não sobe o app nem grava RELEASE", () => {
     withEnvFile();
     writeFileSync(join(dir, "RELEASE"), OLD);
-    const r = run(NEW, { env: { FAIL_DOCKER: "run --rm migrate db:migrate" } });
+    const r = run(NEW, { env: { FAIL_DOCKER: "run --rm migrate db:migrate:deploy" } });
     expect(r.code).toBe(4);
     expect(r.docker.some((l) => l.includes(" up "))).toBe(false);
     expect(release()).toBe(OLD);
@@ -163,9 +163,14 @@ describe("deploy.sh", () => {
     withEnvFile();
     const r = run(NEW);
     expect(r.code).toBe(0);
-    const order = ["compose", "pull", "db:migrate", "db:seed", "up -d app caddy", "db:search:rebuild"].map((step) =>
-      r.docker.findIndex((l) => l.includes(step)),
-    );
+    const order = [
+      "compose",
+      "pull",
+      "run --rm migrate db:migrate:deploy",
+      "db:seed",
+      "up -d app caddy",
+      "db:search:rebuild",
+    ].map((step) => r.docker.findIndex((l) => l.includes(step)));
     expect(order.every((i) => i >= 0)).toBe(true);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
     expect(r.docker.some((l) => l.includes(`vertice-migrate:${NEW}`))).toBe(true);

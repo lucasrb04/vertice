@@ -73,7 +73,7 @@ Como o repositório é público e aceita PR de fork:
 `Dockerfile` multi-stage com dois alvos finais:
 
 - **`app`**: Next.js standalone em `node:22-alpine`, rodando com usuário sem privilégio, só com `.next/standalone` e `.next/static`. Não existe `public/`. As variáveis `NEXT_PUBLIC_*` entram como argumentos de build vindos de Variables do GitHub. Nenhum segredo entra no build. Healthcheck do container em `/`.
-- **`migrate`**: mesma base, para rodar `drizzle-kit migrate`, `db:seed` e `db:search:rebuild` (D44). Ela não é exposta e só roda quando chamada. Leva só as dependências de produção mais `drizzle-kit` e `tsx`, sem vitest, eslint, playwright nem as outras ferramentas de desenvolvimento, para o Trivy seguir o mesmo critério do `pnpm audit --prod`. Leva também o código-fonte que esses scripts importam (`src/db`, `src/lib` e `drizzle/`).
+- **`migrate`**: mesma base, para rodar as migrations (`db:migrate:deploy`, migrador do drizzle-orm; emenda de 2026-11-08), `db:seed` e `db:search:rebuild` (D44). Ela não é exposta e só roda quando chamada. Leva só as dependências de produção mais `drizzle-kit` e `tsx`, sem vitest, eslint, playwright nem as outras ferramentas de desenvolvimento, para o Trivy seguir o mesmo critério do `pnpm audit --prod`. Leva também o código-fonte que esses scripts importam (`src/db`, `src/lib` e `drizzle/`).
 
 Ambas para `linux/arm64`, a arquitetura da VM Ampere A1 do plano gratuito. O build roda nativo no runner ARM do GitHub (`ubuntu-24.04-arm`), gratuito para repositório público, sem emulação.
 
@@ -91,7 +91,7 @@ Por SSH, com o usuário `deploy`. Ele está no grupo `docker`, o que na prática
 
 1. Atualiza `compose.prod.yml` e `Caddyfile` em `/opt/vertice` a partir da imagem `migrate` da tag pedida.
 2. `docker compose pull` com a tag do SHA. Os pacotes no GHCR são públicos, como o código, então a VM não guarda token do registro. As imagens não levam segredo (§5.3).
-3. `migrate`: `drizzle-kit migrate` e depois `db:seed`. Falhou, para tudo, e o app antigo continua no ar.
+3. `migrate`: `db:migrate:deploy` e depois `db:seed`. Falhou, para tudo, e o app antigo continua no ar.
 4. `docker compose up -d app caddy`.
 5. Verificação: `https://APP_DOMAIN/` responde 200 em até 60 s. Se não responder, sobe de novo a tag anterior, gravada em `/opt/vertice/RELEASE`, e a pipeline falha.
 6. `migrate`: `db:search:rebuild`, idempotente, com o site no ar.
@@ -147,7 +147,7 @@ Semanal, para `npm` (lê o `pnpm-lock.yaml`), `github-actions` e `docker`. Agrup
 - `sslip.io` como domínio provisório. Se o Google recusar o nome no OAuth, o plano B é um subdomínio gratuito (DuckDNS), que tem o mesmo papel.
 - Rollback automático só do app, guiado por `/opt/vertice/RELEASE`.
 - Backup diário local com 7 dias de retenção.
-- Imagem `migrate` enxuta: só dependências de produção, `drizzle-kit` e `tsx`.
+- Imagem `migrate` enxuta: só dependências de produção e `tsx`, sem `drizzle-kit`, npm, corepack nem yarn (emenda de 2026-11-08, exigida pelo Trivy).
 - Usuário `deploy` no grupo `docker`, com a chave da pipeline presa a um script de deploy que só aceita a tag.
 - E2E fora da pipeline.
 
