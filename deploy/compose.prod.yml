@@ -1,10 +1,19 @@
 # Produção na VM da OCI (spec de deploy §5.4). Sempre chamado pelo deploy.sh com
 # `-p vertice --env-file /opt/vertice/.env` e IMAGE_TAG no ambiente.
-# Só o Caddy publica portas; o app e o Postgres não ficam expostos à internet.
+# Só o Caddy publica portas na internet; o Dozzle escuta só no loopback (acesso por túnel SSH).
+
+# Logs no journald da VM: sobrevivem à troca de container a cada deploy e aos reboots, com rotação
+# e retenção de 14 dias definidas em /etc/systemd/journald.conf.d/ (docs/DEPLOY.md §6).
+x-logging: &logging
+  driver: journald
+  options:
+    tag: "{{.Name}}"
+
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    logging: *logging
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -20,6 +29,7 @@ services:
   app:
     image: ghcr.io/lucasrb04/vertice-app:${IMAGE_TAG}
     restart: unless-stopped
+    logging: *logging
     env_file: .env
     depends_on:
       postgres:
@@ -29,6 +39,7 @@ services:
   migrate:
     image: ghcr.io/lucasrb04/vertice-migrate:${IMAGE_TAG}
     profiles: ["manual"]
+    logging: *logging
     env_file: .env
     depends_on:
       postgres:
@@ -37,6 +48,7 @@ services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    logging: *logging
     ports:
       - "80:80"
       - "443:443"
@@ -48,6 +60,20 @@ services:
       - caddy_config:/config
     depends_on:
       - app
+
+  # Painel de logs. Só lê: socket do Docker read-only, sem ações nem shell (desligados por padrão).
+  # Acesso: `ssh -N vertice-logs` e http://localhost:8080 (docs/DEPLOY.md §6).
+  dozzle:
+    image: amir20/dozzle:v11.3.5
+    restart: unless-stopped
+    logging: *logging
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DOZZLE_NO_ANALYTICS: "true"
+      DOZZLE_FILTER: label=com.docker.compose.project=vertice
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
 volumes:
   pgdata:

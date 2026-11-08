@@ -17,6 +17,11 @@ describe("/privacidade", () => {
     expect(out).toContain("Seus direitos");
   });
 
+  it("informa o registro de acessos e por quanto tempo fica guardado", () => {
+    expect(out).toContain("registro de acessos");
+    expect(out).toContain("14 dias");
+  });
+
   it("nomeia os operadores que recebem dados", () => {
     for (const operador of ["Google", "Oracle Cloud", "Resend", "Cloudflare"]) expect(out).toContain(operador);
   });

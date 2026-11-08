@@ -75,8 +75,9 @@ export default function PrivacidadePage() {
                 <strong>Projetos e processos que você publica</strong>, e as denúncias que você fizer.
               </>,
               <>
-                <strong>Segurança:</strong> endereço IP e navegador da sua sessão, e o IP associado a ações
-                administrativas e de moderação.
+                <strong>Segurança:</strong> endereço IP e navegador da sua sessão, o IP associado a ações
+                administrativas e de moderação, e o registro de acessos do servidor (IP, página pedida, navegador e
+                horário), usado para investigar erros e abusos.
               </>,
               <>
                 <strong>Visitantes sem login:</strong> para contar acessos a editais sem duplicar, guardamos um código
@@ -154,7 +155,8 @@ export default function PrivacidadePage() {
             Seus dados ficam guardados enquanto sua conta existir. Quando você pede a exclusão, apagamos a conta, o
             perfil e as candidaturas; as cópias de segurança do banco são sobrescritas em até 7 dias. Registros de
             auditoria podem ser mantidos pelo tempo necessário para apurar incidentes de segurança, sem vínculo com uma
-            conta apagada.
+            conta apagada. O registro de acessos e os logs técnicos do servidor são apagados automaticamente após 14
+            dias.
           </p>
         </Section>
 

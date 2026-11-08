@@ -106,14 +106,58 @@ Resend (domínio verificado).
 ## 6. Operação
 
 - **Versão no ar:** `ssh vertice sudo cat /opt/vertice/RELEASE`.
-- **Logs:** `ssh vertice 'sudo docker compose -p vertice -f /opt/vertice/compose.prod.yml logs -f app'`.
-  O `/opt/vertice` é só do `deploy`: como `ubuntu`, use sempre caminhos absolutos com `sudo`, nunca `cd`.
+- **Logs:** veja a seção 6.1.
 - **Rollback manual** para um SHA anterior (precisa da imagem no GHCR):
   `ssh vertice 'sudo -u deploy /opt/vertice/bin/deploy.sh <sha>'` (usa o `.env` que já está na VM).
 - **Rebuild da busca** que falhou (saída 6): mesmo comando com o SHA atual.
 - **Códigos de saída do `deploy.sh`:** 2 tag inválida, 3 `.env` ausente ou inválido, 4 migrate/seed falhou (app antigo
   no ar), 5 site não respondeu (voltou para a versão anterior, se houver), 6 rebuild da busca falhou.
 - Migrations seguem **aditivas**: o rollback troca só o app, nunca desfaz migration.
+
+### 6.1. Logs
+
+Todos os containers logam no **journald** da VM (`x-logging` em `deploy/compose.prod.yml`). O histórico sobrevive
+à troca de container a cada deploy e aos reboots, e é apagado sozinho depois de **14 dias** (no máximo 1 GB), pela
+configuração em `/etc/systemd/journald.conf.d/10-vertice.conf`:
+
+```ini
+[Journal]
+Storage=persistent
+SystemMaxUse=1G
+MaxRetentionSec=14day
+```
+
+**Painel (Dozzle).** Logs ao vivo, busca e filtro por container no navegador. Ele escuta só em `127.0.0.1:8080`
+da VM, nunca na internet; o acesso é por túnel SSH, com a mesma chave do `ssh vertice`:
+
+```bash
+ssh -N vertice-logs        # deixe aberto; Ctrl+C fecha o túnel
+# e abra http://localhost:8080
+```
+
+O bloco `Host vertice-logs` do `~/.ssh/config` faz o `LocalForward 8080 127.0.0.1:8080`. O Dozzle mostra os
+containers que existem agora: depois de um deploy, o app novo começa com o log vazio; o histórico anterior fica no
+journald. O Dozzle só lê (socket do Docker read-only, ações e shell desligados).
+
+**Histórico (journald).** Para o que aconteceu antes do último deploy, filtre por container e horário:
+
+```bash
+ssh vertice 'sudo journalctl CONTAINER_NAME=vertice-app-1 --since "2026-11-08 18:00" --until "18:30"'
+ssh vertice 'sudo journalctl CONTAINER_NAME=vertice-caddy-1 --since "1 hour ago" | grep "\"status\":5"'   # respostas 5xx
+```
+
+**O que cada log mostra.**
+
+| Container | Conteúdo |
+| --- | --- |
+| `vertice-app-1` | erros do servidor e avisos, como `[auth] login recusado com código não mapeado: <código>` |
+| `vertice-caddy-1` | um JSON por acesso (IP, método, URL, status, tempo) e erros de proxy (502). Cookie e Authorization saem como `REDACTED`, e o `code`/`state` do OAuth saem da URL |
+| `vertice-postgres-1` | erros do banco |
+
+**Erros de login.** Um código que o Vértice não reconhece aparece na tela (`Não foi possível entrar (código X)`) e
+no log do app. Erros mostrados numa página do Google nunca chegam ao servidor; a mensagem do Google já diz a causa.
+
+O registro de acessos guarda IP: a política de privacidade (`/privacidade`) informa a finalidade e os 14 dias.
 
 ## 7. Backup e restauração
 

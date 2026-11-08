@@ -6,6 +6,19 @@
 # `trusted_proxies` com as faixas da Cloudflare e leia o IP de CF-Connecting-IP; senão todos os
 # visitantes passam a dividir um único limite.
 {$APP_DOMAIN} {
+	# Log de acessos (JSON no stdout, vai para o journald, retenção de 14 dias). Cookie e Authorization
+	# já saem mascarados pelo Caddy; o código e o state do OAuth saem da URL registrada.
+	log {
+		format filter {
+			wrap json
+			fields {
+				request>uri query {
+					delete code
+					delete state
+				}
+			}
+		}
+	}
 	encode zstd gzip
 	header Strict-Transport-Security "max-age=31536000"
 	reverse_proxy app:3000 {

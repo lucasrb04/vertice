@@ -168,7 +168,7 @@ describe("deploy.sh", () => {
       "pull",
       "run --rm migrate db:migrate:deploy",
       "db:seed",
-      "up -d app caddy",
+      "up -d app caddy dozzle",
       "db:search:rebuild",
     ].map((step) => r.docker.findIndex((l) => l.includes(step)));
     expect(order.every((i) => i >= 0)).toBe(true);

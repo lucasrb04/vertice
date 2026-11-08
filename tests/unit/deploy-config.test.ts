@@ -25,8 +25,28 @@ describe("compose de produção", () => {
     expect(service("caddy")).toMatch(/"443:443"/);
   });
 
+  it("o Dozzle escuta só no loopback da VM (acesso por túnel SSH), nunca na internet", () => {
+    const ports = [...service("dozzle").matchAll(/^\s+- "([^"]+)"$/gm)].map((m) => m[1]).filter((p) => /:\d+$/.test(p));
+    expect(ports).toEqual(["127.0.0.1:8080:8080"]);
+  });
+
+  it("o Dozzle só lê logs: socket do Docker read-only, sem ações, sem shell, sem analytics", () => {
+    const dozzle = service("dozzle");
+    expect(dozzle).toMatch(/image: amir20\/dozzle:v\d+\.\d+\.\d+$/m);
+    expect(dozzle).toContain("/var/run/docker.sock:/var/run/docker.sock:ro");
+    expect(dozzle).not.toMatch(/ENABLE_(ACTIONS|SHELL)|enable-(actions|shell)/i);
+    expect(dozzle).toContain('DOZZLE_NO_ANALYTICS: "true"');
+  });
+
   it("todos os serviços de longa duração reiniciam sozinhos", () => {
-    for (const name of ["postgres", "app", "caddy"]) expect(service(name)).toContain("restart: unless-stopped");
+    for (const name of ["postgres", "app", "caddy", "dozzle"])
+      expect(service(name)).toContain("restart: unless-stopped");
+  });
+
+  it("todos os serviços logam no journald, que guarda o histórico entre deploys e reboots", () => {
+    expect(compose).toMatch(/^x-logging: &logging\n {2}driver: journald\n/m);
+    for (const name of ["postgres", "app", "migrate", "caddy", "dozzle"])
+      expect(service(name)).toContain("logging: *logging");
   });
 
   it("dados e certificados ficam em volumes nomeados", () => {
@@ -45,6 +65,11 @@ describe("pipeline", () => {
 describe("Caddyfile", () => {
   it("sobrescreve X-Forwarded-For com o IP real da conexão", () => {
     expect(caddyfile).toContain("header_up X-Forwarded-For {remote_host}");
+  });
+
+  it("registra os acessos sem o código e o state do OAuth na URL", () => {
+    expect(caddyfile).toMatch(/^\s+log \{$/m);
+    expect(caddyfile).toMatch(/request>uri query \{\s+delete code\s+delete state\s+\}/);
   });
 });
 

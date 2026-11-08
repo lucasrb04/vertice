@@ -1,31 +1,10 @@
 import { redirect } from "next/navigation";
 import { SignInButton } from "@/components/layout/sign-in-button";
-import { type AuthErrorCode, isAuthErrorCode, UnauthorizedError } from "@/lib/auth/errors";
+import { UnauthorizedError } from "@/lib/auth/errors";
 import { resolveActiveUser } from "@/lib/auth/guards";
+import { loginError } from "@/lib/auth/login-error";
 import { safeNextPath } from "@/lib/auth/next-path";
 import { getSessionUser } from "@/lib/auth/session";
-
-const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
-  DOMAIN_NOT_ALLOWED: "Use sua conta @unifei.edu.br.",
-  EMAIL_NOT_VERIFIED: "Seu e-mail Google não está verificado.",
-  ACCOUNT_SUSPENDED: "Conta suspensa. Fale com a administração do Vértice.",
-};
-
-const GENERIC_ERROR_MESSAGE = "Não foi possível entrar. Tente novamente.";
-
-/**
- * Better-Auth 1.7.14 redireciona com `unable_to_get_user_info` quando o `hd` do Google não
- * confere (google.mjs: getUserInfo devolve null -> oauth2/callback.mjs). Na prática, hd divergente;
- * o mesmo código pode vir de outras falhas de userinfo, tratadas como domínio recusado.
- */
-const BETTER_AUTH_HD_MISMATCH_CODE = "unable_to_get_user_info";
-
-function errorMessage(raw: string | undefined): string | null {
-  if (!raw) return null;
-  if (isAuthErrorCode(raw)) return AUTH_ERROR_MESSAGES[raw];
-  if (raw === BETTER_AUTH_HD_MISMATCH_CODE) return AUTH_ERROR_MESSAGES.DOMAIN_NOT_ALLOWED;
-  return GENERIC_ERROR_MESSAGE;
-}
 
 export default async function EntrarPage({
   searchParams,
@@ -41,7 +20,10 @@ export default async function EntrarPage({
     if (!(err instanceof UnauthorizedError)) throw err;
   }
 
-  const message = errorMessage(Array.isArray(error) ? error[0] : error);
+  const failure = loginError(Array.isArray(error) ? error[0] : error);
+  // Código que o Vértice não mapeia (ex.: MISSING_FIELD do Better-Auth): fica no log para diagnóstico.
+  if (failure?.unmappedCode) console.warn(`[auth] login recusado com código não mapeado: ${failure.unmappedCode}`);
+  const message = failure?.message ?? null;
 
   return (
     <section className="mx-auto max-w-md px-4 py-16">

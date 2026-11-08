@@ -80,7 +80,7 @@ dc run --rm migrate db:migrate:deploy || fail 4 "migrations falharam; o app ante
 dc run --rm migrate db:seed || fail 4 "seed falhou; o app anterior continua no ar"
 
 # 4-5. App novo e verificação; sem resposta, volta para a versão anterior.
-dc up -d app caddy
+dc up -d app caddy dozzle
 healthy=false
 for ((waited = 0; waited < HEALTH_TIMEOUT; waited += 2)); do
   if curl -fsS -o /dev/null --max-time 5 "$HEALTH_URL"; then
