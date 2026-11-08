@@ -3,11 +3,11 @@
 #
 # As imagens finais partem de `runtime`: o node:22-alpine sem npm, corepack e yarn. Eles só servem para
 # instalar pacotes, e o npm embutido traz dependências com CVEs altas que o Trivy barra.
-FROM node:22-alpine AS runtime
+FROM node:25-alpine AS runtime
 RUN rm -rf /usr/local/lib/node_modules /opt/yarn-* \
   && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg
 
-FROM node:22-alpine AS base
+FROM node:25-alpine AS base
 ENV COREPACK_HOME=/corepack COREPACK_ENABLE_DOWNLOAD_PROMPT=0 NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable && corepack prepare pnpm@10.33.2 --activate && chmod -R a+rX /corepack
 WORKDIR /app
