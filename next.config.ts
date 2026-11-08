@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Nenhum fluxo envia arquivo; o maior corpo legítimo (wizard com duas descrições) fica bem abaixo disto.
+  experimental: { serverActions: { bodySizeLimit: "100kb" } },
   async headers() {
     return [
       {

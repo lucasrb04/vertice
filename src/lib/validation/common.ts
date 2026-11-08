@@ -40,9 +40,12 @@ export function optionalText(max: number) {
     .transform((v) => (v ? v : null));
 }
 
-const HTML_TAG = /<\/?[a-z!][^>]*>/i;
+// Sem quantificador aberto antes de um terminador: cada início de match custa O(1) ou fica preso à
+// própria linha, para o tempo ficar linear. Rótulo de várias linhas escapa daqui, mas o SafeMarkdown
+// ainda descarta destino não https na renderização.
+const HTML_TAG = /<\/?[a-z!]/i;
 const MD_LINK_TARGET = /\]\(\s*([^)\s]+)/g;
-const MD_REF_DEF = /^\s*\[[^\]]+\]:\s*(\S+)/gm;
+const MD_REF_DEF = /^[ \t]*\[[^\]\n]+\]:[ \t]*\n?[ \t]*(\S+)/gm;
 
 export function isRestrictedMarkdown(value: string): { html: boolean; badLink: boolean } {
   let badLink = false;
@@ -55,12 +58,15 @@ export function isRestrictedMarkdown(value: string): { html: boolean; badLink: b
   return { html: HTML_TAG.test(value), badLink };
 }
 
-/** Markdown restrito (D21): sem HTML e só links/imagens https. */
+/**
+ * Markdown restrito (D21): sem HTML e só links/imagens https. O `abort` no máximo é obrigatório: sem
+ * ele o Zod 4 roda o superRefine mesmo com o tamanho estourado.
+ */
 export function restrictedMarkdown(max: number) {
   return z
     .string()
     .trim()
-    .max(max)
+    .max(max, { abort: true })
     .superRefine((value, ctx) => {
       const { html, badLink } = isRestrictedMarkdown(value);
       if (html) ctx.addIssue({ code: "custom", message: HTML_NOT_ALLOWED });

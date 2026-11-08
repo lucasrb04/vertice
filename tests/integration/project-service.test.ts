@@ -147,6 +147,11 @@ describe("updateProject / archiveProject", () => {
     await expect(updateProject(s.owner, s.project.id, { name: "" })).rejects.toBeInstanceOf(ValidationError);
   });
 
+  it("não membro recebe NotFoundError antes de qualquer validação da entrada", async () => {
+    const s = await setup();
+    await expect(updateProject(s.outsider, s.project.id, { name: "" })).rejects.toBeInstanceOf(NotFoundError);
+  });
+
   it("archiveProject: só OWNER; ADMIN recebe NotFoundError; auditoria; depois updateProject recusa", async () => {
     const s = await setup();
     await expect(archiveProject(s.admin, s.project.id)).rejects.toBeInstanceOf(NotFoundError);

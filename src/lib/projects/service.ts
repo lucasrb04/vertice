@@ -158,11 +158,11 @@ export async function createProjectWithOpportunity(
 }
 
 export async function updateProject(user: AuthUser, projectId: string, input: unknown): Promise<void> {
+  const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   const parsed = projectInputSchema.safeParse(input);
   if (!parsed.success) throw fromZodError(parsed.error);
   const data: ProjectInput = parsed.data;
 
-  const { project } = await loadProjectForWrite(user, projectId, EDITOR_ROLES);
   await db.transaction(async (tx) => {
     await lockProjectSearchDocuments(tx, project.id);
     // slug, institutionId e status ficam de fora de propósito. Só grava se, sob a trava, ainda estiver ativo.

@@ -3,10 +3,17 @@ import {
   dayString,
   HTTPS_ONLY,
   httpsUrl,
+  isRestrictedMarkdown,
   optionalHttpsUrl,
   parseBrlToCents,
   restrictedMarkdown,
 } from "@/lib/validation/common";
+
+function elapsedMs(fn: () => unknown): number {
+  const start = performance.now();
+  fn();
+  return performance.now() - start;
+}
 
 describe("httpsUrl", () => {
   it("aceita e apara link com espaços e protocolo em maiúsculas", () => {
@@ -64,6 +71,37 @@ describe("restrictedMarkdown", () => {
   });
   it("respeita o máximo", () => {
     expect(restrictedMarkdown(5).safeParse("123456").success).toBe(false);
+  });
+  it("recusa tag sem fechamento", () => {
+    expect(md.safeParse("veja <a href=x").success).toBe(false);
+    expect(md.safeParse("fim </b").success).toBe(false);
+  });
+  it("checa destino de definição na linha seguinte", () => {
+    expect(md.safeParse("[x]:\n  javascript:alert(1)").success).toBe(false);
+  });
+});
+
+// Entradas com muitos inícios de match e sem terminador custavam tempo quadrático e travavam o Node.
+describe("restrictedMarkdown sem ReDoS", () => {
+  const md = restrictedMarkdown(5000);
+  const adversarial = {
+    tagsAbertas: "<a".repeat(25_000),
+    linhasVazias: `x${"\n".repeat(50_000)}x`,
+    colchetesAbertos: "[\n".repeat(25_000),
+  };
+
+  it("texto acima do máximo é recusado sem passar pelas regexes", () => {
+    for (const value of Object.values(adversarial)) {
+      let result: ReturnType<typeof md.safeParse> | undefined;
+      expect(elapsedMs(() => (result = md.safeParse(value)))).toBeLessThan(100);
+      expect(result?.success).toBe(false);
+    }
+  });
+
+  it("isRestrictedMarkdown roda em tempo linear", () => {
+    for (const value of Object.values(adversarial)) {
+      expect(elapsedMs(() => isRestrictedMarkdown(value))).toBeLessThan(100);
+    }
   });
 });
 
