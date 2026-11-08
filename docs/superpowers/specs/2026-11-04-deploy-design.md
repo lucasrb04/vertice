@@ -82,7 +82,7 @@ Ambas para `linux/arm64`, a arquitetura da VM Ampere A1 do plano gratuito. O bui
 - `deploy/compose.prod.yml` com os serviços `postgres`, `app`, `migrate` (perfil manual) e `caddy`, a partir do §8.3 da arquitetura, sem o script de init: as extensões vêm da migration `0000`.
 - O app e o Postgres ficam só na rede interna. O Caddy publica 80 e 443.
 - `deploy/Caddyfile` com o domínio vindo de `APP_DOMAIN`, HTTPS automático, compressão, HSTS e `header_up X-Forwarded-For {remote_host}`, que sobrescreve o cabeçalho em vez de acrescentar ao dele.
-- Os segredos de produção vivem só em `/opt/vertice/.env` na VM, com permissão 600, a partir de `deploy/.env.production.example`, que lista cada variável e sua origem.
+- Os segredos de produção vivem só no Environment `production` do GitHub. A cada deploy o job monta o `.env` e o envia pelo stdin do SSH; o `deploy.sh` valida chaves e valores e grava `/opt/vertice/.env` com permissão 600. `deploy/.env.production.example` lista cada variável e sua origem. (Emenda de 2026-11-08, pedido do autor: configurar tudo pelo GitHub.)
 - Backup: `pg_dump` diário às 3h (horário de Brasília) via cron, guardando 7 dias em `/opt/vertice/backups`, com script e instrução de restauração no passo a passo.
 
 ### 5.5. Deploy (job da pipeline)
@@ -103,22 +103,9 @@ O rollback automático só troca o app. Migration que já rodou não é desfeita
 
 Semanal, para `npm` (lê o `pnpm-lock.yaml`), `github-actions` e `docker`. Agrupa atualizações menores e de patch num PR por ecossistema.
 
-### 5.7. Começo sem domínio
+### 5.7. Domínio
 
-O autor ainda não tem domínio e vai configurar um depois que o site estiver no ar. Até lá, `APP_DOMAIN` é um nome do `sslip.io` derivado do IP público (`129-146-10-20.sslip.io` resolve para `129.146.10.20`), sem DNS para configurar:
-
-- O Caddy tira certificado do Let's Encrypt para esse nome, e o HTTPS funciona.
-- O login do Google aceita esse nome como origem e redirect, o que não aceitaria com IP puro.
-- O Turnstile aceita o nome como hostname do widget.
-- **E-mail fica limitado.** Sem domínio verificado, o Resend só entrega a partir de `onboarding@resend.dev` e só para o dono da conta. Os outros envios falham, e a falha já é engolida e registrada em `src/lib/email`, sem derrubar a ação. Avisos de candidatura só chegam a todos depois do domínio.
-
-Trocar para o domínio definitivo é configuração, sem código:
-
-1. Apontar o DNS para a VM.
-2. Mudar `APP_DOMAIN` e `BETTER_AUTH_URL` em `/opt/vertice/.env` e a Variable `NEXT_PUBLIC_APP_URL` no GitHub. Ela entra no build, então a troca exige rodar a pipeline de novo.
-3. Cadastrar o domínio no Google OAuth, no Turnstile e no Resend, e trocar `EMAIL_FROM`.
-
-O passo a passo traz essa troca como seção própria.
+**Emenda de 2026-11-08:** o autor comprou `verticehub.online` antes do primeiro deploy, então o `sslip.io` saiu do plano. O registro `A` aponta para o IP reservado `144.22.241.118`, na Cloudflare com proxy desligado (§9). Google OAuth, Turnstile e Resend usam o domínio desde o início, e os e-mails chegam a todos os usuários.
 
 ### 5.8. Passo a passo (`docs/DEPLOY.md`)
 

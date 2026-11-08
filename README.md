@@ -46,7 +46,8 @@ pnpm db:seed
 `pnpm db:seed` precisa rodar antes da primeira requisição em qualquer ambiente, inclusive produção: as páginas públicas
 consultam a instituição padrão e respondem 500 enquanto ela não existir.
 
-Deploy da busca inteligente, nesta ordem:
+Produção: todo push em `main` passa pela pipeline e faz o deploy na OCI sozinho; veja `docs/DEPLOY.md`. A pipeline
+já roda a ordem abaixo. À mão (outro ambiente), a ordem do deploy da busca inteligente é:
 
 ```bash
 pnpm db:migrate         # antes do deploy: o código novo grava nas tabelas de busca
