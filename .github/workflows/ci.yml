@@ -12,6 +12,12 @@ on:
 permissions:
   contents: read
 
+# Runs da mesma ref em fila: sem isto, o publish de um push mais novo pode terminar antes e o deploy
+# do push anterior rodaria depois, pondo no ar uma versão mais antiga. Nunca cancela no meio.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   verify:
     runs-on: ubuntu-24.04

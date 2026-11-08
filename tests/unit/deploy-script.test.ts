@@ -106,6 +106,24 @@ describe("deploy.sh", () => {
     expect(r.docker).toEqual([]);
   });
 
+  it("rodado à mão (tag como argumento, sem SSH_ORIGINAL_COMMAND) não espera nem lê o stdin", () => {
+    withEnvFile();
+    const r = spawnSync("bash", [SCRIPT, NEW], {
+      input: "NODE_ENV=colado-por-engano\n",
+      encoding: "utf8",
+      env: {
+        NODE_ENV: "test",
+        PATH: `${bin}:/usr/bin:/bin`,
+        CALLS: calls,
+        VERTICE_DIR: dir,
+        HEALTH_URL: "https://exemplo.invalid/",
+        HEALTH_TIMEOUT: "1",
+      },
+    });
+    expect(r.status).toBe(0);
+    expect(readFileSync(join(dir, ".env"), "utf8")).toBe(VALID_ENV);
+  });
+
   it("nunca ecoa valores do .env", () => {
     const ok = run(NEW, { stdin: VALID_ENV });
     const bad = run(NEW, { stdin: `${VALID_ENV}DATABASE_URL=$(s3gr3d0)\n` });

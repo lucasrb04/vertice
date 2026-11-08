@@ -49,7 +49,9 @@ validate_env() {
   done <<<"$1"
 }
 
-if [[ ! -t 0 ]]; then
+# Só a pipeline (forced command, com SSH_ORIGINAL_COMMAND) manda o .env pelo stdin. Rodado à mão,
+# usa o .env que já está na VM e não fica esperando entrada.
+if [[ -n ${SSH_ORIGINAL_COMMAND+x} && ! -t 0 ]]; then
   incoming=$(cat)
   if [[ -n $incoming ]]; then
     validate_env "$incoming"

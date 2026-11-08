@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
@@ -5,6 +6,7 @@ const compose = readFileSync("deploy/compose.prod.yml", "utf8");
 const caddyfile = readFileSync("deploy/Caddyfile", "utf8");
 const envExample = readFileSync("deploy/.env.production.example", "utf8");
 const deployScript = readFileSync("deploy/bin/deploy.sh", "utf8");
+const workflow = readFileSync(".github/workflows/ci.yml", "utf8");
 
 /** Bloco YAML de um serviço: do `  nome:` até o próximo serviço de mesmo recuo ou seção de topo. */
 function service(name: string): string {
@@ -33,6 +35,13 @@ describe("compose de produção", () => {
   });
 });
 
+describe("pipeline", () => {
+  it("runs da mesma ref rodam em fila, para um deploy antigo nunca passar por cima de um novo", () => {
+    const topLevel = workflow.slice(0, workflow.indexOf("\njobs:"));
+    expect(topLevel).toMatch(/^concurrency:\n {2}group: ci-\$\{\{ github\.ref \}\}\n {2}cancel-in-progress: false$/m);
+  });
+});
+
 describe("Caddyfile", () => {
   it("sobrescreve X-Forwarded-For com o IP real da conexão", () => {
     expect(caddyfile).toContain("header_up X-Forwarded-For {remote_host}");
@@ -52,6 +61,16 @@ describe(".env de produção", () => {
         .split(/\s+/)
         .filter(Boolean) ?? [];
     expect(allowed.sort()).toEqual([...new Set(envKeys(envExample))].sort());
+  });
+
+  it("o exemplo é versionado (não cai no .gitignore de .env*)", () => {
+    const ignored = spawnSync("git", ["check-ignore", "-q", "deploy/.env.production.example"]);
+    expect(ignored.status).toBe(1);
+  });
+
+  it("o .env montado pela pipeline traz toda chave aceita pelo deploy.sh", () => {
+    const sent = [...workflow.matchAll(/"([A-Z][A-Z0-9_]*)=/g)].map((m) => m[1]);
+    expect([...new Set(sent)].sort()).toEqual([...new Set(envKeys(envExample))].sort());
   });
 
   it("o exemplo não traz nenhum valor real", () => {
