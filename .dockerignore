@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.env*
+coverage
+test-results
+playwright-report
+e2e
+tests
+reports
+research_notes
+CLAUDE-SECURITY-*
+docs
+.superpowers
+.github
+*.tsbuildinfo
