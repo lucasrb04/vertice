@@ -34,7 +34,7 @@ export default async function PublicarPage({ searchParams }: { searchParams: Pro
       ) : (
         <>
           <p className="mt-3 text-stone-600">Escolha o projeto do novo processo seletivo.</p>
-          <ul className="mt-8 divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
+          <ul className="mt-8 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
             {projects.map((p) => (
               <li key={p.id}>
                 <Link

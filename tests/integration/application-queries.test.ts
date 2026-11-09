@@ -25,7 +25,7 @@ async function apply(userId: string, opportunityId: string, createdAt: Date) {
 
 describe("listMyApplications", () => {
   it("lista só as do próprio usuário, mais recentes primeiro", async () => {
-    const project = await mkProject({ name: "Projeto Alfa" });
+    const project = await mkProject({ name: "Projeto Alfa", acronym: "ALFA", category: "PET" });
     const [a, b, c] = await Promise.all([
       mkOpportunity(project.id, { title: "Primeira" }),
       mkOpportunity(project.id, { title: "Segunda" }),
@@ -41,6 +41,8 @@ describe("listMyApplications", () => {
     expect(list.map((x) => x.opportunityTitle)).toEqual(["Segunda", "Primeira"]);
     expect(list[0]).toMatchObject({
       projectName: "Projeto Alfa",
+      projectAcronym: "ALFA",
+      projectCategory: "PET",
       opportunitySlug: b.slug,
       status: "APPLIED",
       appliedAt: at(2),

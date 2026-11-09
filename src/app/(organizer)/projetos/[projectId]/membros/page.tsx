@@ -12,7 +12,10 @@ export default async function MembersPage({ params }: { params: Promise<{ projec
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-12">
-      <Link href={`/projetos/${access.project.id}`} className="text-sm text-brand underline-offset-4 hover:underline">
+      <Link
+        href={`/projetos/${access.project.id}`}
+        className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2"
+      >
         ← {access.project.name}
       </Link>
       <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">Membros</h1>

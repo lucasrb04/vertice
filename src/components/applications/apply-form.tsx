@@ -103,13 +103,13 @@ export function ApplyForm({
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-6">
-      <section className="space-y-5 rounded-lg border border-stone-200 bg-white p-5">
-        <h2 className="text-base font-semibold tracking-tight text-stone-900">Seu perfil</h2>
+      <section className="space-y-5 rounded-2xl bg-surface p-5 shadow-card sm:p-7">
+        <h2 className="text-[1.2rem] font-bold text-ink">Seu perfil</h2>
         <div className="grid gap-5 sm:grid-cols-6">
           <Field label="Curso" errors={errorsFor(errors, "courseId")} className="sm:col-span-4">
             {(p) => (
               <Select value={courseId} onValueChange={edit("courseId", setCourseId)}>
-                <SelectTrigger {...p} className="w-full bg-white">
+                <SelectTrigger {...p} className="w-full">
                   <SelectValue placeholder="Escolha o curso" />
                 </SelectTrigger>
                 <SelectContent>
@@ -158,7 +158,7 @@ export function ApplyForm({
         {notices.length > 0 && (
           <ul
             role="status"
-            className="space-y-1 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+            className="space-y-1 rounded-xl border border-urgent-ink/25 bg-urgent-soft px-3.5 py-2.5 text-sm text-urgent-ink"
           >
             {notices.map((n) => (
               <li key={n}>{n} Você ainda pode se candidatar; a equipe decide.</li>
@@ -168,7 +168,7 @@ export function ApplyForm({
       </section>
 
       {question && (
-        <section className="rounded-lg border border-stone-200 bg-white p-5">
+        <section className="rounded-2xl bg-surface p-5 shadow-card sm:p-7">
           <Field
             label={question}
             hint={
@@ -191,9 +191,7 @@ export function ApplyForm({
         </section>
       )}
 
-      <p className="text-sm text-stone-600">
-        A equipe do projeto verá seu nome, e-mail, curso, período, link e resposta.
-      </p>
+      <p className="text-sm text-ink-2">A equipe do projeto verá seu nome, e-mail, curso, período, link e resposta.</p>
       <FormMessage message={message} />
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Enviando…" : "Enviar candidatura"}

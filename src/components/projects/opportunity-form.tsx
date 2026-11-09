@@ -107,7 +107,7 @@ const KNOWN_FIELDS = new Set<string>([...Object.keys(toDraft(undefined)), "schol
 
 function Block({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <section className="rounded-lg border border-stone-200 bg-white p-5">
+    <section className="rounded-2xl bg-surface shadow-card p-5">
       <h2 className="text-base font-semibold tracking-tight text-stone-900">{title}</h2>
       {description && <p className="mt-1 text-sm text-stone-600">{description}</p>}
       <div className="mt-4 grid gap-5 sm:grid-cols-6">{children}</div>
@@ -117,7 +117,7 @@ function Block({ title, description, children }: { title: string; description?: 
 
 function OptionalBlock({ title, open, children }: { title: string; open: boolean; children: ReactNode }) {
   return (
-    <details open={open || undefined} className="group rounded-lg border border-stone-200 bg-white">
+    <details open={open || undefined} className="group rounded-2xl bg-surface shadow-card">
       <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 select-none">
         <span className="text-base font-semibold tracking-tight text-stone-900">{title}</span>
         <span className="text-xs text-stone-500">
@@ -365,7 +365,7 @@ export function OpportunityForm({
             </Label>
           </div>
           {hasErr("internalSelectionEnabled") && (
-            <p id="internal-selection-error" className="text-sm text-red-700">
+            <p id="internal-selection-error" className="text-sm text-danger-ink">
               {err("internalSelectionEnabled").join(" ")}
             </p>
           )}
@@ -414,7 +414,7 @@ export function OpportunityForm({
             ))}
           </div>
           {err("scholarshipType").length > 0 && (
-            <p className="text-sm text-red-700">{err("scholarshipType").join(" ")}</p>
+            <p className="text-sm text-danger-ink">{err("scholarshipType").join(" ")}</p>
           )}
         </fieldset>
         <Field
@@ -549,7 +549,7 @@ export function OpportunityForm({
             </ul>
           )}
           {err("targetCourseIds").length > 0 && (
-            <p className="text-sm text-red-700">{err("targetCourseIds").join(" ")}</p>
+            <p className="text-sm text-danger-ink">{err("targetCourseIds").join(" ")}</p>
           )}
         </fieldset>
         <Field label="Período mínimo" optional errors={err("minSemester")} className="sm:col-span-2">
@@ -596,7 +596,7 @@ export function OpportunityForm({
 
       <OptionalBlock title="Tags" open={hasErr("tags")}>
         {(errors.tags ?? []).length > 0 && (
-          <ul role="alert" className="list-disc pl-5 text-sm text-red-700 sm:col-span-6">
+          <ul role="alert" className="list-disc pl-5 text-sm text-danger-ink sm:col-span-6">
             {(errors.tags ?? []).map((m, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
               <li key={i}>{m}</li>
@@ -621,7 +621,7 @@ export function OpportunityForm({
       <div className="space-y-3">
         <FormMessage message={message} />
         {otherErrors.length > 0 && (
-          <ul className="list-disc pl-5 text-sm text-red-700">
+          <ul className="list-disc pl-5 text-sm text-danger-ink">
             {otherErrors.map((m, i) => (
               // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
               <li key={i}>{m}</li>

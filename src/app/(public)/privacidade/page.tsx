@@ -30,7 +30,10 @@ function List({ items }: { items: React.ReactNode[] }) {
 }
 
 const ContactLink = () => (
-  <a href={`mailto:${CONTACT_EMAIL}`} className="font-medium text-brand underline-offset-4 hover:underline">
+  <a
+    href={`mailto:${CONTACT_EMAIL}`}
+    className="font-semibold text-ink underline underline-offset-4 hover:decoration-2"
+  >
     {CONTACT_EMAIL}
   </a>
 );

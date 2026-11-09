@@ -71,7 +71,10 @@ export function PublishNotice({ kind, title, publicPath, publicUrl, shareText }:
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Link href={publicPath} className="text-sm font-medium text-brand underline-offset-4 hover:underline">
+        <Link
+          href={publicPath}
+          className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2"
+        >
           Ver como o aluno vê
         </Link>
         <p role="status" className="text-sm text-stone-700">

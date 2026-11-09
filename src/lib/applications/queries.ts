@@ -2,6 +2,7 @@ import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/db";
 import { applicationEvents, applications, opportunities, projectMembers, projects, studentProfiles } from "@/db/schema";
 import type { AuthUser } from "@/lib/auth/guards";
+import type { ProjectCategory } from "@/lib/projects/labels";
 import { type ApplicationStatus, IN_PROGRESS_STATUSES } from "./labels";
 
 /** Estado do aluno diante de um processo, para a página de candidatura. */
@@ -41,6 +42,8 @@ export type MyApplication = {
   /** Nulo quando o processo ou o projeto está oculto: a página pública devolveria 404. */
   opportunitySlug: string | null;
   projectName: string;
+  projectAcronym: string | null;
+  projectCategory: ProjectCategory;
   /** Projeto arquivado com a candidatura ainda em andamento: o aluno não terá resultado por aqui. */
   projectArchived: boolean;
   status: ApplicationStatus;
@@ -57,6 +60,8 @@ export async function listMyApplications(user: AuthUser): Promise<MyApplication[
       opportunitySlug: opportunities.slug,
       opportunityStatus: opportunities.status,
       projectName: projects.name,
+      projectAcronym: projects.acronym,
+      projectCategory: projects.category,
       projectStatus: projects.status,
       status: applications.status,
       appliedAt: applications.createdAt,

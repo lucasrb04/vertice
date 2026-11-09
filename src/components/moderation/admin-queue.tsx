@@ -45,7 +45,7 @@ function Heading({ row }: { row: TargetRow }) {
       <Link
         href={`/admin/conteudo/${CONTENT_SEGMENTS[row.targetType]}/${row.targetId}`}
         aria-label={`Ver conteúdo: ${row.name}`}
-        className="mt-1 inline-block text-sm font-medium text-brand underline-offset-4 hover:underline"
+        className="mt-1 inline-block text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2"
       >
         Ver conteúdo
       </Link>
@@ -71,7 +71,7 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
           <p
             ref={noticeRef}
             tabIndex={-1}
-            className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 outline-none"
+            className="rounded-xl border border-money-ink/25 bg-money-soft px-3 py-2 text-sm text-money-ink outline-none"
           >
             {notice}
           </p>
@@ -83,16 +83,13 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
           Fila de denúncias
         </h2>
         {queue.length === 0 ? (
-          <p className="rounded-lg border border-stone-200 bg-white px-4 py-6 text-sm text-stone-600">
+          <p className="rounded-2xl bg-surface shadow-card px-4 py-6 text-sm text-stone-600">
             Nenhuma denúncia pendente.
           </p>
         ) : (
           <ul className="space-y-3">
             {queue.map((item) => (
-              <li
-                key={`${item.targetType}:${item.targetId}`}
-                className="rounded-lg border border-stone-200 bg-white p-4"
-              >
+              <li key={`${item.targetType}:${item.targetId}`} className="rounded-2xl bg-surface shadow-card p-4">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <Heading row={item} />
                   <p className="tabular-nums text-sm text-stone-900">
@@ -160,7 +157,7 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
               {results.map((row) => (
                 <li
                   key={`${row.targetType}:${row.targetId}`}
-                  className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-stone-200 bg-white p-4"
+                  className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface shadow-card p-4"
                 >
                   <Heading row={row} />
                   <Actions row={row} onDone={handleDone} />

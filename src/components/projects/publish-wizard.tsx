@@ -96,7 +96,7 @@ export function PublishWizard({ courses, siteKey, bypass }: { courses: Course[];
       <StepIndicator step={step} />
 
       <form onSubmit={goToStep2} noValidate hidden={step !== 1} className="space-y-4">
-        <section className="rounded-lg border border-stone-200 bg-white p-5">
+        <section className="rounded-2xl bg-surface shadow-card p-5">
           <ProjectFields values={project} onChange={setProject} errors={projectErrors} />
         </section>
         <FormMessage message={projectMessage} />

@@ -23,7 +23,7 @@ export function SignInButton({ next = "/painel" }: { next?: string }) {
   }
 
   return (
-    <Button type="button" size="lg" onClick={handleClick} disabled={pending}>
+    <Button type="button" size="lg" onClick={handleClick} disabled={pending} className="w-full">
       Entrar com Google
     </Button>
   );

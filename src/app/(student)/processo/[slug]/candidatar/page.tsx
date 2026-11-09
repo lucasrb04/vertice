@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ApplyForm } from "@/components/applications/apply-form";
+import { Shell } from "@/components/layout/shell";
 import { Button } from "@/components/ui/button";
+import { ProjectTile } from "@/components/vitrine/project-tile";
 import { getApplyContext } from "@/lib/applications/queries";
 import { requireAuthPage } from "@/lib/auth/guards";
 import { opensInFuture } from "@/lib/opportunities/status";
@@ -16,12 +18,15 @@ export const dynamic = "force-dynamic";
 
 function Notice({ title, slug, children }: { title: string; slug: string; children?: React.ReactNode }) {
   return (
-    <div className="mt-6 space-y-3 rounded-lg border border-stone-300 bg-stone-100 p-4 text-sm text-stone-800">
-      <p role="status" className="font-medium text-stone-900">
+    <div className="mt-6 space-y-3 rounded-2xl bg-surface p-5 text-ink-2 shadow-card">
+      <p role="status" className="text-[1.05rem] font-bold text-ink">
         {title}
       </p>
       {children}
-      <Link href={`/processo/${slug}`} className="block font-medium text-brand underline-offset-4 hover:underline">
+      <Link
+        href={`/processo/${slug}`}
+        className="block font-semibold text-ink underline underline-offset-4 hover:decoration-2"
+      >
         Voltar ao processo
       </Link>
     </div>
@@ -58,11 +63,16 @@ export default async function CandidatarPage({ params }: { params: Promise<{ slu
 
   const p = ctx.profile;
   return (
-    <section className="mx-auto max-w-2xl px-4 py-10">
-      <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">{project.name}</p>
-      <h1 className="mt-2 font-heading text-2xl font-bold tracking-tight [overflow-wrap:anywhere] text-stone-900">
-        Candidatar-se: {opportunity.title}
-      </h1>
+    <Shell className="mt-8 max-w-[760px]">
+      <header className="flex gap-4">
+        <ProjectTile category={project.category} name={project.name} acronym={project.acronym} />
+        <div className="min-w-0">
+          <h1 className="text-[1.6rem] leading-tight font-extrabold [overflow-wrap:anywhere] text-ink sm:text-[1.75rem]">
+            Candidatar-se: {opportunity.title}
+          </h1>
+          <p className="mt-1 [overflow-wrap:anywhere] text-ink-2">{project.name}</p>
+        </div>
+      </header>
       {blocked ?? (
         <div className="mt-6">
           <ApplyForm
@@ -82,6 +92,6 @@ export default async function CandidatarPage({ params }: { params: Promise<{ slu
           />
         </div>
       )}
-    </section>
+    </Shell>
   );
 }

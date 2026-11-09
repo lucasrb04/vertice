@@ -153,7 +153,7 @@ export function TagCombobox({
         )}
       </Command>
       {errors.length > 0 && (
-        <p id={errorId} className="text-sm text-red-700">
+        <p id={errorId} className="text-sm text-danger-ink">
           {errors.join(" ")}
         </p>
       )}

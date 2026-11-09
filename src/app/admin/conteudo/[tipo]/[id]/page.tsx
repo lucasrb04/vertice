@@ -20,7 +20,7 @@ export default async function ConteudoModeradoPage({ params }: { params: Promise
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-16">
-      <Link href="/admin" className="text-sm font-medium text-brand underline-offset-4 hover:underline">
+      <Link href="/admin" className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2">
         Voltar à moderação
       </Link>
       <h1 className="mt-6 font-heading text-2xl font-bold tracking-tight [overflow-wrap:anywhere] text-stone-900">
@@ -41,7 +41,10 @@ export default async function ConteudoModeradoPage({ params }: { params: Promise
       ) : (
         content.publicPath && (
           <p className="mt-6 text-sm">
-            <Link href={content.publicPath} className="font-medium text-brand underline-offset-4 hover:underline">
+            <Link
+              href={content.publicPath}
+              className="font-semibold text-ink underline underline-offset-4 hover:decoration-2"
+            >
               Ver página pública
             </Link>
           </p>
@@ -49,7 +52,7 @@ export default async function ConteudoModeradoPage({ params }: { params: Promise
       )}
 
       {content.fields.length > 0 && (
-        <dl className="mt-8 divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
+        <dl className="mt-8 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
           {content.fields.map((f) => (
             <div key={f.label} className="grid gap-1 px-4 py-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
               <dt className="text-sm text-stone-600">{f.label}</dt>
@@ -62,7 +65,7 @@ export default async function ConteudoModeradoPage({ params }: { params: Promise
 
       {content.description && (
         <section aria-labelledby="descricao" className="mt-8">
-          <h2 id="descricao" className="text-lg font-semibold tracking-tight text-stone-900">
+          <h2 id="descricao" className="text-[1.2rem] font-bold text-ink">
             Descrição
           </h2>
           <div className="mt-3">

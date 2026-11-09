@@ -60,10 +60,7 @@ export function ProjectPanel({
       </header>
 
       {hidden && (
-        <div
-          role="status"
-          className="space-y-1 rounded-lg border border-stone-300 bg-stone-100 px-4 py-3 text-sm text-stone-700"
-        >
+        <div role="status" className="space-y-1 rounded-2xl bg-surface-2 shadow-card px-4 py-3 text-sm text-stone-700">
           <p className="font-medium text-stone-900">Oculto pela moderação</p>
           {hiddenReason && <p>{hiddenReason}</p>}
           <p>O painel fica disponível só para leitura e nenhum processo recebe inscrições.</p>
@@ -71,7 +68,7 @@ export function ProjectPanel({
       )}
 
       {!active && !hidden && (
-        <p role="status" className="rounded-lg border border-stone-300 bg-stone-100 px-4 py-3 text-sm text-stone-700">
+        <p role="status" className="rounded-2xl bg-surface-2 shadow-card px-4 py-3 text-sm text-stone-700">
           Projeto {PROJECT_STATUS_LABELS[project.status].toLowerCase()}: o painel fica disponível só para leitura e
           nenhum processo recebe inscrições.
         </p>
@@ -100,13 +97,13 @@ export function ProjectPanel({
       </nav>
 
       <section aria-labelledby="abertos">
-        <h2 id="abertos" className="text-lg font-semibold tracking-tight text-stone-900">
+        <h2 id="abertos" className="text-[1.2rem] font-bold text-ink">
           Abertos <span className="tabular-nums text-sm font-normal text-stone-500">{open.length}</span>
         </h2>
         {open.length === 0 ? (
           <p className="mt-3 text-sm text-stone-600">Nenhum processo aberto.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
+          <ul className="mt-3 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
             {open.map((o) => (
               <OpportunityRow
                 key={o.id}
@@ -127,7 +124,7 @@ export function ProjectPanel({
           // Sem encerrados não há o que abrir: a seção já diz isso.
           <>
             <div className="flex items-center gap-2">
-              <h2 id="encerrados" className="text-lg font-semibold tracking-tight text-stone-900">
+              <h2 id="encerrados" className="text-[1.2rem] font-bold text-ink">
                 Encerrados
               </h2>
               <span className="tabular-nums text-sm text-stone-500">0</span>
@@ -137,7 +134,7 @@ export function ProjectPanel({
         ) : (
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center gap-2 select-none">
-              <h2 id="encerrados" className="text-lg font-semibold tracking-tight text-stone-900">
+              <h2 id="encerrados" className="text-[1.2rem] font-bold text-ink">
                 Encerrados
               </h2>
               <span className="tabular-nums text-sm text-stone-500">{closed.length}</span>
@@ -148,7 +145,7 @@ export function ProjectPanel({
                 −
               </span>
             </summary>
-            <ul className="mt-3 divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
+            <ul className="mt-3 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
               {closed.map((o) => (
                 <OpportunityRow
                   key={o.id}

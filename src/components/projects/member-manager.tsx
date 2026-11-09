@@ -55,7 +55,7 @@ function AddMemberForm({ projectId }: { projectId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4 rounded-lg border border-stone-200 bg-white p-5">
+    <form onSubmit={handleSubmit} noValidate className="space-y-4 rounded-2xl bg-surface shadow-card p-5">
       <h2 className="text-base font-semibold tracking-tight text-stone-900">Adicionar membro</h2>
       <div className="grid gap-5 sm:grid-cols-6">
         <Field
@@ -132,7 +132,7 @@ function RoleSelect({ projectId, member }: { projectId: string; member: MemberIt
         </SelectContent>
       </Select>
       {message && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger-ink">
           {message}
         </p>
       )}
@@ -158,10 +158,10 @@ export function MemberManager({
   return (
     <div className="space-y-6">
       <section aria-labelledby="membros-do-projeto">
-        <h2 id="membros-do-projeto" className="text-lg font-semibold tracking-tight text-stone-900">
+        <h2 id="membros-do-projeto" className="text-[1.2rem] font-bold text-ink">
           Membros do projeto <span className="tabular-nums text-sm font-normal text-stone-500">{members.length}</span>
         </h2>
-        <ul className="mt-3 divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
+        <ul className="mt-3 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
           {members.map((m) => {
             const editable = canManage && m.role !== "OWNER";
             return (

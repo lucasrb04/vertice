@@ -33,10 +33,10 @@ export function Field({
   const errorId = `${id}-error`;
   const describedBy = [hint ? hintId : null, errors.length > 0 ? errorId : null].filter(Boolean).join(" ");
   return (
-    <div className={cn("space-y-1.5", highlight && "rounded-lg border border-brand/30 bg-brand/5 p-3", className)}>
-      <Label htmlFor={id} className="text-stone-800">
+    <div className={cn("space-y-1.5", highlight && "rounded-xl border border-ipe bg-ipe-soft p-3", className)}>
+      <Label htmlFor={id} className="text-[0.95rem] font-semibold text-ink">
         {label}
-        {optional && <span className="text-xs font-normal text-stone-500">opcional</span>}
+        {optional && <span className="text-sm font-normal text-ink-3">opcional</span>}
       </Label>
       {children({
         id,
@@ -44,12 +44,12 @@ export function Field({
         "aria-describedby": describedBy || undefined,
       })}
       {hint && (
-        <p id={hintId} className="text-xs text-stone-500">
+        <p id={hintId} className="text-sm text-ink-3">
           {hint}
         </p>
       )}
       {errors.length > 0 && (
-        <p id={errorId} className="text-sm text-red-700">
+        <p id={errorId} className="text-sm font-medium text-danger-ink">
           {errors.join(" ")}
         </p>
       )}
@@ -60,7 +60,10 @@ export function Field({
 export function FormMessage({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+    <p
+      role="alert"
+      className="rounded-xl border border-danger-ink/25 bg-danger-soft px-3.5 py-2.5 text-sm text-danger-ink"
+    >
       {message}
     </p>
   );

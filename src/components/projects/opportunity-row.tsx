@@ -51,7 +51,7 @@ export function OpportunityRow({
             {o.hiddenReason && <p className="[overflow-wrap:anywhere] text-stone-600">{o.hiddenReason}</p>}
           </div>
         ) : (
-          <p className={cn("tabular-nums text-xs", closingSoon ? "text-amber-700" : "text-stone-600")}>
+          <p className={cn("tabular-nums text-xs", closingSoon ? "text-urgent-ink" : "text-stone-600")}>
             {isOpen ? deadlineLabel(o.deadlineAt) : o.closedOn ? `Encerrado em ${formatDay(o.closedOn)}` : "Encerrado"}
           </p>
         )}

@@ -28,13 +28,16 @@ export default async function CandidatosPage({
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-12">
-      <Link href={`/projetos/${board.project.id}`} className="text-sm text-brand underline-offset-4 hover:underline">
+      <Link
+        href={`/projetos/${board.project.id}`}
+        className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2"
+      >
         ← {board.project.name}
       </Link>
       <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">Candidatos</h1>
       <p className="mt-1 [overflow-wrap:anywhere] text-stone-600">{board.opportunity.title}</p>
       {board.readOnlyReason && (
-        <p role="status" className="mt-4 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm text-stone-700">
+        <p role="status" className="mt-4 rounded-2xl bg-surface shadow-card px-3 py-2 text-sm text-stone-700">
           {board.readOnlyReason}
         </p>
       )}

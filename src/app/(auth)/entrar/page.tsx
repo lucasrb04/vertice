@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { BrandMark } from "@/components/layout/brand";
 import { SignInButton } from "@/components/layout/sign-in-button";
 import { UnauthorizedError } from "@/lib/auth/errors";
 import { resolveActiveUser } from "@/lib/auth/guards";
@@ -47,22 +48,21 @@ export default async function EntrarPage({
   const context = loginContext(next, await applyTitle(next));
 
   return (
-    <section className="mx-auto max-w-md px-4 py-16">
-      <div className="rounded-lg border border-stone-200 bg-white p-6">
-        <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-900">Entrar no Vértice</h1>
-        {context && <p className="mt-3 [overflow-wrap:anywhere] text-stone-800">{context}</p>}
-        <p className="mt-2 text-sm text-stone-600">
-          Use sua conta Google @unifei.edu.br. O primeiro acesso cria a sua conta.
-        </p>
+    <section className="mx-auto max-w-[480px] px-4 pt-10 sm:pt-16">
+      <div className="rounded-[20px] bg-surface p-6 shadow-card sm:p-9">
+        <BrandMark className="size-12" />
+        <h1 className="mt-5 text-[1.75rem] leading-tight font-extrabold text-ink">Entrar no Vértice</h1>
+        {context && <p className="mt-3 text-[1.05rem] [overflow-wrap:anywhere] text-ink">{context}</p>}
+        <p className="mt-2 text-ink-2">Use sua conta Google @unifei.edu.br. O primeiro acesso cria a sua conta.</p>
         {message ? (
           <p
             role="alert"
-            className="mt-4 rounded-md border border-stone-300 bg-stone-50 px-3 py-2 text-sm text-stone-800"
+            className="mt-4 rounded-xl border border-danger-ink/25 bg-danger-soft px-3.5 py-2.5 text-sm text-danger-ink"
           >
             {message}
           </p>
         ) : null}
-        <div className="mt-6">
+        <div className="mt-7">
           <SignInButton next={next} />
         </div>
       </div>
