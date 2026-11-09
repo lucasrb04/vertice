@@ -27,17 +27,17 @@ function Avatar({ user }: { user: UserMenuUser }) {
       <img
         src={user.image}
         alt=""
-        width={28}
-        height={28}
+        width={44}
+        height={44}
         referrerPolicy="no-referrer"
-        className="size-7 shrink-0 rounded-full border border-stone-200 object-cover"
+        className="size-10 shrink-0 rounded-full object-cover sm:size-11"
       />
     );
   }
   return (
     <span
       aria-hidden="true"
-      className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand tabular-nums text-[11px] font-semibold text-white"
+      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-rosa-soft text-sm font-bold text-rosa-ink sm:size-11"
     >
       {initials(user.name)}
     </span>
@@ -55,15 +55,14 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
       <DropdownMenu>
         <DropdownMenuTrigger
           aria-label={`Menu da conta de ${user.name}`}
-          className="flex min-w-0 items-center gap-2 rounded-full border border-stone-200 bg-stone-50 py-0.5 pr-1 pl-0.5 text-sm text-stone-700 hover:bg-stone-100 focus-visible:ring-2 focus-visible:ring-brand focus-visible:outline-none md:pr-3"
+          className="flex shrink-0 items-center rounded-full transition-shadow hover:shadow-[0_0_0_3px_var(--line)]"
         >
           <Avatar user={user} />
-          <span className="hidden max-w-40 truncate md:inline">{user.name}</span>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel className="font-normal">
-            <span className="block truncate font-medium text-stone-900">{user.name}</span>
-            <span className="block truncate tabular-nums text-xs text-stone-500">{user.email}</span>
+            <span className="block truncate font-semibold text-ink">{user.name}</span>
+            <span className="block truncate text-sm text-ink-3">{user.email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {userMenuItems(user).map((item) => (

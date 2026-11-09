@@ -44,16 +44,15 @@ test("rota inexistente usa a mesma página 404 de /admin", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Página não encontrada" })).toBeVisible();
 });
 
-test("fontes do Design System aplicadas por font-heading, font-sans e font-mono", async ({ page }) => {
+test("fontes da identidade Ipê: Bricolage nos títulos e Figtree no texto", async ({ page }) => {
   await page.goto("/rota-que-nao-existe");
   const family = (selector: string) =>
     page
       .locator(selector)
       .first()
       .evaluate((el) => getComputedStyle(el).fontFamily);
-  expect(await family("h1")).toMatch(/Plus Jakarta Sans/);
-  expect(await family("body")).toMatch(/Inter/);
-  expect(await family(".font-mono")).toMatch(/JetBrains Mono/);
+  expect(await family("h1")).toMatch(/Bricolage Grotesque/);
+  expect(await family("body")).toMatch(/Figtree/);
 });
 
 test("admin inicial vê o portal", async ({ page }) => {

@@ -1,14 +1,21 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/layout/brand";
+import { Shell } from "@/components/layout/shell";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-stone-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-stone-600 sm:flex-row sm:justify-between">
-        <p>Vértice — vagas e projetos da UNIFEI, Campus Itajubá.</p>
-        <Link href="/privacidade" className="text-stone-600 underline-offset-4 hover:text-stone-900 hover:underline">
-          Política de Privacidade
-        </Link>
-      </div>
+    <footer className="mt-16 pb-8">
+      <Shell>
+        <div className="flex flex-col gap-3 border-t border-line pt-6 text-sm text-ink-2 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-center gap-2.5">
+            <BrandMark className="size-5" />
+            Vértice — vagas e projetos da UNIFEI, Campus Itajubá.
+          </p>
+          <Link href="/privacidade" className="font-medium text-ink-2 underline-offset-4 hover:text-ink hover:underline">
+            Política de Privacidade
+          </Link>
+        </div>
+      </Shell>
     </footer>
   );
 }
