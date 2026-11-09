@@ -1,5 +1,6 @@
 "use client";
 
+import { Search } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,11 +36,15 @@ export function SearchBox({
   }, [autoFocusShortcut]);
 
   const Wrapper = embedded ? "div" : "form";
-  const wrapperProps = embedded ? { role: "search" } : { action: "/processos", method: "get", role: "search" };
+  const wrapperProps = embedded ? { role: "search" } : { action: "/", method: "get", role: "search" };
 
   return (
-    <Wrapper {...wrapperProps} className="flex flex-col gap-2 sm:flex-row">
+    <Wrapper {...wrapperProps} className="flex gap-2.5">
       <div className="relative min-w-0 flex-1">
+        <Search
+          aria-hidden
+          className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-ink-2"
+        />
         <Input
           ref={inputRef}
           type="search"
@@ -48,19 +53,19 @@ export function SearchBox({
           maxLength={100}
           enterKeyHint="search"
           aria-label="Buscar processos"
-          placeholder="Busque por projeto, área ou habilidade"
-          className="h-11 bg-white pr-10 pl-3 placeholder:text-sm placeholder:text-stone-500"
+          placeholder="Busque por tema, projeto ou habilidade"
+          className="h-[54px] rounded-[14px] border-transparent pr-12 pl-12 text-[1.02rem] shadow-card hover:border-transparent focus-visible:border-ink [&::-webkit-search-cancel-button]:hidden"
         />
         {autoFocusShortcut && (
           <kbd
             aria-hidden
-            className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded border border-stone-200 bg-stone-50 px-1.5 tabular-nums text-xs text-stone-500 sm:block"
+            className="pointer-events-none absolute top-1/2 right-4 hidden -translate-y-1/2 rounded-md border border-line bg-surface-2 px-1.5 text-xs text-ink-3 sm:block"
           >
             /
           </kbd>
         )}
       </div>
-      <Button type="submit" className="h-11 px-5">
+      <Button type="submit" size="lg" className="h-[54px] rounded-[14px] px-5 max-sm:hidden">
         Buscar
       </Button>
     </Wrapper>

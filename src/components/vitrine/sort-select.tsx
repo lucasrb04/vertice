@@ -20,7 +20,7 @@ export function SortSelect({ value, options }: { value: string; options: { value
       name="sort"
       value={current}
       onChange={(e) => setCurrent(e.target.value)}
-      className="h-9 min-w-0 rounded-md border border-stone-200 bg-white px-2 text-sm text-stone-800"
+      className="h-11 w-full min-w-0 rounded-xl border border-transparent bg-surface px-3 text-base font-medium text-ink shadow-card hover:border-line-strong sm:w-auto sm:min-w-[200px]"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value}>

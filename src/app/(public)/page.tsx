@@ -1,86 +1,154 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { HomeRow } from "@/components/vitrine/home-row";
+import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { after } from "next/server";
+import { Shell } from "@/components/layout/shell";
+import { AutoSubmit } from "@/components/vitrine/auto-submit";
+import { CorrectionNotice } from "@/components/vitrine/correction-notice";
+import { EmptyResults } from "@/components/vitrine/empty-results";
+import { FilterSheetProvider, FilterSheetTrigger } from "@/components/vitrine/filter-sheet";
+import { activeChips, Filters } from "@/components/vitrine/filters";
+import { OpportunityCard } from "@/components/vitrine/opportunity-card";
+import { Pagination } from "@/components/vitrine/pagination";
+import { PublishTip } from "@/components/vitrine/publish-tip";
 import { SearchBox } from "@/components/vitrine/search-box";
-import type { ProjectCategory } from "@/lib/projects/labels";
-import { CATEGORY_LABELS } from "@/lib/public/labels";
-import { listHomeRows } from "@/lib/public/queries";
+import { SituationTabs } from "@/components/vitrine/situation-tabs";
+import { SortSelect } from "@/components/vitrine/sort-select";
+import { PUBLISH_TIP_COOKIE } from "@/lib/public/publish-tip";
+import { listFilterOptions, searchOpportunities } from "@/lib/public/queries";
+import { defaultSort, parseVitrineParams, type VitrineSort, vitrineHref } from "@/lib/public/search-params";
+import { recordZeroResult, shouldLogZeroResult } from "@/lib/search/zero-results";
 import { getDefaultInstitution } from "@/lib/tenant";
-import { PROJECT_CATEGORIES } from "@/lib/validation/project";
 
 // Prazos e contagens mudam com o relógio: nunca pré-renderizar.
 export const dynamic = "force-dynamic";
 
-// Mesma ordem dos filtros; "Outro" não vira atalho.
-const CATEGORY_SHORTCUTS: ProjectCategory[] = PROJECT_CATEGORIES.filter((c) => c !== "OTHER");
+export const metadata: Metadata = { title: "Vértice — processos seletivos da UNIFEI" };
 
-export default async function Home() {
+const FORM_ID = "filtros-processos";
+
+const SORT_LABELS: Record<VitrineSort, string> = {
+  relevance: "Relevância",
+  recent: "Mais recentes",
+  deadline: "Prazo mais próximo",
+  popular: "Mais procurados",
+};
+
+const SORT_SUMMARY: Record<VitrineSort, string> = {
+  relevance: "mais relevantes primeiro",
+  recent: "mais recentes primeiro",
+  deadline: "prazo mais próximo primeiro",
+  popular: "mais procurados primeiro",
+};
+
+/**
+ * A página inicial é a lista de processos (D51): painel de filtros, abas de situação e cards. Sem filtros,
+ * todos os abertos, do último publicado para o mais antigo.
+ */
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = parseVitrineParams(await searchParams);
   const institution = await getDefaultInstitution();
-  const { openCount, recent, closing, popular } = await listHomeRows(institution.id);
+  const [result, options, cookieStore] = await Promise.all([
+    searchOpportunities(institution.id, params),
+    listFilterOptions(institution.id),
+    cookies(),
+  ]);
+  const { items, total, page, pageCount, correction, situationCounts, categoryCounts } = result;
+
+  // Agregado por termo e dia, sem usuário nem IP; a página não espera a gravação.
+  if (shouldLogZeroResult(params, total)) {
+    after(async () => {
+      try {
+        await recordZeroResult(institution.id, params.q);
+      } catch (error) {
+        // Erros do Drizzle trazem os parâmetros (o termo): registra só o código do Postgres.
+        const code = (error as { cause?: { code?: string } } | null)?.cause?.code;
+        console.error("[busca] falha ao registrar busca sem resultado", code ?? "");
+      }
+    });
+  }
+
+  const sortOptions: VitrineSort[] = params.q
+    ? ["relevance", "recent", "deadline", "popular"]
+    : ["recent", "deadline", "popular"];
+  const sortValue = params.sort === "relevance" && !params.q ? defaultSort("") : params.sort;
+  // O padrão vai como valor vazio: assim, buscar a partir de uma lista sem `q` cai em "Relevância".
+  const sortParam = (s: VitrineSort) => (s === defaultSort(params.q) ? "" : s);
+
+  const chips = activeChips(params, options);
+  const filterCount = chips.filter((c) => c.key !== "q").length;
+  const narrowed = chips.length > 0 || !!params.situation;
+  const headline = narrowed
+    ? `${total} ${total === 1 ? "processo encontrado" : "processos encontrados"}`
+    : `${total} ${total === 1 ? "processo aberto" : "processos abertos"}`;
+  const emptyKind =
+    situationCounts.all === 0 && chips.length === 0
+      ? "none"
+      : params.situation && situationCounts.all > 0
+        ? "tab"
+        : "filtered";
+  const selectedTags = params.tags.map((slug) => options.tags.find((t) => t.slug === slug)?.name ?? slug);
+  const showTip = cookieStore.get(PUBLISH_TIP_COOKIE)?.value !== "0";
 
   return (
-    <>
-      <section className="border-b border-stone-200 bg-white">
-        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:py-12 lg:grid-cols-[minmax(0,1fr)_17rem] lg:gap-14">
-          <div>
-            <h1 className="max-w-3xl text-[1.75rem] leading-[1.15] font-bold tracking-[-0.02em] text-balance [word-spacing:0.06em] text-stone-900 sm:text-[2.5rem]">
-              Encontre o projeto que vai impulsionar sua trajetória.
-            </h1>
-            <p className="mt-3 max-w-2xl text-pretty text-stone-600">
-              Iniciação científica, extensão, equipes de competição, PETs e empresas juniores da UNIFEI em um só lugar,
-              com prazos e requisitos. Para ver os processos e abrir os editais, não precisa de conta.
-            </p>
-            <div className="mt-6 max-w-2xl">
-              <SearchBox autoFocusShortcut />
+    <Shell className="mt-5 sm:mt-6">
+      <form id={FORM_ID} method="get" action="/">
+        <AutoSubmit formId={FORM_ID} />
+        {/* Filtros e ordenação preservam a escolha de buscar exatamente; o AutoSubmit a descarta ao mudar `q`. */}
+        {params.exact ? <input type="hidden" name="corrigir" value="0" /> : null}
+        {params.situation ? <input type="hidden" name="situacao" value={params.situation} /> : null}
+        <FilterSheetProvider>
+          <div className="grid items-start gap-5 min-[1100px]:grid-cols-[340px_minmax(0,1fr)] min-[1100px]:gap-7">
+            <Filters params={params} options={options} categoryCounts={categoryCounts} total={total} />
+
+            <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-[18px]">
+              {showTip && <PublishTip />}
+              <SearchBox embedded autoFocusShortcut defaultValue={params.q} />
+
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                <SituationTabs params={params} counts={situationCounts} />
+                <FilterSheetTrigger activeCount={filterCount} />
+                <div className="flex min-w-0 flex-1 items-center justify-end gap-2">
+                  <label htmlFor="ordenacao" className="text-[0.95rem] whitespace-nowrap text-ink-2 max-sm:sr-only">
+                    Ordenar por
+                  </label>
+                  <SortSelect
+                    value={sortParam(sortValue)}
+                    options={sortOptions.map((s) => ({ value: sortParam(s), label: SORT_LABELS[s] }))}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-baseline gap-x-2 text-[1.02rem] text-ink-2">
+                <h1 className="text-[1.15rem] font-bold text-ink">{headline}</h1>
+                {total > 0 && <p>· {SORT_SUMMARY[sortValue]}</p>}
+              </div>
+
+              {correction ? <CorrectionNotice params={params} correction={correction} /> : null}
+              {items.length === 0 ? (
+                <EmptyResults kind={emptyKind} allHref={vitrineHref(params, { situation: "" })} />
+              ) : (
+                <>
+                  <h2 className="sr-only">Resultados</h2>
+                  <ul className="grid gap-3.5">
+                    {items.map((card) => (
+                      <li key={card.slug} className="min-w-0">
+                        <OpportunityCard card={card} q={params.q} selectedTags={selectedTags} />
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-4">
+                    <Pagination params={params} page={page} pageCount={pageCount} />
+                  </div>
+                </>
+              )}
             </div>
           </div>
-
-          <div className="lg:border-l lg:border-stone-200 lg:pl-6">
-            {openCount > 0 && (
-              <p className="mb-3 tabular-nums text-xs text-stone-600 lg:mb-2">
-                {openCount} {openCount === 1 ? "processo aberto" : "processos abertos"}
-              </p>
-            )}
-            <nav aria-label="Categorias">
-              <ul className="flex flex-wrap gap-1.5 lg:block lg:divide-y lg:divide-stone-100">
-                {CATEGORY_SHORTCUTS.map((category) => (
-                  <li key={category}>
-                    <Link
-                      href={`/processos?category=${category}`}
-                      className="block rounded-md border border-stone-200 px-2.5 py-1 text-sm text-stone-700 hover:border-stone-400 hover:text-stone-900 lg:rounded-none lg:border-0 lg:px-0 lg:py-1.5 lg:hover:text-brand"
-                    >
-                      {CATEGORY_LABELS[category]}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          </div>
-        </div>
-      </section>
-
-      <div className="mx-auto max-w-6xl space-y-10 px-4 py-8 sm:py-10">
-        {openCount === 0 ? (
-          <div className="rounded-lg border border-stone-200 bg-white px-5 py-8">
-            <h2 className="text-lg font-semibold tracking-[-0.01em] text-stone-900 [word-spacing:0.06em]">
-              Nenhum processo aberto agora
-            </h2>
-            <p className="mt-1 max-w-prose text-sm text-stone-600">
-              Quando um projeto da UNIFEI abrir inscrições, ele aparece aqui. Faz parte de um projeto? Publique o
-              primeiro processo.
-            </p>
-            <Button asChild className="mt-4">
-              <Link href="/publicar">Publicar processo</Link>
-            </Button>
-          </div>
-        ) : (
-          <>
-            <HomeRow title="Últimos publicados" href="/processos?sort=recent" cards={recent} />
-            <HomeRow title="Encerrando em breve" href="/processos?sort=deadline" cards={closing} />
-            <HomeRow title="Mais procurados" href="/processos?sort=popular" cards={popular} />
-          </>
-        )}
-      </div>
-    </>
+        </FilterSheetProvider>
+      </form>
+    </Shell>
   );
 }

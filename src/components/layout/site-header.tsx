@@ -32,11 +32,19 @@ export async function SiteHeader() {
           <nav aria-label="Principal" className="hidden items-center gap-2 sm:flex sm:flex-1">
             <NavPill href="/" label="Processos" />
             {/* Para todos: quem publica pesa igual a quem procura. Sem sessão, /publicar leva ao login e volta. */}
-            <NavPill href="/publicar" label="Publicar processo" className={user ? "hidden min-[1100px]:inline-flex" : undefined} />
+            <NavPill
+              href="/publicar"
+              label="Publicar processo"
+              className={user ? "hidden min-[1100px]:inline-flex" : undefined}
+            />
           </nav>
           {user ? (
             <div className="flex items-center gap-2">
-              <NavPill href="/minhas-candidaturas" label="Minhas candidaturas" className="hidden min-[1100px]:inline-flex" />
+              <NavPill
+                href="/minhas-candidaturas"
+                label="Minhas candidaturas"
+                className="hidden min-[1100px]:inline-flex"
+              />
               <NavPill href="/painel" label="Painel" className="hidden min-[1100px]:inline-flex" />
               <UserMenu user={user} />
             </div>

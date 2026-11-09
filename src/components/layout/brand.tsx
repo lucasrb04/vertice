@@ -21,9 +21,15 @@ export function BrandMark({ className }: { className?: string }) {
 
 export function Brand({ className }: { className?: string }) {
   return (
-    <Link href="/" aria-label="Vértice, início" className={cn("flex shrink-0 items-center gap-2.5 rounded-xl", className)}>
+    <Link
+      href="/"
+      aria-label="Vértice, início"
+      className={cn("flex shrink-0 items-center gap-2.5 rounded-xl", className)}
+    >
       <BrandMark />
-      <span className="font-heading text-[1.4rem] leading-none font-extrabold tracking-[-0.03em] text-ink">vértice</span>
+      <span className="font-heading text-[1.4rem] leading-none font-extrabold tracking-[-0.03em] text-ink">
+        vértice
+      </span>
     </Link>
   );
 }

@@ -11,7 +11,10 @@ export function SiteFooter() {
             <BrandMark className="size-5" />
             Vértice — vagas e projetos da UNIFEI, Campus Itajubá.
           </p>
-          <Link href="/privacidade" className="font-medium text-ink-2 underline-offset-4 hover:text-ink hover:underline">
+          <Link
+            href="/privacidade"
+            className="font-medium text-ink-2 underline-offset-4 hover:text-ink hover:underline"
+          >
             Política de Privacidade
           </Link>
         </div>

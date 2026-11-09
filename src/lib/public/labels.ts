@@ -66,6 +66,22 @@ export function scholarshipSummary(card: { scholarshipType: ScholarshipType; fun
   }
 }
 
+/** Etiqueta de bolsa do card: valor por mês e agência quando houver; "ou voluntário" quando aceita os dois. */
+export function cardScholarshipLabel(card: {
+  scholarshipType: ScholarshipType;
+  fundingAgency: string | null;
+  scholarshipValueCents: number | null;
+}): string {
+  if (card.scholarshipType === "VOLUNTARY") return SCHOLARSHIP_LABELS.VOLUNTARY;
+  if (!card.scholarshipValueCents) return scholarshipSummary(card);
+  const value = formatCents(card.scholarshipValueCents)
+    .replace(/,00$/, "")
+    .replace(/\u00a0/g, " ");
+  const agency = card.fundingAgency ? ` · ${card.fundingAgency}` : "";
+  const either = card.scholarshipType === "BOTH" ? " ou voluntário" : "";
+  return `Bolsa de ${value}/mês${agency}${either}`;
+}
+
 /** `R$ 700,00`. */
 export function formatCents(cents: number): string {
   return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });

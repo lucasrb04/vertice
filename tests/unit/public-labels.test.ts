@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applicationRouteLabel,
+  cardScholarshipLabel,
   closedChip,
   coursesLabel,
   deadlineChip,
@@ -62,6 +63,28 @@ describe("applicationRouteLabel", () => {
     expect(applicationRouteLabel({ internalSelectionEnabled: true, hasExternalUrl: true })).toBe(
       "Pelo Vértice ou pelo edital",
     );
+  });
+});
+
+describe("cardScholarshipLabel", () => {
+  const base = { fundingAgency: null, scholarshipValueCents: null };
+  it("valor, agência e a opção voluntária", () => {
+    expect(
+      cardScholarshipLabel({
+        ...base,
+        scholarshipType: "PAID",
+        scholarshipValueCents: 70_000,
+        fundingAgency: "FAPEMIG",
+      }),
+    ).toBe("Bolsa de R$ 700/mês · FAPEMIG");
+    expect(cardScholarshipLabel({ ...base, scholarshipType: "PAID", scholarshipValueCents: 45_050 })).toBe(
+      "Bolsa de R$ 450,50/mês",
+    );
+    expect(cardScholarshipLabel({ ...base, scholarshipType: "BOTH", scholarshipValueCents: 50_000 })).toBe(
+      "Bolsa de R$ 500/mês ou voluntário",
+    );
+    expect(cardScholarshipLabel({ ...base, scholarshipType: "PAID", fundingAgency: "CNPq" })).toBe("Bolsa CNPq");
+    expect(cardScholarshipLabel({ ...base, scholarshipType: "VOLUNTARY" })).toBe("Voluntário");
   });
 });
 

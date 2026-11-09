@@ -54,7 +54,7 @@ test("admin oculta e restaura um processo achado na busca, só com teclado", asy
   // Some da vitrine e da página pública.
   const visitor = await browser.newContext();
   const pub = await visitor.newPage();
-  await pub.goto("/processos");
+  await pub.goto("/");
   await expect(pub.getByText("Processo moderável")).toHaveCount(0);
   expect((await pub.goto(`/processo/${opportunity.slug}`))?.status()).toBe(404);
 
@@ -66,7 +66,7 @@ test("admin oculta e restaura um processo achado na busca, só com teclado", asy
   await confirmWithKeyboard(page, REASON);
   await expect(page.getByRole("status")).toContainText("Item restaurado.");
 
-  await pub.goto("/processos");
+  await pub.goto("/");
   await expect(pub.getByText("Processo moderável")).toBeVisible();
   await visitor.close();
 });

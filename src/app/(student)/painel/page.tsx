@@ -48,7 +48,7 @@ export default async function PainelPage() {
             <div className="space-y-3 px-5 py-4 text-sm text-stone-600">
               <p>Você ainda não se candidatou a nenhum processo.</p>
               <Button asChild variant="outline">
-                <Link href="/processos">Ver processos abertos</Link>
+                <Link href="/">Ver processos abertos</Link>
               </Button>
             </div>
           ) : (

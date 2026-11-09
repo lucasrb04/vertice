@@ -155,7 +155,7 @@ test("/painel lista Meus projetos", async ({ page }) => {
 test("menu da conta leva de volta à gestão do projeto depois de publicar", async ({ page }) => {
   await loginAs(page, "dono.menu@unifei.edu.br", "Dono do Menu");
   const projectId = await publishProject(page, "Projeto do Menu", "Processo do menu");
-  await page.goto("/processos");
+  await page.goto("/");
 
   const menuButton = page.getByRole("banner").getByRole("button", { name: "Menu da conta de Dono do Menu" });
   await menuButton.click();

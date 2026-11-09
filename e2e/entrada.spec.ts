@@ -43,7 +43,7 @@ test("painel vazio: duas metades, cada uma com o próximo passo", async ({ page 
 
   const minhas = page.getByRole("region", { name: "Minhas candidaturas" });
   await expect(minhas).toContainText("Você ainda não se candidatou a nenhum processo.");
-  await expect(minhas.getByRole("link", { name: "Ver processos abertos" })).toHaveAttribute("href", "/processos");
+  await expect(minhas.getByRole("link", { name: "Ver processos abertos" })).toHaveAttribute("href", "/");
 
   const meus = page.getByRole("region", { name: "Meus projetos" });
   await expect(meus).toContainText("Você ainda não participa de nenhum projeto.");

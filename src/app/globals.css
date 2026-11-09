@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Com JavaScript disponível (a folha de filtros do celular só existe assim). */
+@custom-variant scripting (@media (scripting: enabled));
+
 /* Identidade Ipê (D51): creme quente, cards brancos e o amarelo dos ipês de Itajubá. */
 :root {
   --ground: #f5f2ec;

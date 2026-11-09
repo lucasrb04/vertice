@@ -110,7 +110,9 @@ export default async function ProcessoPage({ params }: Props) {
   return (
     <article className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
       <header className="border-b border-stone-200 pb-6">
-        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
+        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">
+          {CATEGORY_LABELS[project.category]}
+        </p>
         <h1 className="mt-2 font-heading text-2xl leading-tight font-bold tracking-tight [word-spacing:0.06em] [overflow-wrap:anywhere] text-stone-900 sm:text-3xl">
           {opportunity.title}
         </h1>
@@ -140,7 +142,12 @@ export default async function ProcessoPage({ params }: Props) {
                   {opensOnLabel(opportunity.applicationsOpenOn!)}
                 </p>
               )}
-              <p className={cn("tabular-nums text-sm font-medium", urgency!.urgent ? "text-amber-700" : "text-stone-900")}>
+              <p
+                className={cn(
+                  "tabular-nums text-sm font-medium",
+                  urgency!.urgent ? "text-amber-700" : "text-stone-900",
+                )}
+              >
                 {urgency!.text}
               </p>
               <p className="tabular-nums text-xs leading-relaxed text-stone-600">

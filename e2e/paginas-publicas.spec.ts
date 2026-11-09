@@ -1,5 +1,6 @@
 import { expect, type Page, test } from "@playwright/test";
 import { deadlineLabel } from "../src/lib/projects/labels";
+import { deadlineDate } from "../src/lib/public/labels";
 import { formatDay } from "../src/lib/time";
 import { addProcess, closeTestDb, daysFromNow, insertProcess, opportunityCounters } from "./helpers";
 
@@ -99,13 +100,14 @@ test.describe("/processo/[slug]", () => {
     await expect(page.getByText(`Abre em ${opens}`)).toBeVisible();
     await expect(page.getByRole("link", { name: "Acessar edital" })).toBeVisible();
 
-    await page.goto("/processos");
-    const card = page.getByRole("link", { name: /Processo que abre em breve/ });
-    await expect(card).toContainText(`Abre em ${opens}`);
-    await expect(card).toContainText("Encerra em 30 dias");
+    await page.goto("/");
+    const card = page.locator("article", { has: page.getByRole("link", { name: /Processo que abre em breve/ }) });
+    await expect(card).toContainText(
+      `Inscrições abrem em ${deadlineDate(daysFromNow(10))} · até ${deadlineDate(daysFromNow(30))}`,
+    );
   });
 
-  test("abertura amanhã com prazo em 3 dias: o card mostra selo e prazo, o prazo em âmbar", async ({ page }) => {
+  test("abertura amanhã com prazo em 3 dias: o card mostra abertura e prazo no selo rosa", async ({ page }) => {
     const tomorrow = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(daysFromNow(1));
     await insertProcess({
       title: "Abre amanhã e encerra logo",
@@ -113,10 +115,12 @@ test.describe("/processo/[slug]", () => {
       deadlineAt: daysFromNow(3),
     });
 
-    await page.goto("/processos");
-    const card = page.getByRole("link", { name: /Abre amanhã e encerra logo/ });
-    await expect(card).toContainText(`Abre em ${formatDay(daysFromNow(1)).slice(0, 5)}`);
-    await expect(card.getByText("Encerra em 3 dias")).toHaveClass(/text-amber-700/);
+    await page.goto("/");
+    const card = page.locator("article", { has: page.getByRole("link", { name: /Abre amanhã e encerra logo/ }) });
+    const chip = card.getByText(
+      `Inscrições abrem em ${deadlineDate(daysFromNow(1))} · até ${deadlineDate(daysFromNow(3))}`,
+    );
+    await expect(chip).toHaveClass(/bg-rosa-soft/);
   });
 
   test("clique abre o destino e conta 1 mesmo clicando duas vezes; visualização conta 1", async ({ page, context }) => {

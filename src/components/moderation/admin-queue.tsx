@@ -101,7 +101,10 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
                 </div>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {item.reasons.map((r) => (
-                    <li key={r.code} className="rounded-md bg-stone-100 px-2 py-0.5 tabular-nums text-xs text-stone-700">
+                    <li
+                      key={r.code}
+                      className="rounded-md bg-stone-100 px-2 py-0.5 tabular-nums text-xs text-stone-700"
+                    >
                       {REPORT_REASON_LABELS[r.code]} ({r.count})
                     </li>
                   ))}

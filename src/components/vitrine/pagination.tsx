@@ -3,7 +3,7 @@ import { type VitrineParams, vitrineHref } from "@/lib/public/search-params";
 import { cn } from "@/lib/utils";
 
 const linkClass =
-  "inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-3 tabular-nums text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+  "inline-flex h-10 min-w-10 items-center justify-center rounded-[10px] border px-3.5 font-semibold tabular-nums";
 
 function pageList(page: number, count: number): (number | null)[] {
   const keep = new Set([1, count, page - 1, page, page + 1]);
@@ -17,7 +17,7 @@ function pageList(page: number, count: number): (number | null)[] {
   return out;
 }
 
-/** `prefetch={false}`: o prefetch de /processos?q= gastaria o limite de buscas do visitante. */
+/** `prefetch={false}`: o prefetch de /?q= gastaria o limite de buscas do visitante. */
 export function Pagination({ params, page, pageCount }: { params: VitrineParams; page: number; pageCount: number }) {
   if (pageCount <= 1) return null;
   const href = (p: number) => vitrineHref(params, { page: p });
@@ -28,7 +28,7 @@ export function Pagination({ params, page, pageCount }: { params: VitrineParams;
           href={href(page - 1)}
           prefetch={false}
           rel="prev"
-          className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}
+          className={cn(linkClass, "border-line bg-surface text-ink hover:border-line-strong")}
         >
           Anterior
         </Link>
@@ -36,7 +36,7 @@ export function Pagination({ params, page, pageCount }: { params: VitrineParams;
       {pageList(page, pageCount).map((n, i) =>
         n === null ? (
           // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
-          <span key={`gap-${i}`} aria-hidden className="px-1 tabular-nums text-stone-500">
+          <span key={`gap-${i}`} aria-hidden className="px-1 text-ink-3">
             …
           </span>
         ) : (
@@ -48,9 +48,7 @@ export function Pagination({ params, page, pageCount }: { params: VitrineParams;
             aria-label={`Página ${n}`}
             className={cn(
               linkClass,
-              n === page
-                ? "border-stone-900 bg-stone-900 text-white"
-                : "border-stone-200 text-stone-700 hover:border-stone-400",
+              n === page ? "border-ink bg-ink text-white" : "border-line bg-surface text-ink hover:border-line-strong",
             )}
           >
             {n}
@@ -62,7 +60,7 @@ export function Pagination({ params, page, pageCount }: { params: VitrineParams;
           href={href(page + 1)}
           prefetch={false}
           rel="next"
-          className={cn(linkClass, "border-stone-200 text-stone-700 hover:border-stone-400")}
+          className={cn(linkClass, "border-line bg-surface text-ink hover:border-line-strong")}
         >
           Próxima
         </Link>

@@ -7,7 +7,7 @@ import { proxy } from "@/proxy";
 
 const newLimiter = () => createRateLimiter({ limit: SEARCH_LIMIT_PER_MINUTE, windowMs: 60_000 });
 const ipHeaders = (ip: string) => new Headers({ "x-forwarded-for": ip });
-const search = (q: string) => new URL(`https://vertice.test/processos?q=${q}`);
+const search = (q: string) => new URL(`https://vertice.test/?q=${q}`);
 
 describe("isSearchRateLimited", () => {
   it("permite 120 buscas por minuto do mesmo IP e limita a 121ª", () => {
@@ -22,7 +22,7 @@ describe("isSearchRateLimited", () => {
   it("não limita nem consome sem q ou com q só de espaços", () => {
     const limiter = newLimiter();
     for (let i = 0; i < SEARCH_LIMIT_PER_MINUTE + 5; i++) {
-      expect(isSearchRateLimited(new URL("https://vertice.test/processos"), ipHeaders("9.9.9.9"), limiter)).toBe(false);
+      expect(isSearchRateLimited(new URL("https://vertice.test/"), ipHeaders("9.9.9.9"), limiter)).toBe(false);
       expect(isSearchRateLimited(search("%20%20"), ipHeaders("9.9.9.9"), limiter)).toBe(false);
     }
     expect(isSearchRateLimited(search("robo"), ipHeaders("9.9.9.9"), limiter)).toBe(false);
@@ -57,9 +57,8 @@ describe("isLocalDatabaseUrl", () => {
 });
 
 describe("proxy", () => {
-  it("responde 429 em HTML pt-BR com link para /processos e Retry-After", async () => {
-    const make = () =>
-      new NextRequest("https://vertice.test/processos?q=robo", { headers: { "x-forwarded-for": "8.8.4.4" } });
+  it("responde 429 em HTML pt-BR com link para a lista e Retry-After", async () => {
+    const make = () => new NextRequest("https://vertice.test/?q=robo", { headers: { "x-forwarded-for": "8.8.4.4" } });
     for (let i = 0; i < SEARCH_LIMIT_PER_MINUTE; i++) expect(proxy(make()).status).toBe(200);
     const res = proxy(make());
     expect(res.status).toBe(429);
@@ -68,6 +67,6 @@ describe("proxy", () => {
     const html = await res.text();
     expect(html).toContain('lang="pt-BR"');
     expect(html).toContain("Muitas buscas em pouco tempo. Tente de novo em um minuto.");
-    expect(html).toContain('href="/processos"');
+    expect(html).toContain('href="/"');
   });
 });

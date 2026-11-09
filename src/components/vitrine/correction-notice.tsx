@@ -13,13 +13,13 @@ export function CorrectionNotice({
   correction: { original: string; corrected: string };
 }) {
   return (
-    <p role="status" className="mb-4 text-sm text-stone-700">
-      Mostrando resultados para <strong className="font-semibold text-stone-900">{correction.corrected}</strong>
+    <p role="status" className="text-[0.98rem] text-ink-2">
+      Mostrando resultados para <strong className="font-semibold text-ink">{correction.corrected}</strong>
       <span aria-hidden> · </span>
       <Link
         href={vitrineHref(params, { exact: true })}
         prefetch={false}
-        className="font-medium text-brand underline underline-offset-4"
+        className="font-semibold text-ink underline underline-offset-4"
       >
         buscar exatamente <strong className="font-semibold">{correction.original}</strong>
       </Link>

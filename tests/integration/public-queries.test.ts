@@ -529,7 +529,10 @@ describe("abas de situação", () => {
     expect(r.categoryCounts.SCIENTIFIC_INIT).toBe(2);
     expect(r.categoryCounts.PET).toBe(2);
     expect(r.categoryCounts.EXTENSION).toBe(0);
-    expect((await search({ situacao: "encerrando" }, now)).categoryCounts).toMatchObject({ SCIENTIFIC_INIT: 2, PET: 0 });
+    expect((await search({ situacao: "encerrando" }, now)).categoryCounts).toMatchObject({
+      SCIENTIFIC_INIT: 2,
+      PET: 0,
+    });
     expect((await search({ q: "abre depois" }, now)).categoryCounts).toMatchObject({ SCIENTIFIC_INIT: 0, PET: 1 });
   });
 });

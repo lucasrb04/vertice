@@ -4,7 +4,7 @@ import { clearOpportunities, closeTestDb, daysFromNow, insertProcess, rebuildSea
 test.beforeEach(clearOpportunities);
 test.afterAll(closeTestDb);
 
-const cards = (page: import("@playwright/test").Page) => page.locator("main ul > li a[href^='/processo/']");
+const cards = (page: import("@playwright/test").Page) => page.locator("main article");
 const titles = (page: import("@playwright/test").Page) => cards(page).locator("h3").allTextContents();
 
 // O envio automático só existe após a hidratação; interagir antes disso não submete.
@@ -15,12 +15,12 @@ test("busca sem acento acha título com acento", async ({ page }) => {
   await insertProcess({ title: "Equipe de Robótica" });
   await insertProcess({ title: "Outro assunto" });
   await rebuildSearchIndex();
-  await page.goto("/processos");
+  await page.goto("/");
   await page.getByRole("searchbox", { name: "Buscar processos" }).fill("robotica");
   await page.getByRole("button", { name: "Buscar", exact: true }).click();
   await expect(page).toHaveURL(/q=robotica/);
   expect(await titles(page)).toEqual(["Equipe de Robótica"]);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("1 processo seletivo");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("1 processo encontrado");
   await expect(page.getByLabel("Ordenar por").locator("option:checked")).toHaveText("Relevância");
 });
 
@@ -28,7 +28,7 @@ test("filtro de categoria muda a URL e os resultados; combinar e recarregar mant
   await insertProcess({ title: "Pesquisa A", project: { category: "PET" }, scholarshipType: "PAID" });
   await insertProcess({ title: "Pesquisa B", project: { category: "PET" }, scholarshipType: "VOLUNTARY" });
   await insertProcess({ title: "Extensão C", project: { category: "EXTENSION" } });
-  await page.goto("/processos");
+  await page.goto("/");
   await hydrated(page);
   await expect(cards(page)).toHaveCount(3);
 
@@ -50,7 +50,7 @@ test("filtro de categoria muda a URL e os resultados; combinar e recarregar mant
 test("incluir encerrados mostra o encerrado depois dos abertos", async ({ page }) => {
   await insertProcess({ title: "Encerrado antigo", deadlineAt: daysFromNow(-5), createdAt: daysFromNow(-1) });
   await insertProcess({ title: "Aberto antigo", createdAt: daysFromNow(-10) });
-  await page.goto("/processos");
+  await page.goto("/");
   await hydrated(page);
   expect(await titles(page)).toEqual(["Aberto antigo"]);
   await page.getByRole("checkbox", { name: "Incluir encerrados" }).check();
@@ -62,7 +62,7 @@ test("incluir encerrados mostra o encerrado depois dos abertos", async ({ page }
 test("ordenação por prazo", async ({ page }) => {
   await insertProcess({ title: "Prazo longe", deadlineAt: daysFromNow(30) });
   await insertProcess({ title: "Prazo perto", deadlineAt: daysFromNow(3) });
-  await page.goto("/processos");
+  await page.goto("/");
   await hydrated(page);
   await expect(page.getByLabel("Ordenar por").locator("option", { hasText: "Relevância" })).toHaveCount(0);
   await page.getByLabel("Ordenar por").selectOption("deadline");
@@ -72,8 +72,8 @@ test("ordenação por prazo", async ({ page }) => {
 
 test("paginação com 13 processos", async ({ page }) => {
   for (let i = 1; i <= 13; i++) await insertProcess({ title: `Lote ${i}`, createdAt: daysFromNow(-i) });
-  await page.goto("/processos");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("13 processos seletivos");
+  await page.goto("/");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("13 processos abertos");
   await expect(cards(page)).toHaveCount(12);
   await page.getByRole("link", { name: "Próxima" }).click();
   await expect(page).toHaveURL(/page=2/);
@@ -84,16 +84,25 @@ test("paginação com 13 processos", async ({ page }) => {
 
 test("sem resultados oferece limpar", async ({ page }) => {
   await insertProcess({ title: "Algo" });
-  await page.goto("/processos?q=zzzzqqqq");
-  await expect(page.getByText("Nenhum processo encontrado")).toBeVisible();
-  await page.getByRole("link", { name: "Limpar busca e filtros" }).click();
-  await expect(page).toHaveURL(/\/processos$/);
+  await page.goto("/?q=zzzzqqqq");
+  await expect(page.getByText("Nenhum processo com esses filtros")).toBeVisible();
+  await page.getByRole("link", { name: "Limpar filtros e busca" }).click();
+  await page.waitForURL((url) => url.pathname === "/" && url.search === "");
   await expect(cards(page)).toHaveCount(1);
+});
+
+test("/processos com filtros redireciona para / com os mesmos parâmetros", async ({ page }) => {
+  await insertProcess({ title: "PET robótica", project: { category: "PET" } });
+  await page.goto("/processos?category=PET&q=robo");
+  await page.waitForURL((url) => url.pathname === "/");
+  const url = new URL(page.url());
+  expect(url.searchParams.get("category")).toBe("PET");
+  expect(url.searchParams.get("q")).toBe("robo");
 });
 
 test("parâmetros inválidos abrem normalmente", async ({ page }) => {
   await insertProcess({ title: "Algo" });
-  const res = await page.goto("/processos?page=abc&sort=x&category=y");
+  const res = await page.goto("/?page=abc&sort=x&category=y");
   expect(res?.status()).toBe(200);
   await expect(cards(page)).toHaveCount(1);
 });
@@ -105,7 +114,7 @@ test.describe("sem JavaScript", () => {
     await insertProcess({ title: "Robótica PET", project: { category: "PET" } });
     await insertProcess({ title: "Robótica Extensão", project: { category: "EXTENSION" } });
     await rebuildSearchIndex();
-    await page.goto("/processos");
+    await page.goto("/");
     await page.getByRole("searchbox", { name: "Buscar processos" }).fill("robotica");
     await page.getByRole("checkbox", { name: "PET" }).first().check();
     await expect(page.getByRole("button", { name: "Aplicar" })).toBeVisible();
@@ -119,47 +128,49 @@ test.describe("sem JavaScript", () => {
 test.describe("celular, com JavaScript", () => {
   test.use({ viewport: { width: 360, height: 740 } });
 
-  test("marcar duas categorias mantém o painel aberto, o foco e uma URL sem parâmetros vazios", async ({ page }) => {
+  test("marcar duas categorias na folha mantém a folha aberta, o foco e uma URL sem parâmetros vazios", async ({
+    page,
+  }) => {
     await insertProcess({ title: "PET um", project: { category: "PET" } });
     await insertProcess({ title: "Extensão um", project: { category: "EXTENSION" } });
     await insertProcess({ title: "Outro um", project: { category: "LAB_GROUP" } });
-    await page.goto("/processos");
+    await page.goto("/");
     await hydrated(page);
-    await page.getByText("Filtros", { exact: true }).click();
-    const details = page.locator("details");
-    await expect(details).toHaveJSProperty("open", true);
+    await page.getByRole("button", { name: /^Filtros/ }).click();
+    const sheet = page.getByRole("dialog", { name: "Filtros" });
+    await expect(sheet).toBeVisible();
 
-    const pet = page.getByRole("checkbox", { name: "PET" }).first();
+    const pet = sheet.getByRole("checkbox", { name: /^PET/ });
     await pet.check();
     await expect(page).toHaveURL(/category=PET/);
-    const extension = page.getByRole("checkbox", { name: /Extensão/ }).first();
+    const extension = sheet.getByRole("checkbox", { name: /^Extensão/ });
     await extension.check();
     await expect(page).toHaveURL(/category=EXTENSION/);
     await expect(page).toHaveURL(/category=PET/);
     expect(new URL(page.url()).search).not.toMatch(/=(&|$)/);
     await expect(cards(page)).toHaveCount(2);
-    await expect(details).toHaveJSProperty("open", true);
+    await expect(sheet).toBeVisible();
     await expect(extension).toBeFocused();
   });
 
-  test("desmarcar o último filtro mantém o painel aberto", async ({ page }) => {
+  test("desmarcar o último filtro mantém a folha aberta", async ({ page }) => {
     await insertProcess({ title: "PET um", project: { category: "PET" } });
-    await page.goto("/processos");
+    await page.goto("/");
     await hydrated(page);
-    await page.getByText("Filtros", { exact: true }).click();
-    const details = page.locator("details");
-    const pet = page.getByRole("checkbox", { name: "PET" }).first();
+    await page.getByRole("button", { name: /^Filtros/ }).click();
+    const sheet = page.getByRole("dialog", { name: "Filtros" });
+    const pet = sheet.getByRole("checkbox", { name: /^PET/ });
     await pet.check();
     await expect(page).toHaveURL(/category=PET/);
     await pet.uncheck();
     await expect(page).not.toHaveURL(/category=/);
-    await expect(details).toHaveJSProperty("open", true);
+    await expect(sheet).toBeVisible();
   });
 
   test("a ordenação pelo teclado mantém o foco e o seletor acompanha o histórico", async ({ page }) => {
     await insertProcess({ title: "Prazo longe", deadlineAt: daysFromNow(30) });
     await insertProcess({ title: "Prazo perto", deadlineAt: daysFromNow(3) });
-    await page.goto("/processos");
+    await page.goto("/");
     await hydrated(page);
     const sort = page.locator("select#ordenacao");
     await sort.focus();
@@ -170,9 +181,7 @@ test.describe("celular, com JavaScript", () => {
 
     // O envio automático usa `replace`; uma navegação com `push` cria o histórico para voltar.
     await page.evaluate(() =>
-      (window as unknown as { next: { router: { push(href: string): void } } }).next.router.push(
-        "/processos?sort=popular",
-      ),
+      (window as unknown as { next: { router: { push(href: string): void } } }).next.router.push("/?sort=popular"),
     );
     await expect(sort.locator("option:checked")).toHaveText("Mais procurados");
     await page.goBack();
@@ -182,12 +191,12 @@ test.describe("celular, com JavaScript", () => {
   });
 });
 
-// O prefetch de links para /processos?q= gastaria o limite de buscas: cada página carregada faz uma só requisição com `q`.
+// O prefetch de links para /?q= gastaria o limite de buscas: cada página carregada faz uma só requisição com `q`.
 const countSearchRequests = (page: import("@playwright/test").Page) => {
   const urls: string[] = [];
   page.on("request", (req) => {
     const url = new URL(req.url());
-    if (url.pathname === "/processos" && url.searchParams.has("q")) urls.push(req.url());
+    if (url.pathname === "/" && url.searchParams.has("q")) urls.push(req.url());
   });
   return urls;
 };
@@ -197,7 +206,7 @@ test("busca paginada faz uma só requisição com q por página carregada", asyn
   await rebuildSearchIndex();
   const urls = countSearchRequests(page);
 
-  await page.goto("/processos?q=robotica");
+  await page.goto("/?q=robotica");
   await hydrated(page);
   await page.getByRole("navigation", { name: "Paginação" }).scrollIntoViewIfNeeded();
   await page.waitForLoadState("networkidle");
@@ -214,7 +223,7 @@ test("busca com correção faz uma só requisição com q", async ({ page }) => 
   await rebuildSearchIndex();
   const urls = countSearchRequests(page);
 
-  await page.goto("/processos?q=casinha");
+  await page.goto("/?q=casinha");
   await expect(page.getByRole("link", { name: /buscar exatamente/ })).toBeVisible();
   await page.waitForLoadState("networkidle");
   expect(urls).toHaveLength(1);

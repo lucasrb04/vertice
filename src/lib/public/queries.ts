@@ -3,9 +3,6 @@ import { db } from "@/db";
 import { courses, opportunities, opportunityTags, projects, searchDocuments, tags } from "@/db/schema";
 import { closedOnDate, isOpportunityOpen, openOpportunitySql } from "@/lib/opportunities/status";
 import type { ProjectCategory, ScholarshipType } from "@/lib/projects/labels";
-import { deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
-import { PROJECT_CATEGORIES } from "@/lib/validation/project";
-import { plainTextExcerpt } from "./labels";
 import {
   groupTsQuery,
   planSearch,
@@ -14,12 +11,14 @@ import {
   wholeWordRegex,
   wordStartRegex,
 } from "@/lib/search/query";
+import { deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
+import { PROJECT_CATEGORIES } from "@/lib/validation/project";
+import { plainTextExcerpt } from "./labels";
 import { defaultSort, type VitrineParams } from "./search-params";
 
 export { normalizeQuery } from "@/lib/search/corrector";
 
 export const PAGE_SIZE = 12;
-export const ROW_LIMIT = 10;
 const MAX_CARD_TAGS = 4;
 const SIMILARITY_THRESHOLD = 0.4;
 
@@ -329,7 +328,9 @@ async function countSituations(where: SQL, now: Date, searching: boolean): Promi
     .innerJoin(projects, eq(projects.id, opportunities.projectId))
     .where(where)
     .$dynamic();
-  const [row] = await (searching ? q.leftJoin(searchDocuments, eq(searchDocuments.opportunityId, opportunities.id)) : q);
+  const [row] = await (searching
+    ? q.leftJoin(searchDocuments, eq(searchDocuments.opportunityId, opportunities.id))
+    : q);
   return row ?? { all: 0, closing: 0, soon: 0 };
 }
 
@@ -419,33 +420,6 @@ export async function searchOpportunities(
     countCategories(filtersSql(institutionId, { ...params, categories: [] }, now, search), !!search),
   ]);
   return { items, total, page, pageCount, correction, situationCounts, categoryCounts };
-}
-
-// ---------- home ----------
-
-export async function listHomeRows(
-  institutionId: string,
-  now: Date = new Date(),
-): Promise<{ openCount: number; recent: PublicCard[]; closing: PublicCard[]; popular: PublicCard[] }> {
-  const where = and(eq(opportunities.institutionId, institutionId), publicOpportunitySql(), openOpportunitySql(now))!;
-  const [{ openCount }] = await db
-    .select({ openCount: sql<number>`count(*)`.mapWith(Number) })
-    .from(opportunities)
-    .innerJoin(projects, eq(projects.id, opportunities.projectId))
-    .where(where);
-  if (openCount === 0) return { openCount, recent: [], closing: [], popular: [] };
-
-  const [recent, closing, popular] = await Promise.all([
-    fetchCards({ where, orderBy: [desc(opportunities.createdAt), asc(opportunities.id)], limit: ROW_LIMIT, now }),
-    fetchCards({ where, orderBy: [asc(opportunities.deadlineAt), asc(opportunities.id)], limit: ROW_LIMIT, now }),
-    fetchCards({
-      where: and(where, sql`${popularity} > 0`)!,
-      orderBy: [desc(popularity), desc(opportunities.createdAt), asc(opportunities.id)],
-      limit: ROW_LIMIT,
-      now,
-    }),
-  ]);
-  return { openCount, recent, closing, popular };
 }
 
 // ---------- detalhes ----------

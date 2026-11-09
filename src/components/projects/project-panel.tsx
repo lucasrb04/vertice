@@ -38,7 +38,9 @@ export function ProjectPanel({
   return (
     <div className="space-y-8">
       <header className="space-y-3 border-b border-stone-200 pb-6">
-        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
+        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">
+          {CATEGORY_LABELS[project.category]}
+        </p>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="font-heading text-3xl font-bold tracking-tight text-stone-900">{project.name}</h1>
           {project.acronym && <span className="tabular-nums text-sm text-stone-600">{project.acronym}</span>}

@@ -27,7 +27,7 @@ export function AutoSubmit({ formId }: { formId: string }) {
       const q = form.elements.namedItem("q");
       if (q instanceof HTMLInputElement && q.value !== q.defaultValue) query.delete("corrigir");
       const qs = query.toString();
-      startTransition(() => router.replace(qs ? `/processos?${qs}` : "/processos", { scroll: false }));
+      startTransition(() => router.replace(qs ? `/?${qs}` : "/", { scroll: false }));
     }
     function onChange(e: Event) {
       // O campo de busca envia pelo Enter ou pelo botão; `change` dispararia ao perder o foco.

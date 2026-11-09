@@ -69,7 +69,9 @@ export default async function ProjetoPage({ params }: Props) {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:py-10">
       <header className="space-y-3 border-b border-stone-200 pb-6">
-        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
+        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">
+          {CATEGORY_LABELS[project.category]}
+        </p>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="min-w-0 font-heading text-2xl leading-tight font-bold tracking-tight [word-spacing:0.06em] [overflow-wrap:anywhere] text-stone-900 sm:text-3xl">
             {project.name}
@@ -147,7 +149,8 @@ export default async function ProjetoPage({ params }: Props) {
       {closed.length > 0 && (
         <section aria-labelledby="anteriores">
           <h2 id="anteriores" className="text-lg font-semibold tracking-tight text-stone-900">
-            Processos anteriores <span className="tabular-nums text-sm font-normal text-stone-500">{closed.length}</span>
+            Processos anteriores{" "}
+            <span className="tabular-nums text-sm font-normal text-stone-500">{closed.length}</span>
           </h2>
           <CardGrid cards={closed} />
         </section>
