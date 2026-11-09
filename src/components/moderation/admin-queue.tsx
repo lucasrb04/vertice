@@ -35,11 +35,11 @@ function Actions({ row, onDone }: { row: TargetRow; onDone: (message: string) =>
 function Heading({ row }: { row: TargetRow }) {
   return (
     <div className="min-w-0">
-      <p className="font-mono text-xs uppercase tracking-wide text-stone-500">{TYPE_LABELS[row.targetType]}</p>
+      <p className="tabular-nums text-xs uppercase tracking-wide text-stone-500">{TYPE_LABELS[row.targetType]}</p>
       <h3 className="font-heading text-base font-semibold text-stone-900">{row.name}</h3>
       {row.targetType === "OPPORTUNITY" && <p className="text-sm text-stone-600">{row.projectName}</p>}
       <p className="mt-1 text-sm text-stone-700">
-        <span className="font-mono text-xs">Estado:</span> {statusLabel(row)}
+        <span className="tabular-nums text-xs">Estado:</span> {statusLabel(row)}
       </p>
       {/* O admin vê o que julga antes de ocultar ou restaurar, inclusive o que já está oculto. */}
       <Link
@@ -95,13 +95,13 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <Heading row={item} />
-                  <p className="font-mono text-sm text-stone-900">
+                  <p className="tabular-nums text-sm text-stone-900">
                     {item.pendingCount} {item.pendingCount === 1 ? "denúncia" : "denúncias"}
                   </p>
                 </div>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {item.reasons.map((r) => (
-                    <li key={r.code} className="rounded-md bg-stone-100 px-2 py-0.5 font-mono text-xs text-stone-700">
+                    <li key={r.code} className="rounded-md bg-stone-100 px-2 py-0.5 tabular-nums text-xs text-stone-700">
                       {REPORT_REASON_LABELS[r.code]} ({r.count})
                     </li>
                   ))}

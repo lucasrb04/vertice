@@ -37,7 +37,7 @@ export default async function Home() {
 
           <div className="lg:border-l lg:border-stone-200 lg:pl-6">
             {openCount > 0 && (
-              <p className="mb-3 font-mono text-xs text-stone-600 lg:mb-2">
+              <p className="mb-3 tabular-nums text-xs text-stone-600 lg:mb-2">
                 {openCount} {openCount === 1 ? "processo aberto" : "processos abertos"}
               </p>
             )}

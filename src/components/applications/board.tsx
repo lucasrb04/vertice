@@ -51,7 +51,7 @@ function CandidateCard({
           {details.length > 0 && (
             <p className="text-sm [overflow-wrap:anywhere] text-stone-600">{details.join(" · ")}</p>
           )}
-          <p className="font-mono text-xs text-stone-500">{formatDay(card.appliedAt)}</p>
+          <p className="tabular-nums text-xs text-stone-500">{formatDay(card.appliedAt)}</p>
           {card.isOwn && <p className="text-xs font-medium text-stone-600">Sua candidatura</p>}
         </div>
       </div>
@@ -96,7 +96,7 @@ function CandidateCard({
                 {card.history.map((h, i) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
                   <li key={`${h.createdAt.toISOString()}-${i}`}>
-                    <p className="font-mono text-xs text-stone-500">
+                    <p className="tabular-nums text-xs text-stone-500">
                       {formatDay(h.createdAt)} · {APPLICATION_STATUS_LABELS[h.toStatus]}
                     </p>
                     {h.message && <p className="whitespace-pre-line text-stone-800">{h.message}</p>}
@@ -168,7 +168,7 @@ export function ApplicationBoard({ board }: { board: Board }) {
           aria-label="Candidatos selecionados"
           className="sticky top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-stone-200 bg-white px-3 py-2"
         >
-          <p aria-live="polite" className="font-mono text-xs text-stone-600">
+          <p aria-live="polite" className="tabular-nums text-xs text-stone-600">
             {selectedCards.length === 1 ? "1 selecionado" : `${selectedCards.length} selecionados`}
             {overLimit && ` · até ${MOVE_ITEMS_MAX} de cada vez`}
           </p>
@@ -212,7 +212,7 @@ export function ApplicationBoard({ board }: { board: Board }) {
           >
             <h2 id={`etapa-${column.status}`} className="flex items-baseline gap-2 font-medium text-stone-900">
               {APPLICATION_STATUS_LABELS[column.status]}
-              <span className="font-mono text-sm font-normal text-stone-500">{column.cards.length}</span>
+              <span className="tabular-nums text-sm font-normal text-stone-500">{column.cards.length}</span>
             </h2>
             {column.cards.length === 0 ? (
               <p className="mt-2 text-sm text-stone-500">Nenhum candidato.</p>

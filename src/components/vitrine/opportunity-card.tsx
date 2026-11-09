@@ -43,7 +43,7 @@ export function OpportunityCard({ card }: { card: PublicCard }) {
         {card.title}
       </h3>
 
-      <p className="mt-2 truncate font-mono text-xs text-stone-600">{details}</p>
+      <p className="mt-2 truncate tabular-nums text-xs text-stone-600">{details}</p>
 
       {card.tags.length > 0 && (
         <ul className="mt-3 flex flex-wrap gap-1">
@@ -51,7 +51,7 @@ export function OpportunityCard({ card }: { card: PublicCard }) {
             <li key={tag} className="max-w-full min-w-0">
               <Badge
                 variant="secondary"
-                className="block h-auto max-w-full truncate rounded-md font-mono font-normal text-stone-700"
+                className="block h-auto max-w-full truncate rounded-md tabular-nums font-normal text-stone-700"
               >
                 {tag}
               </Badge>
@@ -63,8 +63,8 @@ export function OpportunityCard({ card }: { card: PublicCard }) {
       <div className="mt-auto pt-4">
         <div className="space-y-0.5 border-t border-stone-100 pt-3 text-xs">
           <p className="text-stone-600">{requirementsSummary(card)}</p>
-          {opensOn ? <p className="font-mono text-stone-600">{opensOnLabel(opensOn)}</p> : null}
-          <p className={cn("font-mono", deadline.urgent ? "font-medium text-amber-700" : "text-stone-600")}>
+          {opensOn ? <p className="tabular-nums text-stone-600">{opensOnLabel(opensOn)}</p> : null}
+          <p className={cn("tabular-nums", deadline.urgent ? "font-medium text-amber-700" : "text-stone-600")}>
             {deadline.text}
           </p>
         </div>

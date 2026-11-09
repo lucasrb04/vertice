@@ -110,7 +110,7 @@ export default async function ProcessoPage({ params }: Props) {
   return (
     <article className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
       <header className="border-b border-stone-200 pb-6">
-        <p className="font-mono text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
+        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
         <h1 className="mt-2 font-heading text-2xl leading-tight font-bold tracking-tight [word-spacing:0.06em] [overflow-wrap:anywhere] text-stone-900 sm:text-3xl">
           {opportunity.title}
         </h1>
@@ -121,7 +121,7 @@ export default async function ProcessoPage({ params }: Props) {
           >
             {project.name}
           </Link>
-          {project.acronym && <span className="font-mono text-xs text-stone-600">{project.acronym}</span>}
+          {project.acronym && <span className="tabular-nums text-xs text-stone-600">{project.acronym}</span>}
           {project.verified && (
             <span className="inline-flex items-center gap-1 text-xs text-stone-600">
               <BadgeCheck aria-hidden className="size-3.5 text-brand" />
@@ -136,14 +136,14 @@ export default async function ProcessoPage({ params }: Props) {
           {isOpen ? (
             <div className="space-y-3 rounded-lg border border-stone-200 bg-white p-4">
               {opensLater && (
-                <p className="font-mono text-sm font-medium text-stone-900">
+                <p className="tabular-nums text-sm font-medium text-stone-900">
                   {opensOnLabel(opportunity.applicationsOpenOn!)}
                 </p>
               )}
-              <p className={cn("font-mono text-sm font-medium", urgency!.urgent ? "text-amber-700" : "text-stone-900")}>
+              <p className={cn("tabular-nums text-sm font-medium", urgency!.urgent ? "text-amber-700" : "text-stone-900")}>
                 {urgency!.text}
               </p>
-              <p className="font-mono text-xs leading-relaxed text-stone-600">
+              <p className="tabular-nums text-xs leading-relaxed text-stone-600">
                 {deadlineLabel(opportunity.deadlineAt)}
               </p>
               {opportunity.internalSelectionEnabled &&
@@ -189,7 +189,7 @@ export default async function ProcessoPage({ params }: Props) {
                 {closedOn && (
                   <>
                     {" em "}
-                    <span className="font-mono">{formatDay(closedOn)}</span>
+                    <span className="tabular-nums">{formatDay(closedOn)}</span>
                   </>
                 )}
               </p>
@@ -224,7 +224,7 @@ export default async function ProcessoPage({ params }: Props) {
             {facts.map(([label, value]) => (
               <div key={label} className="flex justify-between gap-4 py-2">
                 <dt className="text-stone-600">{label}</dt>
-                <dd className="min-w-0 text-right font-mono [overflow-wrap:anywhere] text-stone-900">{value}</dd>
+                <dd className="min-w-0 text-right tabular-nums [overflow-wrap:anywhere] text-stone-900">{value}</dd>
               </div>
             ))}
           </dl>
@@ -263,7 +263,7 @@ export default async function ProcessoPage({ params }: Props) {
                       <li key={tag.slug} className="max-w-full min-w-0">
                         <Badge
                           variant="secondary"
-                          className="block h-auto max-w-full truncate rounded-md font-mono font-normal text-stone-700"
+                          className="block h-auto max-w-full truncate rounded-md tabular-nums font-normal text-stone-700"
                         >
                           {tag.name}
                         </Badge>

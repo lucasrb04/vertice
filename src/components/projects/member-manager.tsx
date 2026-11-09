@@ -159,7 +159,7 @@ export function MemberManager({
     <div className="space-y-6">
       <section aria-labelledby="membros-do-projeto">
         <h2 id="membros-do-projeto" className="text-lg font-semibold tracking-tight text-stone-900">
-          Membros do projeto <span className="font-mono text-sm font-normal text-stone-500">{members.length}</span>
+          Membros do projeto <span className="tabular-nums text-sm font-normal text-stone-500">{members.length}</span>
         </h2>
         <ul className="mt-3 divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
           {members.map((m) => {
@@ -171,7 +171,7 @@ export function MemberManager({
               >
                 <div className="min-w-0">
                   <p className="font-medium text-stone-900">{m.name}</p>
-                  <p className="truncate font-mono text-xs text-stone-600">{m.email}</p>
+                  <p className="truncate tabular-nums text-xs text-stone-600">{m.email}</p>
                 </div>
                 {editable ? (
                   <div className="flex flex-wrap items-start gap-2">

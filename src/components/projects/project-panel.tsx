@@ -38,10 +38,10 @@ export function ProjectPanel({
   return (
     <div className="space-y-8">
       <header className="space-y-3 border-b border-stone-200 pb-6">
-        <p className="font-mono text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
+        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="font-heading text-3xl font-bold tracking-tight text-stone-900">{project.name}</h1>
-          {project.acronym && <span className="font-mono text-sm text-stone-600">{project.acronym}</span>}
+          {project.acronym && <span className="tabular-nums text-sm text-stone-600">{project.acronym}</span>}
         </div>
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
           <div className="flex gap-1.5">
@@ -99,7 +99,7 @@ export function ProjectPanel({
 
       <section aria-labelledby="abertos">
         <h2 id="abertos" className="text-lg font-semibold tracking-tight text-stone-900">
-          Abertos <span className="font-mono text-sm font-normal text-stone-500">{open.length}</span>
+          Abertos <span className="tabular-nums text-sm font-normal text-stone-500">{open.length}</span>
         </h2>
         {open.length === 0 ? (
           <p className="mt-3 text-sm text-stone-600">Nenhum processo aberto.</p>
@@ -128,7 +128,7 @@ export function ProjectPanel({
               <h2 id="encerrados" className="text-lg font-semibold tracking-tight text-stone-900">
                 Encerrados
               </h2>
-              <span className="font-mono text-sm text-stone-500">0</span>
+              <span className="tabular-nums text-sm text-stone-500">0</span>
             </div>
             <p className="mt-3 text-sm text-stone-600">Nenhum processo encerrado.</p>
           </>
@@ -138,11 +138,11 @@ export function ProjectPanel({
               <h2 id="encerrados" className="text-lg font-semibold tracking-tight text-stone-900">
                 Encerrados
               </h2>
-              <span className="font-mono text-sm text-stone-500">{closed.length}</span>
-              <span aria-hidden="true" className="font-mono text-sm text-stone-500 group-open:hidden">
+              <span className="tabular-nums text-sm text-stone-500">{closed.length}</span>
+              <span aria-hidden="true" className="tabular-nums text-sm text-stone-500 group-open:hidden">
                 +
               </span>
-              <span aria-hidden="true" className="hidden font-mono text-sm text-stone-500 group-open:inline">
+              <span aria-hidden="true" className="hidden tabular-nums text-sm text-stone-500 group-open:inline">
                 −
               </span>
             </summary>

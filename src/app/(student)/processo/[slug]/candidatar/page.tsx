@@ -59,7 +59,7 @@ export default async function CandidatarPage({ params }: { params: Promise<{ slu
   const p = ctx.profile;
   return (
     <section className="mx-auto max-w-2xl px-4 py-10">
-      <p className="font-mono text-xs tracking-wide text-stone-500 uppercase">{project.name}</p>
+      <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">{project.name}</p>
       <h1 className="mt-2 font-heading text-2xl font-bold tracking-tight [overflow-wrap:anywhere] text-stone-900">
         Candidatar-se: {opportunity.title}
       </h1>

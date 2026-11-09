@@ -54,7 +54,7 @@ export function SearchBox({
         {autoFocusShortcut && (
           <kbd
             aria-hidden
-            className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded border border-stone-200 bg-stone-50 px-1.5 font-mono text-xs text-stone-500 sm:block"
+            className="pointer-events-none absolute top-1/2 right-3 hidden -translate-y-1/2 rounded border border-stone-200 bg-stone-50 px-1.5 tabular-nums text-xs text-stone-500 sm:block"
           >
             /
           </kbd>

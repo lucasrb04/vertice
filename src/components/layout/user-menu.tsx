@@ -37,7 +37,7 @@ function Avatar({ user }: { user: UserMenuUser }) {
   return (
     <span
       aria-hidden="true"
-      className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand font-mono text-[11px] font-semibold text-white"
+      className="flex size-7 shrink-0 items-center justify-center rounded-full bg-brand tabular-nums text-[11px] font-semibold text-white"
     >
       {initials(user.name)}
     </span>
@@ -63,7 +63,7 @@ export function UserMenu({ user }: { user: UserMenuUser }) {
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel className="font-normal">
             <span className="block truncate font-medium text-stone-900">{user.name}</span>
-            <span className="block truncate font-mono text-xs text-stone-500">{user.email}</span>
+            <span className="block truncate tabular-nums text-xs text-stone-500">{user.email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           {userMenuItems(user).map((item) => (

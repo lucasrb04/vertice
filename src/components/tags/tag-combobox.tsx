@@ -97,7 +97,7 @@ export function TagCombobox({
     <div className="space-y-2">
       <div aria-hidden="true" className="text-sm font-medium text-stone-800">
         {label}{" "}
-        <span className="font-mono text-xs text-stone-500">
+        <span className="tabular-nums text-xs text-stone-500">
           {value.length}/{max}
         </span>
       </div>
@@ -109,7 +109,7 @@ export function TagCombobox({
             return (
               <li
                 key={key}
-                className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-stone-100 py-0.5 pr-1 pl-2 font-mono text-xs text-stone-700"
+                className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-stone-100 py-0.5 pr-1 pl-2 tabular-nums text-xs text-stone-700"
               >
                 {name}
                 <button
@@ -140,12 +140,12 @@ export function TagCombobox({
             <CommandGroup>
               {visible.map((r) => (
                 <CommandItem key={r.id} value={`id:${r.id}`} onSelect={() => add({ id: r.id }, r)}>
-                  <span className="font-mono text-xs">{r.name}</span>
+                  <span className="tabular-nums text-xs">{r.name}</span>
                 </CommandItem>
               ))}
               {canCreate && (
                 <CommandItem value={`new:${termSlug}`} onSelect={() => add({ name: term })}>
-                  Criar <span className="font-mono text-xs">“{term}”</span>
+                  Criar <span className="tabular-nums text-xs">“{term}”</span>
                 </CommandItem>
               )}
             </CommandGroup>

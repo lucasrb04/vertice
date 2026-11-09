@@ -39,7 +39,7 @@ export default function PrivacidadePage() {
   return (
     <div className="bg-stone-50 px-4 py-12">
       <article className="mx-auto max-w-3xl rounded-md border border-stone-200 bg-white p-6 sm:p-10">
-        <p className="font-mono text-xs tracking-wide text-stone-500 uppercase">Atualizada em {UPDATED_AT}</p>
+        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">Atualizada em {UPDATED_AT}</p>
         <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">Política de Privacidade</h1>
         <p className="mt-4 leading-relaxed text-stone-700">
           Esta política explica quais dados pessoais o Vértice trata, para quê, com quem eles são compartilhados e como

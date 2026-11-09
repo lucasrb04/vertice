@@ -69,12 +69,12 @@ export default async function ProjetoPage({ params }: Props) {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-8 sm:py-10">
       <header className="space-y-3 border-b border-stone-200 pb-6">
-        <p className="font-mono text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
+        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">{CATEGORY_LABELS[project.category]}</p>
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="min-w-0 font-heading text-2xl leading-tight font-bold tracking-tight [word-spacing:0.06em] [overflow-wrap:anywhere] text-stone-900 sm:text-3xl">
             {project.name}
           </h1>
-          {project.acronym && <span className="font-mono text-sm text-stone-600">{project.acronym}</span>}
+          {project.acronym && <span className="tabular-nums text-sm text-stone-600">{project.acronym}</span>}
           {project.verified && (
             <span className="inline-flex items-center gap-1 text-xs text-stone-600">
               <BadgeCheck aria-hidden className="size-3.5 text-brand" />
@@ -135,7 +135,7 @@ export default async function ProjetoPage({ params }: Props) {
 
       <section aria-labelledby="abertos">
         <h2 id="abertos" className="text-lg font-semibold tracking-tight text-stone-900">
-          Processos abertos <span className="font-mono text-sm font-normal text-stone-500">{open.length}</span>
+          Processos abertos <span className="tabular-nums text-sm font-normal text-stone-500">{open.length}</span>
         </h2>
         {open.length === 0 ? (
           <p className="mt-3 text-sm text-stone-600">Nenhum processo aberto no momento.</p>
@@ -147,7 +147,7 @@ export default async function ProjetoPage({ params }: Props) {
       {closed.length > 0 && (
         <section aria-labelledby="anteriores">
           <h2 id="anteriores" className="text-lg font-semibold tracking-tight text-stone-900">
-            Processos anteriores <span className="font-mono text-sm font-normal text-stone-500">{closed.length}</span>
+            Processos anteriores <span className="tabular-nums text-sm font-normal text-stone-500">{closed.length}</span>
           </h2>
           <CardGrid cards={closed} />
         </section>

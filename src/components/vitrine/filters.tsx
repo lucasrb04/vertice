@@ -107,7 +107,7 @@ export function Filters({ params, options }: { params: VitrineParams; options: O
                   defaultChecked={params.tags.includes(t.slug)}
                   className={control}
                 />
-                <span className="min-w-0 truncate font-mono text-xs">{t.name}</span>
+                <span className="min-w-0 truncate tabular-nums text-xs">{t.name}</span>
               </label>
             ))}
           </fieldset>

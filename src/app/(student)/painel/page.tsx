@@ -30,7 +30,7 @@ export default async function PainelPage() {
                 Minhas candidaturas
               </h2>
               {applications.length > 0 && (
-                <p className="font-mono text-xs text-stone-600">
+                <p className="tabular-nums text-xs text-stone-600">
                   {inProgress === 0 ? "Nenhuma em andamento" : `${inProgress} em andamento`}
                 </p>
               )}
@@ -101,14 +101,14 @@ export default async function PainelPage() {
                     <span className="flex items-start justify-between gap-4">
                       <span className="min-w-0">
                         <span className="font-medium [overflow-wrap:anywhere] text-stone-900">{p.name}</span>
-                        {p.acronym && <span className="ml-2 font-mono text-xs text-stone-500">{p.acronym}</span>}
+                        {p.acronym && <span className="ml-2 tabular-nums text-xs text-stone-500">{p.acronym}</span>}
                         {p.status !== "ACTIVE" && (
                           <span className="ml-2 text-xs text-stone-600">{PROJECT_STATUS_LABELS[p.status]}</span>
                         )}
                       </span>
                       <span className="shrink-0 text-sm text-stone-600">{ROLE_LABELS[p.role]}</span>
                     </span>
-                    <span className="block font-mono text-xs text-stone-600">
+                    <span className="block tabular-nums text-xs text-stone-600">
                       {/* Cada número fica inteiro numa linha; a quebra só acontece entre eles. */}
                       {projectStatsParts(p.stats).map((part, i) => (
                         <span key={part}>

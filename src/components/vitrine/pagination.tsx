@@ -3,7 +3,7 @@ import { type VitrineParams, vitrineHref } from "@/lib/public/search-params";
 import { cn } from "@/lib/utils";
 
 const linkClass =
-  "inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-3 font-mono text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+  "inline-flex h-9 min-w-9 items-center justify-center rounded-md border px-3 tabular-nums text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function pageList(page: number, count: number): (number | null)[] {
   const keep = new Set([1, count, page - 1, page, page + 1]);
@@ -36,7 +36,7 @@ export function Pagination({ params, page, pageCount }: { params: VitrineParams;
       {pageList(page, pageCount).map((n, i) =>
         n === null ? (
           // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
-          <span key={`gap-${i}`} aria-hidden className="px-1 font-mono text-stone-500">
+          <span key={`gap-${i}`} aria-hidden className="px-1 tabular-nums text-stone-500">
             …
           </span>
         ) : (

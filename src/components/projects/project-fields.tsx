@@ -99,7 +99,7 @@ export function ProjectFields({
       </Field>
       <Field
         label="Descrição curta"
-        hint={<span className="font-mono">{values.shortDescription.length}/280</span>}
+        hint={<span className="tabular-nums">{values.shortDescription.length}/280</span>}
         errors={errorsFor(errors, "shortDescription")}
         className="sm:col-span-6"
       >

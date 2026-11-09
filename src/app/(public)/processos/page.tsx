@@ -73,7 +73,7 @@ export default async function ProcessosPage({
       {/* Filtros e ordenação preservam a escolha de buscar exatamente; o AutoSubmit a descarta ao mudar `q`. */}
       {params.exact ? <input type="hidden" name="corrigir" value="0" /> : null}
       <h1 className="text-[1.75rem] leading-[1.15] font-bold tracking-[-0.02em] text-stone-900 [word-spacing:0.06em]">
-        <span className="font-mono">{total}</span> {total === 1 ? "processo seletivo" : "processos seletivos"}
+        <span className="tabular-nums">{total}</span> {total === 1 ? "processo seletivo" : "processos seletivos"}
       </h1>
 
       <div className="mt-5 max-w-2xl">

@@ -46,7 +46,7 @@ export default async function MinhasCandidaturasPage({
           <p className="mt-2 text-sm text-stone-700">
             Próximas etapas: <span className="font-medium text-stone-900">Em análise</span>, depois{" "}
             <span className="font-medium text-stone-900">Entrevista</span> e o resultado. Você recebe um e-mail a cada
-            mudança de etapa em <span className="font-mono text-xs">{user.email}</span>, e tudo fica registrado aqui.
+            mudança de etapa em <span className="tabular-nums text-xs">{user.email}</span>, e tudo fica registrado aqui.
           </p>
         </section>
       )}
@@ -83,7 +83,7 @@ export default async function MinhasCandidaturasPage({
               </div>
               <ApplicationFunnel status={a.status} />
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <p className="font-mono text-xs text-stone-500">Enviada em {formatDay(a.appliedAt)}</p>
+                <p className="tabular-nums text-xs text-stone-500">Enviada em {formatDay(a.appliedAt)}</p>
                 {IN_PROGRESS_STATUSES.includes(a.status) && (
                   <ConfirmActionButton
                     label="Retirar candidatura"
@@ -103,7 +103,7 @@ export default async function MinhasCandidaturasPage({
                   {a.messages.map((m, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
                     <li key={`${m.createdAt.toISOString()}-${i}`} className="text-sm">
-                      <p className="font-mono text-xs text-stone-500">
+                      <p className="tabular-nums text-xs text-stone-500">
                         {formatDay(m.createdAt)} · {APPLICATION_STATUS_LABELS[m.toStatus]}
                       </p>
                       <p className="whitespace-pre-line [overflow-wrap:anywhere] text-stone-800">{m.message}</p>

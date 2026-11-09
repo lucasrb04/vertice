@@ -51,7 +51,7 @@ export function PublishNotice({ kind, title, publicPath, publicUrl, shareText }:
           readOnly
           value={publicUrl}
           onFocus={(e) => e.currentTarget.select()}
-          className="h-9 min-w-0 flex-1 rounded-md border border-stone-200 bg-stone-50 px-3 font-mono text-sm text-stone-800"
+          className="h-9 min-w-0 flex-1 rounded-md border border-stone-200 bg-stone-50 px-3 tabular-nums text-sm text-stone-800"
         />
         <Button type="button" variant="outline" onClick={() => copy(publicUrl, "Link copiado.")}>
           Copiar link

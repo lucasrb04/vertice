@@ -35,7 +35,7 @@ function validateRequired(draft: ProjectDraft): FieldErrors {
 function StepIndicator({ step }: { step: 1 | 2 }) {
   const item = (n: 1 | 2, label: string) => (
     <li className={n === step ? "text-stone-900" : "text-stone-500"} aria-current={n === step ? "step" : undefined}>
-      <span className="font-mono">{n}.</span> {label}
+      <span className="tabular-nums">{n}.</span> {label}
     </li>
   );
   return (

@@ -121,8 +121,8 @@ function OptionalBlock({ title, open, children }: { title: string; open: boolean
       <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 select-none">
         <span className="text-base font-semibold tracking-tight text-stone-900">{title}</span>
         <span className="text-xs text-stone-500">
-          opcional <span className="font-mono group-open:hidden">+</span>
-          <span className="hidden font-mono group-open:inline">−</span>
+          opcional <span className="tabular-nums group-open:hidden">+</span>
+          <span className="hidden tabular-nums group-open:inline">−</span>
         </span>
       </summary>
       <div className="grid gap-5 border-t border-stone-200 p-5 sm:grid-cols-6">{children}</div>
@@ -310,7 +310,7 @@ export function OpportunityForm({
               max={99}
               value={draft.vacanciesCount}
               onChange={text("vacanciesCount")}
-              className="font-mono"
+              className="tabular-nums"
             />
           )}
         </Field>
@@ -331,7 +331,7 @@ export function OpportunityForm({
               value={draft.deadline}
               onChange={text("deadline")}
               min={requiresFutureDeadline ? today : undefined}
-              className="font-mono"
+              className="tabular-nums"
             />
           )}
         </Field>
@@ -456,7 +456,7 @@ export function OpportunityForm({
               value={draft.scholarshipValue}
               onChange={text("scholarshipValue")}
               placeholder="700,00"
-              className="font-mono"
+              className="tabular-nums"
             />
           )}
         </Field>
@@ -476,7 +476,7 @@ export function OpportunityForm({
               max={20}
               value={draft.weeklyHours}
               onChange={text("weeklyHours")}
-              className="font-mono"
+              className="tabular-nums"
             />
           )}
         </Field>
@@ -496,7 +496,7 @@ export function OpportunityForm({
           ] as const
         ).map(([key, label]) => (
           <Field key={key} label={label} errors={err(key)} className="sm:col-span-3">
-            {(p) => <Input {...p} type="date" value={draft[key]} onChange={text(key)} className="font-mono" />}
+            {(p) => <Input {...p} type="date" value={draft[key]} onChange={text(key)} className="tabular-nums" />}
           </Field>
         ))}
       </OptionalBlock>
@@ -541,7 +541,7 @@ export function OpportunityForm({
                       onCheckedChange={(v) => toggleCourse(c.id, v === true)}
                     />
                     <Label htmlFor={id} className="font-normal text-stone-700">
-                      <span className="font-mono text-xs text-stone-500">{c.code}</span> {c.name}
+                      <span className="tabular-nums text-xs text-stone-500">{c.code}</span> {c.name}
                     </Label>
                   </li>
                 );
@@ -562,7 +562,7 @@ export function OpportunityForm({
               max={12}
               value={draft.minSemester}
               onChange={text("minSemester")}
-              className="font-mono"
+              className="tabular-nums"
             />
           )}
         </Field>

@@ -132,7 +132,7 @@ export function ApplyForm({
                 max={12}
                 value={semester}
                 onChange={(e) => edit("currentSemester", setSemester)(e.target.value)}
-                className="font-mono"
+                className="tabular-nums"
               />
             )}
           </Field>
@@ -172,7 +172,7 @@ export function ApplyForm({
           <Field
             label={question}
             hint={
-              <span className="font-mono">
+              <span className="tabular-nums">
                 {answer.length}/{ANSWER_MAX}
               </span>
             }

@@ -42,7 +42,7 @@ export function Schedule({ dates }: { dates: ScheduleDates }) {
             value && (
               <div key={label} className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-2">
                 <dt className="text-stone-600">{label}</dt>
-                <dd className="font-mono text-stone-900">{value}</dd>
+                <dd className="tabular-nums text-stone-900">{value}</dd>
               </div>
             ),
         )}

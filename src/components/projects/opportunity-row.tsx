@@ -10,7 +10,7 @@ import { ConfirmActionButton } from "./confirm-action-button";
 
 function ChannelBadge({ children }: { children: string }) {
   return (
-    <span className="rounded-md border border-stone-200 bg-stone-100 px-1.5 py-0.5 font-mono text-xs text-stone-700">
+    <span className="rounded-md border border-stone-200 bg-stone-100 px-1.5 py-0.5 tabular-nums text-xs text-stone-700">
       {children}
     </span>
   );
@@ -47,22 +47,22 @@ export function OpportunityRow({
         <p className="font-medium text-stone-900">{o.title}</p>
         {o.hidden ? (
           <div className="space-y-0.5 text-sm">
-            <p className="font-mono text-xs text-stone-700">Oculto pela moderação</p>
+            <p className="tabular-nums text-xs text-stone-700">Oculto pela moderação</p>
             {o.hiddenReason && <p className="[overflow-wrap:anywhere] text-stone-600">{o.hiddenReason}</p>}
           </div>
         ) : (
-          <p className={cn("font-mono text-xs", closingSoon ? "text-amber-700" : "text-stone-600")}>
+          <p className={cn("tabular-nums text-xs", closingSoon ? "text-amber-700" : "text-stone-600")}>
             {isOpen ? deadlineLabel(o.deadlineAt) : o.closedOn ? `Encerrado em ${formatDay(o.closedOn)}` : "Encerrado"}
           </p>
         )}
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="font-mono text-xs text-stone-600">
+          <span className="tabular-nums text-xs text-stone-600">
             {o.vacanciesCount} {o.vacanciesCount === 1 ? "vaga" : "vagas"}
           </span>
           {o.hasExternalUrl && <ChannelBadge>Edital</ChannelBadge>}
           {o.internalSelectionEnabled && <ChannelBadge>Plataforma</ChannelBadge>}
         </div>
-        <p className="font-mono text-xs text-stone-600">
+        <p className="tabular-nums text-xs text-stone-600">
           {opportunityStatsParts({
             views: o.views,
             externalClicks: o.hasExternalUrl ? o.externalClicks : null,
