@@ -23,18 +23,23 @@ import { FormMessage } from "./field";
  */
 export function ConfirmActionButton({
   label,
+  srLabel,
   title,
   description,
   confirmLabel,
+  cancelLabel = "Cancelar",
   action,
   redirectTo,
   variant = "outline",
   size = "sm",
 }: {
   label: string;
+  /** Complemento só para leitores de tela, quando há vários botões iguais na página. */
+  srLabel?: string;
   title: string;
   description: string;
   confirmLabel: string;
+  cancelLabel?: string;
   action: () => Promise<ActionResult<unknown>>;
   redirectTo?: string;
   variant?: "outline" | "destructive" | "ghost";
@@ -78,6 +83,7 @@ export function ConfirmActionButton({
       <AlertDialogTrigger asChild>
         <Button type="button" variant={variant} size={size}>
           {label}
+          {srLabel && <span className="sr-only"> {srLabel}</span>}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent className="rounded-lg ring-stone-200">
@@ -87,7 +93,7 @@ export function ConfirmActionButton({
         </AlertDialogHeader>
         <FormMessage message={message} />
         <AlertDialogFooter className="rounded-b-lg border-stone-200 bg-stone-50">
-          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction variant="destructive" disabled={pending} onClick={confirm}>
             {pending ? "Aguarde…" : confirmLabel}
           </AlertDialogAction>

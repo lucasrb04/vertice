@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { db } from "@/db";
 import { applicationEvents, applications, opportunities, studentProfiles } from "@/db/schema";
 import { runSeed } from "@/db/seed";
-import { applyToOpportunity } from "@/lib/applications/service";
+import { applyToOpportunity, RESULT_ALREADY_OUT, withdrawApplication } from "@/lib/applications/service";
 import { NotFoundError } from "@/lib/auth/errors";
 import { DomainError, RateLimitError, ValidationError } from "@/lib/domain-errors";
 import { updateOpportunity } from "@/lib/opportunities/service";
@@ -197,5 +197,44 @@ describe("applyToOpportunity", () => {
     // Nunca pode restar candidatura num processo com a seleção desligada.
     expect(count > 0 && !fresh.internalSelectionEnabled).toBe(false);
     expect([a.status, b.status].filter((s) => s === "fulfilled").length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("withdrawApplication", () => {
+  it("apaga a candidatura e o histórico; com o processo aberto, dá para se candidatar de novo", async () => {
+    const { opp, student, input } = await setup();
+    const { applicationId } = await applyToOpportunity(student, input);
+    await db.update(applications).set({ status: "INTERVIEW" }).where(eq(applications.id, applicationId));
+
+    await withdrawApplication(student, applicationId);
+
+    expect(await rows(opp.id)).toHaveLength(0);
+    expect(
+      await db.select().from(applicationEvents).where(eq(applicationEvents.applicationId, applicationId)),
+    ).toHaveLength(0);
+    await applyToOpportunity(student, input);
+    expect(await rows(opp.id)).toHaveLength(1);
+  });
+
+  it("com o resultado já saído, recusa e mantém a candidatura", async () => {
+    const { opp, student, input } = await setup();
+    const { applicationId } = await applyToOpportunity(student, input);
+    for (const status of ["ACCEPTED", "REJECTED"] as const) {
+      await db.update(applications).set({ status }).where(eq(applications.id, applicationId));
+      const err = await withdrawApplication(student, applicationId).catch((e) => e);
+      expect(err).toBeInstanceOf(DomainError);
+      expect(err.userMessage).toBe(RESULT_ALREADY_OUT);
+    }
+    expect(await rows(opp.id)).toHaveLength(1);
+  });
+
+  it("candidatura de outra pessoa ou inexistente: NotFoundError, sem apagar nada", async () => {
+    const { opp, student, input } = await setup();
+    const { applicationId } = await applyToOpportunity(student, input);
+    const other = await mkUser(`outro${seq++}@unifei.edu.br`);
+    await expect(withdrawApplication(other, applicationId)).rejects.toBeInstanceOf(NotFoundError);
+    await expect(withdrawApplication(student, crypto.randomUUID())).rejects.toBeInstanceOf(NotFoundError);
+    await expect(withdrawApplication(student, "nao-uuid")).rejects.toBeInstanceOf(NotFoundError);
+    expect(await rows(opp.id)).toHaveLength(1);
   });
 });

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { applyToOpportunityAction } from "@/actions/application.actions";
 import type { ActionResult } from "@/actions/result";
 import { Field, FormMessage } from "@/components/projects/field";
-import { errorsFor, type FieldErrors } from "@/components/projects/form-errors";
+import { errorsFor, type FieldErrors, withoutFieldError } from "@/components/projects/form-errors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,6 +61,14 @@ export function ApplyForm({
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+  // O erro de um campo sai assim que ele é editado; o resto espera o próximo envio.
+  const edit =
+    <T,>(field: string, set: (value: T) => void) =>
+    (value: T) => {
+      set(value);
+      setErrors((prev) => withoutFieldError(prev, field));
+    };
+
   const courseNames = Object.fromEntries(courses.map((c) => [c.id, c.name]));
   const notices = warnings(requirements, courseId, semester, courseNames);
 
@@ -100,7 +108,7 @@ export function ApplyForm({
         <div className="grid gap-5 sm:grid-cols-6">
           <Field label="Curso" errors={errorsFor(errors, "courseId")} className="sm:col-span-4">
             {(p) => (
-              <Select value={courseId} onValueChange={setCourseId}>
+              <Select value={courseId} onValueChange={edit("courseId", setCourseId)}>
                 <SelectTrigger {...p} className="w-full bg-white">
                   <SelectValue placeholder="Escolha o curso" />
                 </SelectTrigger>
@@ -123,7 +131,7 @@ export function ApplyForm({
                 min={1}
                 max={12}
                 value={semester}
-                onChange={(e) => setSemester(e.target.value)}
+                onChange={(e) => edit("currentSemester", setSemester)(e.target.value)}
                 className="font-mono"
               />
             )}
@@ -140,7 +148,7 @@ export function ApplyForm({
                 {...p}
                 type="url"
                 value={profileLink}
-                onChange={(e) => setProfileLink(e.target.value)}
+                onChange={(e) => edit("profileLink", setProfileLink)(e.target.value)}
                 maxLength={PROFILE_LINK_MAX}
                 placeholder="https://"
               />
@@ -174,7 +182,7 @@ export function ApplyForm({
               <Textarea
                 {...p}
                 value={answer}
-                onChange={(e) => setAnswer(e.target.value)}
+                onChange={(e) => edit("answerText", setAnswer)(e.target.value)}
                 maxLength={ANSWER_MAX}
                 rows={5}
               />

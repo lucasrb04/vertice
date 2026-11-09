@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { errorsFor, splitPrefixedErrors } from "@/components/projects/form-errors";
+import { errorsFor, splitPrefixedErrors, withoutFieldError } from "@/components/projects/form-errors";
 import { addTagRef, removeTagRef, tagRefKey } from "@/components/tags/tag-refs";
 import { deadlineLabel } from "@/lib/projects/labels";
 
@@ -60,5 +60,18 @@ describe("form errors", () => {
     expect(errorsFor(errors, "tags")).toEqual(["max", "curto"]);
     expect(errorsFor(errors, "titl")).toEqual([]);
     expect(errorsFor(undefined, "title")).toEqual([]);
+  });
+});
+
+describe("withoutFieldError", () => {
+  it("remove o campo e os seus subcaminhos, sem tocar nos vizinhos", () => {
+    const errors = { courseId: ["a"], "tags.0": ["b"], tagsExtra: ["c"], message: ["d"] };
+    expect(withoutFieldError(errors, "tags")).toEqual({ courseId: ["a"], tagsExtra: ["c"], message: ["d"] });
+    expect(withoutFieldError(errors, "courseId")).toEqual({ "tags.0": ["b"], tagsExtra: ["c"], message: ["d"] });
+  });
+
+  it("sem erro do campo devolve o mesmo objeto, para não renderizar à toa", () => {
+    const errors = { courseId: ["a"] };
+    expect(withoutFieldError(errors, "currentSemester")).toBe(errors);
   });
 });

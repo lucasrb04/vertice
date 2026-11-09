@@ -145,7 +145,8 @@ test("movimento alheio não sobrescreve: a tela informa quem não mudou", async 
     await p.getByRole("button", { name: `Mover para (${ana.name})` }).click();
     await p.getByRole("combobox", { name: "Etapa de destino" }).click();
     await p.getByRole("option", { name: stage }).click();
-    await p.getByRole("dialog").getByRole("button", { name: "Mover" }).click();
+    await p.getByRole("dialog").getByRole("button", { name: "Mover e avisar" }).click();
+    await p.getByRole("dialog").getByRole("button", { name: "Enviar resultado" }).click();
     await expect(p.getByRole("status")).toHaveText(expected);
   }
   await expect(inColumn(page, "Aprovado", ana.name)).toBeVisible();
@@ -202,8 +203,50 @@ test("candidato que virou REVIEWER vê o próprio card sem controles", async ({ 
 
   await page.getByRole("button", { name: `Mover para (${bia.name})` }).click();
   await expect(page.getByRole("dialog")).toContainText(
-    "O aluno recebe um e-mail e vê a mensagem em Minhas candidaturas.",
+    `${bia.name} recebe um e-mail com a nova etapa e a sua mensagem assim que você mover.`,
   );
+});
+
+test("resultado pede confirmação antes do e-mail e Não selecionado sugere um texto gentil", async ({ page }) => {
+  const { project, opportunity, ana, bia } = await boardWithTwoCandidates(page);
+  await page.goto(`/projetos/${project.id}/processos/${opportunity.id}/candidatos`);
+
+  await page.getByRole("button", { name: `Mover para (${ana.name})` }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("combobox", { name: "Etapa de destino" }).click();
+  // Etapa intermediária: sem texto sugerido.
+  await page.getByRole("option", { name: "Entrevista" }).click();
+  await expect(dialog.getByRole("button", { name: "Usar texto sugerido" })).toHaveCount(0);
+  await dialog.getByRole("combobox", { name: "Etapa de destino" }).click();
+  await page.getByRole("option", { name: "Não selecionado" }).click();
+  await dialog.getByRole("button", { name: "Usar texto sugerido" }).click();
+  const message = dialog.getByLabel("Mensagem ao candidato");
+  await expect(message).toHaveValue(/^Obrigado pelo interesse/);
+  await message.press("End");
+  await message.pressSequentially(" Abraços, equipe.");
+
+  await dialog.getByRole("button", { name: "Mover e avisar" }).click();
+  await expect(dialog.getByRole("heading", { name: "Confirmar resultado" })).toBeVisible();
+  await expect(dialog).toContainText(`${ana.name} passa para Não selecionado e recebe o e-mail agora.`);
+  await expect(dialog).toContainText("Abraços, equipe.");
+  await expect(dialog).toContainText("O e-mail não pode ser desfeito.");
+  // O foco vai para o passo seguro: dois Enter seguidos não enviam o resultado.
+  await expect(dialog.getByRole("button", { name: "Voltar" })).toBeFocused();
+  // Voltar mantém o que foi escrito.
+  await page.keyboard.press("Enter");
+  await expect(message).toHaveValue(/Abraços, equipe\.$/);
+  await expect(dialog.getByRole("button", { name: "Mover e avisar" })).toBeFocused();
+  await dialog.getByRole("button", { name: "Mover e avisar" }).click();
+  await dialog.getByRole("button", { name: "Enviar resultado" }).click();
+
+  await expect(page.getByRole("status")).toHaveText("1 candidato movido.");
+  await expect(inColumn(page, "Não selecionado", ana.name)).toBeVisible();
+
+  // Em lote, o diálogo fala de cada um.
+  await page.getByRole("checkbox", { name: `Selecionar ${bia.name}` }).click();
+  await page.getByRole("checkbox", { name: `Selecionar ${ana.name}` }).click();
+  await page.getByRole("button", { name: "Mover selecionados" }).click();
+  await expect(dialog).toContainText("Cada candidato recebe um e-mail com a nova etapa e a sua mensagem");
 });
 
 test("arquivar cita os candidatos em andamento e o aluno vê Projeto arquivado", async ({ page }) => {

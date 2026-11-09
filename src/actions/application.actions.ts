@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { moveApplications } from "@/lib/applications/board";
-import { applyToOpportunity } from "@/lib/applications/service";
+import { applyToOpportunity, withdrawApplication } from "@/lib/applications/service";
 import { requireAuth } from "@/lib/auth/guards";
 import { notifyApplicationReceived, notifyStatusChanged } from "@/lib/email/notify";
 import type { MoveInput } from "@/lib/validation/application";
@@ -47,5 +47,14 @@ export async function moveApplicationsAction(
       });
     }
     return { moved: moved.length, skipped };
+  });
+}
+
+export async function withdrawApplicationAction(applicationId: unknown): Promise<ActionResult<null>> {
+  return runAction(async () => {
+    const user = await requireAuth();
+    await withdrawApplication(user, typeof applicationId === "string" ? applicationId : "");
+    revalidatePath("/minhas-candidaturas");
+    return null;
   });
 }

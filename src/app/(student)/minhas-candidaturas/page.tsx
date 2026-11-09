@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { withdrawApplicationAction } from "@/actions/application.actions";
+import { ConfirmActionButton } from "@/components/projects/confirm-action-button";
 import { Button } from "@/components/ui/button";
-import { APPLICATION_STATUS_LABELS } from "@/lib/applications/labels";
+import { APPLICATION_STATUS_LABELS, IN_PROGRESS_STATUSES } from "@/lib/applications/labels";
 import { listMyApplications } from "@/lib/applications/queries";
 import { requireAuthPage } from "@/lib/auth/guards";
 import { formatDay } from "@/lib/time";
@@ -14,18 +16,23 @@ export const dynamic = "force-dynamic";
 export default async function MinhasCandidaturasPage({
   searchParams,
 }: {
-  searchParams: Promise<{ enviada?: string | string[] }>;
+  searchParams: Promise<{ enviada?: string | string[]; retirada?: string | string[] }>;
 }) {
   const user = await requireAuthPage("/minhas-candidaturas");
   const applications = await listMyApplications(user);
   // Fim da jornada do aluno: `?enviada=<slug>` só vale para uma candidatura dele; nada da URL é mostrado.
-  const { enviada } = await searchParams;
+  const { enviada, retirada } = await searchParams;
   const sentSlug = Array.isArray(enviada) ? enviada[0] : enviada;
   const sent = sentSlug ? applications.find((a) => a.opportunitySlug === sentSlug) : undefined;
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-900">Minhas candidaturas</h1>
+      {retirada !== undefined && (
+        <p role="status" className="mt-6 rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm text-stone-800">
+          Candidatura retirada.
+        </p>
+      )}
       {sent && (
         <section aria-labelledby="candidatura-enviada" className="mt-6 rounded-lg border border-stone-300 bg-white p-5">
           <h2 id="candidatura-enviada" className="text-base font-semibold text-stone-900">
@@ -73,7 +80,22 @@ export default async function MinhasCandidaturasPage({
                   {APPLICATION_STATUS_LABELS[a.status]}
                 </p>
               </div>
-              <p className="font-mono text-xs text-stone-500">Enviada em {formatDay(a.appliedAt)}</p>
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                <p className="font-mono text-xs text-stone-500">Enviada em {formatDay(a.appliedAt)}</p>
+                {IN_PROGRESS_STATUSES.includes(a.status) && (
+                  <ConfirmActionButton
+                    label="Retirar candidatura"
+                    srLabel={`(${a.opportunityTitle})`}
+                    title="Retirar esta candidatura?"
+                    description={`Sua candidatura para ${a.opportunityTitle} sai do processo. A equipe deixa de ver seus dados e a sua resposta. Se as inscrições ainda estiverem abertas, você pode se candidatar de novo.`}
+                    confirmLabel="Retirar candidatura"
+                    cancelLabel="Manter"
+                    action={withdrawApplicationAction.bind(null, a.id)}
+                    redirectTo="/minhas-candidaturas?retirada=1"
+                    variant="ghost"
+                  />
+                )}
+              </div>
               {a.messages.length > 0 && (
                 <ul aria-label="Mensagens da equipe" className="space-y-2 border-l-2 border-stone-200 pl-4">
                   {a.messages.map((m, i) => (

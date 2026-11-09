@@ -46,7 +46,8 @@ export type DomainErrorCode =
   | "OPPORTUNITY_HIDDEN"
   | "ALREADY_HIDDEN"
   | "NOT_HIDDEN"
-  | "NO_PENDING_REPORTS";
+  | "NO_PENDING_REPORTS"
+  | "RESULT_ALREADY_OUT";
 
 /** Violação de regra de negócio, com mensagem pt-BR pronta para a UI. */
 export class DomainError extends Error {

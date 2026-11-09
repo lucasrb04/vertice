@@ -1,5 +1,5 @@
-import { and, eq } from "drizzle-orm";
-import { ZodError } from "zod";
+import { and, eq, inArray } from "drizzle-orm";
+import { ZodError, z } from "zod";
 import { db } from "@/db";
 import {
   applicationEvents,
@@ -10,6 +10,7 @@ import {
   projects,
   studentProfiles,
 } from "@/db/schema";
+import { IN_PROGRESS_STATUSES } from "@/lib/applications/labels";
 import { NotFoundError } from "@/lib/auth/errors";
 import type { AuthUser } from "@/lib/auth/guards";
 import { isUniqueViolation } from "@/lib/db-errors";
@@ -25,6 +26,7 @@ export const NO_INTERNAL_SELECTION = "Este processo não recebe candidaturas pel
 export const NOT_OPEN_YET = "As candidaturas deste processo ainda não abriram.";
 export const ALREADY_APPLIED = "Você já se candidatou a este processo.";
 export const PROJECT_MEMBER = "Você faz parte da equipe deste projeto e não pode se candidatar.";
+export const RESULT_ALREADY_OUT = "O resultado desta candidatura já saiu; ela não pode mais ser retirada.";
 export const APPLICATION_RATE_LIMITED = "Muitas candidaturas em pouco tempo. Tente de novo mais tarde.";
 
 const ANSWER_REQUIRED = "Responda à pergunta.";
@@ -136,4 +138,22 @@ export async function applyToOpportunity(
     if (isUniqueViolation(err)) throw new DomainError("ALREADY_APPLIED", ALREADY_APPLIED);
     throw err;
   }
+}
+
+/**
+ * Retirada pelo próprio aluno enquanto o resultado não saiu (D48): a linha e o histórico são apagados, a equipe
+ * deixa de ver os dados e, com o processo aberto, o aluno pode se candidatar de novo. A condição de etapa vai no
+ * próprio `DELETE`, para um "Mover para" concorrente decidir sozinho quem chega primeiro.
+ */
+export async function withdrawApplication(user: AuthUser, applicationId: string): Promise<void> {
+  if (!z.uuid().safeParse(applicationId).success) throw new NotFoundError();
+  const own = and(eq(applications.id, applicationId), eq(applications.userId, user.id));
+  const deleted = await db
+    .delete(applications)
+    .where(and(own, inArray(applications.status, [...IN_PROGRESS_STATUSES])))
+    .returning({ id: applications.id });
+  if (deleted.length > 0) return;
+  const [existing] = await db.select({ id: applications.id }).from(applications).where(own);
+  if (!existing) throw new NotFoundError();
+  throw new DomainError("RESULT_ALREADY_OUT", RESULT_ALREADY_OUT);
 }

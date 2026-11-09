@@ -47,8 +47,11 @@ test("com sessão, preenche o perfil, responde e envia", async ({ page }) => {
   await page.getByRole("button", { name: "Enviar candidatura" }).click();
   await expect(page.getByText("Revise os campos destacados.")).toBeVisible();
   await expect(page.getByLabel("Link de perfil")).toHaveValue("https://github.com/candidato");
+  await expect(page.getByText("Responda à pergunta.")).toBeVisible();
 
+  // O erro some assim que o campo é corrigido, antes de reenviar.
   await page.getByLabel("Por que você quer entrar?").fill("Quero aprender na prática.");
+  await expect(page.getByText("Responda à pergunta.")).toHaveCount(0);
   await page.getByRole("button", { name: "Enviar candidatura" }).click();
   await page.waitForURL(/\/minhas-candidaturas\?enviada=/);
   await expect(page.getByRole("heading", { name: "Minhas candidaturas" })).toBeVisible();
@@ -117,4 +120,36 @@ test("antes da abertura o botão fica desabilitado", async ({ page }) => {
   const button = page.getByRole("button", { name: /Candidaturas abrem em/ });
   await expect(button).toBeDisabled();
   await expect(page.getByRole("link", { name: "Candidatar-se" })).toHaveCount(0);
+});
+
+test("aluno retira a candidatura em andamento e pode se candidatar de novo; com resultado, não", async ({ page }) => {
+  const email = "retira.e2e@unifei.edu.br";
+  const { opportunity: aberto } = await insertProcess({
+    title: "Processo em andamento",
+    internalSelectionEnabled: true,
+  });
+  const { opportunity: decidido } = await insertProcess({ title: "Processo decidido", internalSelectionEnabled: true });
+  await loginAs(page, email, "Aluno que retira");
+  await insertApplication(aberto.id, email, "INTERVIEW");
+  await insertApplication(decidido.id, email, "ACCEPTED");
+
+  await page.goto("/minhas-candidaturas");
+  await expect(page.getByRole("button", { name: "Retirar candidatura (Processo decidido)" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Retirar candidatura (Processo em andamento)" }).click();
+
+  const confirm = page.getByRole("alertdialog");
+  await expect(confirm).toContainText("Processo em andamento");
+  await expect(confirm).toContainText("A equipe deixa de ver seus dados e a sua resposta.");
+  await confirm.getByRole("button", { name: "Manter" }).click();
+  await expect(confirm).toBeHidden();
+  await expect(page.getByRole("link", { name: "Processo em andamento" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Retirar candidatura (Processo em andamento)" }).click();
+  await confirm.getByRole("button", { name: "Retirar candidatura" }).click();
+  await expect(page.getByRole("status")).toHaveText("Candidatura retirada.");
+  await expect(page.getByRole("link", { name: "Processo em andamento" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Processo decidido" })).toBeVisible();
+
+  await page.goto(`/processo/${aberto.slug}`);
+  await expect(page.getByRole("link", { name: "Candidatar-se" })).toBeVisible();
 });

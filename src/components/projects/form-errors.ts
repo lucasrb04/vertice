@@ -8,6 +8,15 @@ export function errorsFor(errors: FieldErrors | undefined, field: string): strin
     .flatMap(([, messages]) => messages);
 }
 
+/** Erros sem os do campo `field` (e subcaminhos): o campo editado deixa de mostrar um erro já corrigido. */
+export function withoutFieldError(errors: FieldErrors, field: string): FieldErrors {
+  const keys = Object.keys(errors).filter((key) => key === field || key.startsWith(`${field}.`));
+  if (keys.length === 0) return errors;
+  const next = { ...errors };
+  for (const key of keys) delete next[key];
+  return next;
+}
+
 /** Separa `fieldErrors` com chaves `prefixo.campo` por prefixo, removendo-o; o resto vai em `rest`. */
 export function splitPrefixedErrors<P extends string>(
   errors: FieldErrors | undefined,
