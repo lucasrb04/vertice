@@ -138,7 +138,7 @@ test("/painel lista Meus projetos", async ({ page }) => {
   const meus = page.getByRole("region", { name: "Meus projetos" });
   await expect(meus.getByRole("link", { name: /Projeto do Painel/ })).toHaveAttribute("href", `/projetos/${projectId}`);
   await expect(meus.getByText("Dono", { exact: true })).toBeVisible();
-  await page.getByRole("main").getByRole("link", { name: "Publicar processo seletivo" }).click();
+  await meus.getByRole("link", { name: "Publicar processo" }).click();
   await expect(page).toHaveURL(/\/publicar$/);
 });
 
@@ -152,7 +152,7 @@ test("menu da conta leva de volta à gestão do projeto depois de publicar", asy
   const menu = page.getByRole("menu");
   await expect(menu).toContainText("dono.menu@unifei.edu.br");
   await expect(menu.getByRole("menuitem", { name: "Administração" })).toHaveCount(0);
-  await menu.getByRole("menuitem", { name: "Meus projetos" }).click();
+  await menu.getByRole("menuitem", { name: "Painel" }).click();
 
   await page.waitForURL("/painel");
   await page.getByRole("link", { name: /Projeto do Menu/ }).click();

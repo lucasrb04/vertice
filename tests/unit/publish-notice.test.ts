@@ -17,6 +17,8 @@ function op(id: string, overrides: Partial<PanelOpportunity> = {}): PanelOpportu
     hasExternalUrl: true,
     internalSelectionEnabled: false,
     applicationsCount: 0,
+    views: 0,
+    externalClicks: 0,
     hidden: false,
     hiddenReason: null,
     ...overrides,

@@ -31,12 +31,16 @@ export async function SiteHeader() {
           <Link href="/processos" className="text-sm font-medium text-stone-800 hover:text-brand">
             Processos
           </Link>
+          {/* Para todos: quem publica pesa igual a quem procura. Sem sessão, /publicar leva ao login e volta. */}
+          <Link href="/publicar" className="text-sm font-medium whitespace-nowrap text-stone-800 hover:text-brand">
+            Publicar<span className="hidden sm:inline"> processo</span>
+          </Link>
         </div>
         {user ? (
           <UserMenu user={user} />
         ) : (
           <Link href="/entrar" className="text-sm font-medium whitespace-nowrap text-stone-800 hover:text-brand">
-            Entrar com Google
+            Entrar
           </Link>
         )}
       </div>

@@ -6,9 +6,14 @@ import { IN_PROGRESS_STATUSES } from "@/lib/applications/labels";
 import type { AuthUser, ProjectAccess } from "@/lib/auth/guards";
 import { getHiddenReasons } from "@/lib/moderation/queries";
 import { isHidden } from "@/lib/moderation/service";
-import { closedOnDate, isOpportunityOpen } from "@/lib/opportunities/status";
+import { closedOnDate, isOpportunityOpen, openOpportunitySql } from "@/lib/opportunities/status";
+import type { ProjectStats } from "@/lib/projects/stats";
 
-export async function listMyProjects(user: AuthUser): Promise<
+/** Projetos de que o usuário é membro, com os números do `/painel`, somados sobre todos os processos de cada um. */
+export async function listMyProjects(
+  user: AuthUser,
+  now: Date = new Date(),
+): Promise<
   Array<{
     id: string;
     name: string;
@@ -16,9 +21,10 @@ export async function listMyProjects(user: AuthUser): Promise<
     category: ProjectCategory;
     status: ProjectStatus;
     role: ProjectRole;
+    stats: ProjectStats;
   }>
 > {
-  return db
+  const rows = await db
     .select({
       id: projects.id,
       name: projects.name,
@@ -31,6 +37,43 @@ export async function listMyProjects(user: AuthUser): Promise<
     .innerJoin(projects, eq(projects.id, projectMembers.projectId))
     .where(and(eq(projectMembers.userId, user.id), eq(projects.institutionId, user.institutionId)))
     .orderBy(asc(projects.name));
+  if (rows.length === 0) return [];
+  const ids = rows.map((r) => r.id);
+
+  const [opportunityTotals, applicationTotals] = await Promise.all([
+    db
+      .select({
+        projectId: opportunities.projectId,
+        open: sql<number>`count(*) filter (where ${openOpportunitySql(now)})`.mapWith(Number),
+        views: sql<number>`coalesce(sum(${opportunities.viewsCount}), 0)`.mapWith(Number),
+        externalClicks: sql<number>`coalesce(sum(${opportunities.externalClicksCount}), 0)`.mapWith(Number),
+      })
+      .from(opportunities)
+      .innerJoin(projects, eq(projects.id, opportunities.projectId))
+      .where(inArray(opportunities.projectId, ids))
+      .groupBy(opportunities.projectId),
+    db
+      .select({ projectId: opportunities.projectId, inProgress: count() })
+      .from(applications)
+      .innerJoin(opportunities, eq(opportunities.id, applications.opportunityId))
+      .where(and(inArray(opportunities.projectId, ids), inArray(applications.status, [...IN_PROGRESS_STATUSES])))
+      .groupBy(opportunities.projectId),
+  ]);
+  const byOpportunities = new Map(opportunityTotals.map((t) => [t.projectId, t]));
+  const byApplications = new Map(applicationTotals.map((t) => [t.projectId, t.inProgress]));
+
+  return rows.map((r) => {
+    const o = byOpportunities.get(r.id);
+    return {
+      ...r,
+      stats: {
+        openOpportunities: o?.open ?? 0,
+        inProgressApplications: byApplications.get(r.id) ?? 0,
+        views: o?.views ?? 0,
+        externalClicks: o?.externalClicks ?? 0,
+      },
+    };
+  });
 }
 
 export async function listProjectsUserCanPublishIn(user: AuthUser): Promise<Array<{ id: string; name: string }>> {
@@ -61,6 +104,9 @@ export type PanelOpportunity = {
   internalSelectionEnabled: boolean;
   /** Zero para quem não tem membership real: a contagem é dado da equipe. */
   applicationsCount: number;
+  /** Acumulados desde a publicação. */
+  views: number;
+  externalClicks: number;
   /** Oculto pela moderação: só leitura, sem editar nem duplicar (D46). */
   hidden: boolean;
   /** Motivo da última ocultação, quando `hidden`. */
@@ -131,6 +177,8 @@ export async function getProjectPanel(
       hasExternalUrl: o.externalUrl !== null,
       internalSelectionEnabled: o.internalSelectionEnabled,
       applicationsCount: countByOpportunity.get(o.id) ?? 0,
+      views: o.viewsCount,
+      externalClicks: o.externalClicksCount,
       hidden: isHidden("OPPORTUNITY", o.status),
       hiddenReason: reasons.get(`OPPORTUNITY:${o.id}`) ?? null,
     };

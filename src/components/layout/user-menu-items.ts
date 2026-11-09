@@ -3,7 +3,7 @@ export type UserMenuItem = { href: string; label: string };
 /** Itens do menu da conta, na ordem em que aparecem. Administração só para SYSTEM_ADMIN. */
 export function userMenuItems(user: { systemRole: "USER" | "SYSTEM_ADMIN" }): UserMenuItem[] {
   const items: UserMenuItem[] = [
-    { href: "/painel", label: "Meus projetos" },
+    { href: "/painel", label: "Painel" },
     { href: "/minhas-candidaturas", label: "Minhas candidaturas" },
     { href: "/publicar", label: "Publicar processo" },
   ];

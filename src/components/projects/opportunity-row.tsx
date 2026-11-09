@@ -3,6 +3,7 @@ import { closeOpportunityAction } from "@/actions/opportunity.actions";
 import { Button } from "@/components/ui/button";
 import { deadlineLabel } from "@/lib/projects/labels";
 import type { PanelOpportunity } from "@/lib/projects/queries";
+import { opportunityStatsParts } from "@/lib/projects/stats";
 import { daysUntil, formatDay } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import { ConfirmActionButton } from "./confirm-action-button";
@@ -61,6 +62,12 @@ export function OpportunityRow({
           {o.hasExternalUrl && <ChannelBadge>Edital</ChannelBadge>}
           {o.internalSelectionEnabled && <ChannelBadge>Plataforma</ChannelBadge>}
         </div>
+        <p className="font-mono text-xs text-stone-600">
+          {opportunityStatsParts({
+            views: o.views,
+            externalClicks: o.hasExternalUrl ? o.externalClicks : null,
+          }).join(" · ")}
+        </p>
       </div>
       {(canChange || showApplicants) && (
         <div className="flex shrink-0 flex-wrap items-center gap-2">

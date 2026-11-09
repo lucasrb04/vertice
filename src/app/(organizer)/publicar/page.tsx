@@ -8,7 +8,7 @@ import { getTurnstileConfig } from "@/lib/security/turnstile";
 export const metadata = { title: "Publicar processo seletivo — Vértice" };
 
 export default async function PublicarPage({ searchParams }: { searchParams: Promise<{ novo?: string | string[] }> }) {
-  const user = await requireAuthPage();
+  const user = await requireAuthPage("/publicar");
   const { novo } = await searchParams;
   const projects = await listProjectsUserCanPublishIn(user);
   const showWizard = projects.length === 0 || novo === "1";

@@ -12,7 +12,7 @@ test("entrar, ver painel, sair", async ({ page }) => {
   await page.getByRole("button", { name: "Menu da conta de Aluno Teste" }).click();
   await page.getByRole("menuitem", { name: "Sair" }).click();
   await page.waitForURL("/");
-  await expect(page.getByRole("banner").getByRole("link", { name: "Entrar com Google" })).toBeVisible();
+  await expect(page.getByRole("banner").getByRole("link", { name: "Entrar", exact: true })).toBeVisible();
   await page.goto("/painel");
   await expect(page).toHaveURL(/\/entrar$/);
 });

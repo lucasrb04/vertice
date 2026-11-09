@@ -4,9 +4,9 @@ import { UserMenu } from "@/components/layout/user-menu";
 import { initials, userMenuItems } from "@/components/layout/user-menu-items";
 
 describe("userMenuItems", () => {
-  it("usuário comum: projetos, candidaturas e publicar, nessa ordem", () => {
+  it("usuário comum: painel, candidaturas e publicar, nessa ordem", () => {
     expect(userMenuItems({ systemRole: "USER" })).toEqual([
-      { href: "/painel", label: "Meus projetos" },
+      { href: "/painel", label: "Painel" },
       { href: "/minhas-candidaturas", label: "Minhas candidaturas" },
       { href: "/publicar", label: "Publicar processo" },
     ]);

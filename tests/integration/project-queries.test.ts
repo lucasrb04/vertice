@@ -55,6 +55,20 @@ describe("consultas do painel", () => {
     expect(panel.closed[1]!.closedOn).toEqual(expiredDeadline);
     expect(panel.open[0]).toMatchObject({ vacanciesCount: 1, hasExternalUrl: true, internalSelectionEnabled: false });
     expect(panel.open[0]!.slug).toBe(open1.slug);
+    expect(panel.open[0]).toMatchObject({ views: 0, externalClicks: 0 });
+  });
+
+  it("getProjectPanel traz visualizações e cliques no edital de cada processo", async () => {
+    const user = (await mkUser("o@unifei.edu.br"))!;
+    const project = (await mkProject())!;
+    await addMember(project.id, user.id, "OWNER");
+    await mkOpportunity(project.id, {
+      deadlineAt: new Date(Date.now() + 24 * H),
+      viewsCount: 42,
+      externalClicksCount: 7,
+    });
+    const panel = await getProjectPanel(await authorizeProjectRole(user as AuthUser, project.id, ["OWNER"]));
+    expect(panel.open[0]).toMatchObject({ views: 42, externalClicks: 7 });
   });
 
   it("getProjectPanel conta candidatos em andamento, só para quem tem membership real", async () => {
@@ -151,6 +165,43 @@ describe("consultas do painel", () => {
     const list = await listMyProjects(user as AuthUser);
     expect(list).toHaveLength(1);
     expect(list[0]).toMatchObject({ id: mine.id, name: "Meu", role: "REVIEWER", status: "ACTIVE" });
+  });
+
+  it("listMyProjects traz zeros sem processos e soma os números de todos os processos do projeto", async () => {
+    const user = (await mkUser("dono@unifei.edu.br"))!;
+    const empty = (await mkProject({ name: "A vazio" }))!;
+    const busy = (await mkProject({ name: "B movimentado" }))!;
+    await addMember(empty.id, user.id, "OWNER");
+    await addMember(busy.id, user.id, "ADMIN");
+    const now = Date.now();
+    const open = (await mkOpportunity(busy.id, {
+      deadlineAt: new Date(now + 48 * H),
+      viewsCount: 10,
+      externalClicksCount: 3,
+    }))!;
+    const expired = (await mkOpportunity(busy.id, {
+      deadlineAt: new Date(now - 48 * H),
+      viewsCount: 5,
+      externalClicksCount: 1,
+    }))!;
+    await mkOpportunity(busy.id, { status: "CLOSED", deadlineAt: new Date(now + 48 * H), viewsCount: 2 });
+    let n = 0;
+    for (const [oppId, status] of [
+      [open.id, "APPLIED"],
+      [open.id, "INTERVIEW"],
+      [open.id, "ACCEPTED"],
+      [expired.id, "IN_REVIEW"],
+      [expired.id, "REJECTED"],
+    ] as const) {
+      const student = (await mkUser(`aluno${n++}@unifei.edu.br`))!;
+      await db.insert(applications).values({ opportunityId: oppId, userId: student.id, status });
+    }
+
+    const list = await listMyProjects(user as AuthUser);
+    expect(list.map((p) => [p.name, p.stats])).toEqual([
+      ["A vazio", { openOpportunities: 0, inProgressApplications: 0, views: 0, externalClicks: 0 }],
+      ["B movimentado", { openOpportunities: 1, inProgressApplications: 3, views: 17, externalClicks: 4 }],
+    ]);
   });
 
   it("listProjectsUserCanPublishIn exclui REVIEWER e projeto ARCHIVED", async () => {
