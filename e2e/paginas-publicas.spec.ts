@@ -74,16 +74,25 @@ test.describe("/processo/[slug]", () => {
     await expect(requirements).toContainText("Terças à tarde");
     await expect(requirements).toContainText("Não acumular com outra bolsa");
 
-    await expect(page.getByRole("main")).toContainText("Bolsa FAPEMIG");
-    await expect(page.getByRole("main")).toContainText("R$ 700,00");
-    await expect(page.getByRole("main")).toContainText("12h/sem");
+    await expect(page.getByRole("main")).toContainText("Bolsa de R$ 700/mês · FAPEMIG");
+    await expect(page.getByRole("main")).toContainText("12 h por semana");
+  });
+
+  test("a ação principal fica no card de inscrição", async ({ page }) => {
+    const { opportunity } = await insertProcess({ title: "Processo com inscrição", internalSelectionEnabled: true });
+    await page.goto(`/processo/${opportunity.slug}`);
+    const aside = page.getByRole("complementary", { name: "Inscrição" });
+    await expect(aside.getByRole("link", { name: "Candidatar-se" })).toBeVisible();
+    await expect(aside.getByRole("link", { name: "Acessar edital" })).toBeVisible();
   });
 
   test("sem datas opcionais não há Cronograma; prazo próximo fica em âmbar", async ({ page }) => {
     const { opportunity } = await insertProcess({ title: "Processo curto", deadlineAt: daysFromNow(3) });
     await page.goto(`/processo/${opportunity.slug}`);
     await expect(page.getByRole("heading", { name: "Cronograma" })).toHaveCount(0);
-    await expect(page.getByText("Encerra em 3 dias")).toHaveClass(/text-amber/);
+    await expect(page.getByRole("complementary", { name: "Inscrição" }).getByText("Encerra em 3 dias")).toHaveClass(
+      /text-urgent-ink/,
+    );
   });
 
   test("abertura futura: selo na lista e na página, com o edital disponível", async ({ page }) => {

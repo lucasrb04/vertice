@@ -33,16 +33,16 @@ export function Schedule({ dates }: { dates: ScheduleDates }) {
 
   return (
     <section aria-labelledby="cronograma">
-      <h2 id="cronograma" className="text-lg font-semibold tracking-tight text-stone-900">
+      <h2 id="cronograma" className="text-[1.2rem] font-bold text-ink">
         Cronograma
       </h2>
-      <dl className="mt-3 divide-y divide-stone-200 border-y border-stone-200 text-sm">
+      <dl className="mt-3 divide-y divide-line overflow-hidden rounded-xl bg-surface-2 px-4 text-[0.97rem]">
         {rows.map(
           ([label, value]) =>
             value && (
-              <div key={label} className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-2">
-                <dt className="text-stone-600">{label}</dt>
-                <dd className="tabular-nums text-stone-900">{value}</dd>
+              <div key={label} className="flex flex-wrap justify-between gap-x-4 gap-y-0.5 py-2.5">
+                <dt className="text-ink-2">{label}</dt>
+                <dd className="font-medium text-ink tabular-nums">{value}</dd>
               </div>
             ),
         )}

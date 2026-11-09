@@ -31,14 +31,14 @@ export function Requirements({
 
   return (
     <section aria-labelledby="requisitos">
-      <h2 id="requisitos" className="text-lg font-semibold tracking-tight text-stone-900">
+      <h2 id="requisitos" className="text-[1.2rem] font-bold text-ink">
         Requisitos
       </h2>
-      <dl className="mt-3 divide-y divide-stone-200 border-y border-stone-200 text-sm">
+      <dl className="mt-3 divide-y divide-line overflow-hidden rounded-xl bg-surface-2 px-4 text-[0.97rem]">
         {rows.map(([label, value]) => (
-          <div key={label} className="grid gap-x-4 gap-y-0.5 py-2 sm:grid-cols-[9rem_minmax(0,1fr)]">
-            <dt className="text-stone-600">{label}</dt>
-            <dd className="[overflow-wrap:anywhere] text-stone-900">{value}</dd>
+          <div key={label} className="grid gap-x-4 gap-y-0.5 py-2.5 sm:grid-cols-[10rem_minmax(0,1fr)]">
+            <dt className="text-ink-2">{label}</dt>
+            <dd className="font-medium [overflow-wrap:anywhere] text-ink">{value}</dd>
           </div>
         ))}
       </dl>

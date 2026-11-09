@@ -1,13 +1,14 @@
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, BriefcaseBusiness, CalendarClock, Clock, HandHeart, Users, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { cache } from "react";
+import { Shell } from "@/components/layout/shell";
 import { ReportDialog } from "@/components/moderation/report-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProjectTile } from "@/components/vitrine/project-tile";
 import { Requirements } from "@/components/vitrine/requirements";
 import { SafeMarkdown } from "@/components/vitrine/safe-markdown";
 import { Schedule } from "@/components/vitrine/schedule";
@@ -17,7 +18,7 @@ import { logError } from "@/lib/log";
 import { canReport } from "@/lib/moderation/reports";
 import { opensInFuture, opensOnLabel } from "@/lib/opportunities/status";
 import { deadlineLabel } from "@/lib/projects/labels";
-import { CATEGORY_LABELS, deadlineChip, formatCents, plainTextExcerpt, scholarshipSummary } from "@/lib/public/labels";
+import { CATEGORY_LABELS, cardScholarshipLabel, deadlineChip, plainTextExcerpt } from "@/lib/public/labels";
 import { getPublicOpportunity } from "@/lib/public/queries";
 import { getVisitorHashSecret, recordView, visitorHash } from "@/lib/public/telemetry";
 import { getRequestIp } from "@/lib/security/audit";
@@ -100,59 +101,88 @@ export default async function ProcessoPage({ params }: Props) {
   const editalHref = opportunity.externalUrl && isHttps(opportunity.externalUrl) ? `/processo/${slug}/edital` : null;
   const opensLater = isOpen && opensInFuture(opportunity.applicationsOpenOn);
   const urgency = isOpen ? deadlineChip(opportunity.deadlineAt) : null;
-  const facts: [string, string][] = [["Modalidade", scholarshipSummary(opportunity)]];
-  if (opportunity.scholarshipValueCents) facts.push(["Valor", formatCents(opportunity.scholarshipValueCents)]);
-  if (opportunity.weeklyHours) facts.push(["Carga", `${opportunity.weeklyHours}h/sem`]);
-  if (opportunity.vacanciesCount) facts.push(["Vagas", String(opportunity.vacanciesCount)]);
-  if (opportunity.roleArea) facts.push(["Área", opportunity.roleArea]);
+  const paid = opportunity.scholarshipType !== "VOLUNTARY";
+  const facts: { icon: typeof Clock; text: string; money?: boolean }[] = [
+    { icon: paid ? Wallet : HandHeart, text: cardScholarshipLabel(opportunity), money: paid },
+  ];
+  if (opportunity.weeklyHours) facts.push({ icon: Clock, text: `${opportunity.weeklyHours} h por semana` });
+  if (opportunity.vacanciesCount) {
+    facts.push({
+      icon: Users,
+      text: opportunity.vacanciesCount === 1 ? "1 vaga" : `${opportunity.vacanciesCount} vagas`,
+    });
+  }
+  if (opportunity.roleArea) facts.push({ icon: BriefcaseBusiness, text: opportunity.roleArea });
   const tagGroups = TAG_GROUPS.filter(([key]) => tags[key].length > 0);
 
-  return (
-    <article className="mx-auto w-full max-w-5xl px-4 py-8 sm:py-10">
-      <header className="border-b border-stone-200 pb-6">
-        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">
-          {CATEGORY_LABELS[project.category]}
-        </p>
-        <h1 className="mt-2 font-heading text-2xl leading-tight font-bold tracking-tight [word-spacing:0.06em] [overflow-wrap:anywhere] text-stone-900 sm:text-3xl">
-          {opportunity.title}
-        </h1>
-        <p className="mt-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-          <Link
-            href={`/projeto/${project.slug}`}
-            className="min-w-0 font-medium [overflow-wrap:anywhere] text-stone-800 underline-offset-4 hover:text-brand hover:underline"
-          >
-            {project.name}
-          </Link>
-          {project.acronym && <span className="tabular-nums text-xs text-stone-600">{project.acronym}</span>}
-          {project.verified && (
-            <span className="inline-flex items-center gap-1 text-xs text-stone-600">
-              <BadgeCheck aria-hidden className="size-3.5 text-brand" />
-              Verificado
-            </span>
-          )}
-        </p>
-      </header>
+  const sectionCard = "rounded-2xl bg-surface p-5 shadow-card sm:p-8";
+  const sideLink = "block font-semibold text-ink underline underline-offset-4 hover:decoration-2";
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
-        <aside aria-label="Inscrição" className="space-y-5 lg:col-start-2 lg:row-start-1">
+  return (
+    <Shell className="mt-6">
+      {/* Celular: cabeçalho, inscrição e conteúdo, nessa ordem; desktop: inscrição fixa à direita. */}
+      <article className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-7">
+        <header className={cn(sectionCard, "flex gap-4 sm:gap-5 lg:col-start-1")}>
+          <ProjectTile category={project.category} name={project.name} acronym={project.acronym} size="lg" />
+          <div className="min-w-0">
+            <h1 className="text-[1.6rem] leading-[1.15] font-extrabold [overflow-wrap:anywhere] text-ink sm:text-[2.1rem]">
+              {opportunity.title}
+            </h1>
+            <p className="mt-2 text-base [overflow-wrap:anywhere]">
+              <Link
+                href={`/projeto/${project.slug}`}
+                className="font-semibold text-ink underline-offset-4 hover:underline"
+              >
+                {project.name}
+              </Link>
+              {project.verified && (
+                <span className="ml-1.5 inline-flex items-center gap-1 align-[-2px] text-sm font-medium text-[#2350b5]">
+                  <BadgeCheck aria-hidden className="size-4" />
+                  Verificado
+                </span>
+              )}{" "}
+              <span className="whitespace-nowrap text-ink-2">· {CATEGORY_LABELS[project.category]}</span>
+            </p>
+            <ul className="mt-4 flex flex-wrap gap-2" aria-label="Resumo">
+              {facts.map(({ icon: Icon, text, money }) => (
+                <li
+                  key={text}
+                  className={cn(
+                    "inline-flex max-w-full items-center gap-1.5 rounded-[9px] px-2.5 py-1 text-[0.94rem] font-medium",
+                    money ? "bg-money-soft text-money-ink" : "bg-fact",
+                  )}
+                >
+                  <Icon aria-hidden className={cn("size-4 shrink-0", money ? "text-money-ink" : "text-ink-2")} />
+                  <span className="min-w-0 [overflow-wrap:anywhere]">{text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </header>
+
+        <aside
+          aria-label="Inscrição"
+          className="space-y-4 lg:sticky lg:top-5 lg:col-start-2 lg:row-span-2 lg:row-start-1"
+        >
           {isOpen ? (
-            <div className="space-y-3 rounded-lg border border-stone-200 bg-white p-4">
+            <div className="space-y-4 rounded-2xl bg-surface p-5 shadow-card">
               {opensLater && (
-                <p className="tabular-nums text-sm font-medium text-stone-900">
+                <p className="inline-flex items-center gap-1.5 rounded-[9px] bg-rosa-soft px-2.5 py-1 font-semibold text-rosa-ink">
                   {opensOnLabel(opportunity.applicationsOpenOn!)}
                 </p>
               )}
-              <p
-                className={cn(
-                  "tabular-nums text-sm font-medium",
-                  urgency!.urgent ? "text-amber-700" : "text-stone-900",
-                )}
-              >
-                {urgency!.text}
-              </p>
-              <p className="tabular-nums text-xs leading-relaxed text-stone-600">
-                {deadlineLabel(opportunity.deadlineAt)}
-              </p>
+              <div>
+                <p
+                  className={cn(
+                    "inline-flex items-center gap-2 text-[1.15rem] font-bold",
+                    urgency!.urgent ? "rounded-[10px] bg-urgent-soft px-3 py-1.5 text-urgent-ink" : "text-ink",
+                  )}
+                >
+                  <CalendarClock aria-hidden className="size-5" />
+                  {urgency!.text}
+                </p>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink-2">{deadlineLabel(opportunity.deadlineAt)}</p>
+              </div>
               {opportunity.internalSelectionEnabled &&
                 (myApplicationId ? (
                   <Button asChild size="lg" className="w-full">
@@ -170,7 +200,7 @@ export default async function ProcessoPage({ params }: Props) {
                       <Link href={`/processo/${slug}/candidatar`}>Candidatar-se</Link>
                     </Button>
                     {!signedIn && (
-                      <p className="text-xs leading-relaxed text-stone-600">
+                      <p className="text-sm leading-relaxed text-ink-2">
                         Para se candidatar, você entra com a sua conta Google @unifei.edu.br.
                       </p>
                     )}
@@ -190,8 +220,8 @@ export default async function ProcessoPage({ params }: Props) {
               )}
             </div>
           ) : (
-            <div className="space-y-2 rounded-lg border border-stone-300 bg-stone-100 p-4 text-sm text-stone-700">
-              <p role="status" className="font-medium text-stone-900">
+            <div className="space-y-2.5 rounded-2xl bg-surface-2 p-5 text-ink-2 shadow-card">
+              <p role="status" className="text-[1.1rem] font-bold text-ink">
                 Processo encerrado
                 {closedOn && (
                   <>
@@ -200,46 +230,30 @@ export default async function ProcessoPage({ params }: Props) {
                   </>
                 )}
               </p>
-              <Link
-                href={`/projeto/${project.slug}`}
-                className="block font-medium text-brand underline-offset-4 hover:underline"
-              >
+              <Link href={`/projeto/${project.slug}`} className={sideLink}>
                 Ver outros processos do projeto
               </Link>
               {myApplicationId && (
-                <Link
-                  href="/minhas-candidaturas"
-                  className="block font-medium text-brand underline-offset-4 hover:underline"
-                >
+                <Link href="/minhas-candidaturas" className={sideLink}>
                   Ver minha candidatura
                 </Link>
               )}
               {editalHref && (
-                <a
-                  href={editalHref}
-                  target="_blank"
-                  rel="nofollow noopener"
-                  className="block text-stone-600 underline underline-offset-4 hover:text-stone-900"
-                >
+                <a href={editalHref} target="_blank" rel="nofollow noopener" className={sideLink}>
                   Acessar edital
                 </a>
               )}
             </div>
           )}
 
-          <dl className="divide-y divide-stone-200 border-y border-stone-200 text-sm">
-            {facts.map(([label, value]) => (
-              <div key={label} className="flex justify-between gap-4 py-2">
-                <dt className="text-stone-600">{label}</dt>
-                <dd className="min-w-0 text-right tabular-nums [overflow-wrap:anywhere] text-stone-900">{value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          {reportable && <ReportDialog targetType="OPPORTUNITY" targetId={opportunity.id} />}
+          {reportable && (
+            <div className="px-1">
+              <ReportDialog targetType="OPPORTUNITY" targetId={opportunity.id} />
+            </div>
+          )}
         </aside>
 
-        <div className="min-w-0 space-y-8 lg:col-start-1 lg:row-start-1">
+        <div className={cn(sectionCard, "min-w-0 space-y-9 lg:col-start-1")}>
           <section aria-labelledby="sobre">
             <h2 id="sobre" className="sr-only">
               Sobre o processo
@@ -259,21 +273,19 @@ export default async function ProcessoPage({ params }: Props) {
 
           {tagGroups.length > 0 && (
             <section aria-labelledby="tags" className="space-y-3">
-              <h2 id="tags" className="text-lg font-semibold tracking-tight text-stone-900">
-                Tags
+              <h2 id="tags" className="text-[1.2rem] font-bold text-ink">
+                Temas e habilidades
               </h2>
               {tagGroups.map(([key, label]) => (
                 <div key={key}>
-                  <h3 className="text-sm text-stone-600">{label}</h3>
-                  <ul className="mt-1 flex flex-wrap gap-1">
+                  <h3 className="font-sans text-sm font-semibold tracking-normal text-ink-2">{label}</h3>
+                  <ul className="mt-1.5 flex flex-wrap gap-1.5">
                     {tags[key].map((tag) => (
-                      <li key={tag.slug} className="max-w-full min-w-0">
-                        <Badge
-                          variant="secondary"
-                          className="block h-auto max-w-full truncate rounded-md tabular-nums font-normal text-stone-700"
-                        >
-                          {tag.name}
-                        </Badge>
+                      <li
+                        key={tag.slug}
+                        className="max-w-full truncate rounded-full border border-line px-3 py-0.5 text-[0.9rem] text-ink-2"
+                      >
+                        {tag.name}
                       </li>
                     ))}
                   </ul>
@@ -282,7 +294,7 @@ export default async function ProcessoPage({ params }: Props) {
             </section>
           )}
         </div>
-      </div>
-    </article>
+      </article>
+    </Shell>
   );
 }

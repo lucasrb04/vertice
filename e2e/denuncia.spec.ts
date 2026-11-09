@@ -28,7 +28,7 @@ test("logado denuncia um processo, vê a confirmação e o foco volta ao botão"
   await dialog.getByRole("button", { name: "Enviar denúncia" }).click();
   await expect(dialog.getByText("Recebemos sua denúncia.")).toBeVisible();
 
-  await dialog.getByRole("button", { name: "Fechar" }).click();
+  await dialog.getByRole("button", { name: "Fechar", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(trigger).toBeFocused();
 
