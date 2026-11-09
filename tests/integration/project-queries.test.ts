@@ -54,6 +54,7 @@ describe("consultas do painel", () => {
     expect(panel.closed[0]!.closedOn).toEqual(closedAt);
     expect(panel.closed[1]!.closedOn).toEqual(expiredDeadline);
     expect(panel.open[0]).toMatchObject({ vacanciesCount: 1, hasExternalUrl: true, internalSelectionEnabled: false });
+    expect(panel.open[0]!.slug).toBe(open1.slug);
   });
 
   it("getProjectPanel conta candidatos em andamento, só para quem tem membership real", async () => {

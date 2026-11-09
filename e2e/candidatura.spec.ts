@@ -50,8 +50,12 @@ test("com sessão, preenche o perfil, responde e envia", async ({ page }) => {
 
   await page.getByLabel("Por que você quer entrar?").fill("Quero aprender na prática.");
   await page.getByRole("button", { name: "Enviar candidatura" }).click();
-  await page.waitForURL(/\/minhas-candidaturas/);
+  await page.waitForURL(/\/minhas-candidaturas\?enviada=/);
   await expect(page.getByRole("heading", { name: "Minhas candidaturas" })).toBeVisible();
+  // Fim da jornada: confirmação e o que acontece depois.
+  const aviso = page.getByRole("region", { name: "Candidatura enviada" });
+  await expect(aviso).toContainText("Processo com pergunta");
+  await expect(aviso).toContainText("e-mail a cada mudança de etapa");
   await expect(page.getByRole("link", { name: "Processo com pergunta" })).toBeVisible();
   await expect(page.getByText("Inscrito")).toBeVisible();
 
@@ -98,7 +102,8 @@ test("com candidaturas, a pergunta fica somente leitura e o processo ainda salva
   await expect(page.getByText("A pergunta não pode mudar depois das primeiras candidaturas.")).toBeVisible();
 
   await page.getByRole("button", { name: "Salvar alterações" }).click();
-  await expect(page).toHaveURL(new RegExp(`/projetos/${project.id}$`));
+  await expect(page).toHaveURL(new RegExp(`/projetos/${project.id}\\?atualizado=${opportunity.id}$`));
+  await expect(page.getByRole("region", { name: "Alterações salvas" })).toBeVisible();
 });
 
 test("antes da abertura o botão fica desabilitado", async ({ page }) => {

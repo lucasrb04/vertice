@@ -273,7 +273,7 @@ test("painel privado tem link para a página pública", async ({ page }) => {
   await page.getByLabel("Prazo final de inscrição").fill(daysFromNow(10).toISOString().slice(0, 10));
   await page.getByLabel("Link do edital ou formulário").fill("https://unifei.edu.br/edital.pdf");
   await page.getByRole("button", { name: "Publicar" }).click();
-  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}\?publicado=[0-9a-f-]{36}$/);
 
   await page.getByRole("link", { name: "Ver página pública" }).click();
   await page.waitForURL(/\/projeto\/projeto-do-link-publico/);

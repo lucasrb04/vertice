@@ -75,7 +75,7 @@ export function PublishWizard({ courses, siteKey, bypass }: { courses: Course[];
       opportunity,
     });
     if (res.ok) {
-      router.push(`/projetos/${res.data.projectId}`);
+      router.push(`/projetos/${res.data.projectId}?publicado=${res.data.opportunityId}`);
       return res;
     }
     // Token do Turnstile é de uso único: qualquer recusa pede um novo desafio.

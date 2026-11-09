@@ -51,6 +51,8 @@ export async function listProjectsUserCanPublishIn(user: AuthUser): Promise<Arra
 
 export type PanelOpportunity = {
   id: string;
+  /** Para o link público (`/processo/[slug]`) que o organizador divulga. */
+  slug: string;
   title: string;
   deadlineAt: Date;
   closedOn: Date | null;
@@ -120,6 +122,7 @@ export async function getProjectPanel(
     const isOpen = isOpportunityOpen(o, access.project.status, now);
     const item: PanelOpportunity = {
       id: o.id,
+      slug: o.slug,
       title: o.title,
       deadlineAt: o.deadlineAt,
       // Projeto inativo com processo ainda em andamento: sem data de encerramento (spec §6.3).

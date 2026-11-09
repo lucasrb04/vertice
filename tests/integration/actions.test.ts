@@ -50,6 +50,9 @@ describe("Server Actions", () => {
     const res = await createProjectWithOpportunityAction(wizard());
     expect(res.ok).toBe(true);
     expect(await db.select().from(projects)).toHaveLength(1);
+    // O redirecionamento usa o id do processo para mostrar o bloco "Processo publicado".
+    const [created] = await db.select({ id: opportunities.id }).from(opportunities);
+    expect(res.ok && res.data).toEqual({ projectId: expect.any(String), opportunityId: created!.id });
   });
 
   it("Turnstile inválido recusa sem gravar nada", async () => {

@@ -89,7 +89,7 @@ export function ApplyForm({
       return;
     }
     // Em sucesso o envio continua "pendente" até a navegação, para evitar clique duplo.
-    router.push("/minhas-candidaturas");
+    router.push(`/minhas-candidaturas?enviada=${encodeURIComponent(res.data.opportunitySlug)}`);
     router.refresh();
   }
 

@@ -46,8 +46,28 @@ test("usuário sem projeto publica projeto e processo só com os obrigatórios",
   await fillOpportunityRequired(page, "Processo seletivo 2026/2", "https://unifei.edu.br/edital.pdf");
   await page.getByRole("button", { name: "Publicar" }).click();
 
-  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}\?publicado=[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { level: 1, name: "Equipe Baja Itajubá" })).toBeVisible();
+
+  // Fim da jornada: o organizador recebe o que precisa para divulgar.
+  const aviso = page.getByRole("region", { name: "Processo publicado" });
+  await expect(aviso).toContainText("Processo seletivo 2026/2");
+  await expect(aviso.getByRole("textbox", { name: "Link público" })).toHaveValue(
+    /\/processo\/processo-seletivo-2026-2/,
+  );
+  await expect(aviso.getByRole("link", { name: "Ver como o aluno vê" })).toHaveAttribute(
+    "href",
+    /^\/processo\/processo-seletivo-2026-2/,
+  );
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await aviso.getByRole("button", { name: "Copiar link" }).click();
+  await expect(aviso.getByText("Link copiado.")).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(/\/processo\/processo-seletivo-2026-2/);
+  await aviso.getByRole("button", { name: "Copiar texto de divulgação" }).click();
+  await expect(aviso.getByText("Texto copiado.")).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toMatch(
+    /^Processo seletivo aberto: Processo seletivo 2026\/2 \(Equipe Baja Itajubá\)\.\nInscrições até /,
+  );
   const abertos = page.getByRole("region", { name: "Abertos" });
   await expect(abertos.getByText("Processo seletivo 2026/2")).toBeVisible();
   const projectId = new URL(page.url()).pathname.split("/").pop();
@@ -78,7 +98,7 @@ test("link http é recusado com mensagem", async ({ page }) => {
   // Depois da recusa o Turnstile é renovado: corrigir o link e publicar funciona.
   await field.fill("https://unifei.edu.br/edital-http.pdf");
   await page.getByRole("button", { name: "Publicar" }).click();
-  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}\?publicado=[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { level: 1, name: "Projeto Http" })).toBeVisible();
 });
 
@@ -94,7 +114,7 @@ test("publica processo só com seleção pela plataforma e pergunta", async ({ p
   await page.getByLabel("Pergunta para os candidatos").fill("Qual sua experiência com CAD?");
   await page.getByRole("button", { name: "Publicar" }).click();
 
-  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}\?publicado=[0-9a-f-]{36}$/);
   const abertos = page.getByRole("region", { name: "Abertos" });
   await expect(abertos.getByText("Processo pela plataforma")).toBeVisible();
   await expect(abertos.getByText("Plataforma", { exact: true })).toBeVisible();
@@ -128,5 +148,5 @@ test("tag nova criada com Enter aparece como badge", async ({ page }) => {
 
   await fillOpportunityRequired(page, "Processo com tags", "https://unifei.edu.br/edital-tags.pdf");
   await page.getByRole("button", { name: "Publicar" }).click();
-  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}\?publicado=[0-9a-f-]{36}$/);
 });

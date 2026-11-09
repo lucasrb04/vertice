@@ -11,13 +11,37 @@ export const metadata: Metadata = { title: "Minhas candidaturas · Vértice" };
 // Depende da sessão.
 export const dynamic = "force-dynamic";
 
-export default async function MinhasCandidaturasPage() {
+export default async function MinhasCandidaturasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ enviada?: string | string[] }>;
+}) {
   const user = await requireAuthPage("/minhas-candidaturas");
   const applications = await listMyApplications(user);
+  // Fim da jornada do aluno: `?enviada=<slug>` só vale para uma candidatura dele; nada da URL é mostrado.
+  const { enviada } = await searchParams;
+  const sentSlug = Array.isArray(enviada) ? enviada[0] : enviada;
+  const sent = sentSlug ? applications.find((a) => a.opportunitySlug === sentSlug) : undefined;
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-10">
       <h1 className="font-heading text-2xl font-bold tracking-tight text-stone-900">Minhas candidaturas</h1>
+      {sent && (
+        <section aria-labelledby="candidatura-enviada" className="mt-6 rounded-lg border border-stone-300 bg-white p-5">
+          <h2 id="candidatura-enviada" className="text-base font-semibold text-stone-900">
+            Candidatura enviada
+          </h2>
+          <p className="mt-1 text-sm [overflow-wrap:anywhere] text-stone-700">
+            Sua candidatura para <strong className="font-medium text-stone-900">{sent.opportunityTitle}</strong> chegou
+            à equipe de {sent.projectName}.
+          </p>
+          <p className="mt-2 text-sm text-stone-700">
+            Próximas etapas: <span className="font-medium text-stone-900">Em análise</span>, depois{" "}
+            <span className="font-medium text-stone-900">Entrevista</span> e o resultado. Você recebe um e-mail a cada
+            mudança de etapa em <span className="font-mono text-xs">{user.email}</span>, e tudo fica registrado aqui.
+          </p>
+        </section>
+      )}
       {applications.length === 0 ? (
         <div className="mt-6 space-y-3 text-sm text-stone-600">
           <p>Você ainda não se candidatou a nenhum processo.</p>

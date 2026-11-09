@@ -34,7 +34,7 @@ async function publishProject(page: Page, projectName: string, opportunityTitle:
   await page.getByLabel("Link do edital ou formulário").fill("https://unifei.edu.br/edital.pdf");
   await page.getByRole("button", { name: "Publicar" }).click();
 
-  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}\?publicado=[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { level: 1, name: projectName })).toBeVisible();
   return new URL(page.url()).pathname.split("/").pop()!;
 }
@@ -76,7 +76,8 @@ test("duplicar abre formulário pré-preenchido sem prazo", async ({ page }) => 
   await expect(page.getByRole("option", { name: "Python" })).toBeVisible();
   await tema.press("Enter");
   await page.getByRole("button", { name: "Salvar alterações" }).click();
-  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}$/);
+  await page.waitForURL(/\/projetos\/[0-9a-f-]{36}\?atualizado=[0-9a-f-]{36}$/);
+  await expect(page.getByRole("region", { name: "Alterações salvas" })).toBeVisible();
 
   await page.getByRole("region", { name: "Abertos" }).getByRole("link", { name: "Duplicar" }).click();
   await expect(page).toHaveURL(/\/processos\/novo\?duplicar=[0-9a-f-]{36}$/);
@@ -172,6 +173,19 @@ test("menu da conta mostra Administração só para admin", async ({ page }) => 
   await page.getByRole("banner").getByRole("button", { name: "Menu da conta de Admin" }).click();
   await page.getByRole("menuitem", { name: "Administração" }).click();
   await page.waitForURL("/admin");
+});
+
+test("aviso de publicação só aparece para processo aberto do próprio projeto", async ({ page }) => {
+  await loginAs(page, "dono.aviso@unifei.edu.br", "Dono do Aviso");
+  const projectId = await publishProject(page, "Projeto do Aviso", "Processo do aviso");
+  await expect(page.getByRole("region", { name: "Processo publicado" })).toBeVisible();
+
+  // Id inventado ou de outro projeto na URL: nenhum aviso, nada é refletido.
+  await page.goto(`/projetos/${projectId}?publicado=00000000-0000-4000-8000-000000000000`);
+  await expect(page.getByRole("heading", { level: 1, name: "Projeto do Aviso" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Processo publicado" })).toHaveCount(0);
+  await page.goto(`/projetos/${projectId}?publicado=nao-e-uuid`);
+  await expect(page.getByRole("region", { name: "Processo publicado" })).toHaveCount(0);
 });
 
 test("painel de projeto alheio é 404", async ({ page, browser }) => {

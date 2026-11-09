@@ -15,20 +15,20 @@ export async function createProjectWithOpportunityAction(input: {
   turnstileToken: string;
   project: unknown;
   opportunity: unknown;
-}): Promise<ActionResult<{ projectId: string }>> {
+}): Promise<ActionResult<{ projectId: string; opportunityId: string }>> {
   return runAction(async () => {
     const user = await requireAuth();
     const parsedToken = turnstileTokenSchema.safeParse(input?.turnstileToken);
     const token = parsedToken.success ? parsedToken.data : "";
     // Antes de qualquer escrita; o serviço não recebe o token.
     if (!(await verifyTurnstile(token, getRequestIp(await headers())))) throw new TurnstileFailedError();
-    const { projectId } = await createProjectWithOpportunity(user, {
+    const { projectId, opportunityId } = await createProjectWithOpportunity(user, {
       project: input.project,
       opportunity: input.opportunity,
     });
     revalidatePath("/painel");
     revalidatePath("/publicar");
-    return { projectId };
+    return { projectId, opportunityId };
   });
 }
 

@@ -200,13 +200,18 @@ export function OpportunityForm({
     .filter(([key]) => !KNOWN_FIELDS.has(key.split(".")[0]!))
     .flatMap(([, m]) => m);
 
-  async function defaultSubmit(values: OpportunityFormValues): Promise<ActionResult<unknown>> {
+  /** Salva e diz para onde ir: o painel do projeto, com o aviso de publicado ou de alterações salvas. */
+  async function defaultSubmit(values: OpportunityFormValues): Promise<ActionResult<{ redirectTo: string }>> {
     if (!projectId) throw new Error("projectId é obrigatório sem onSubmit");
     if (mode === "edit") {
       if (!opportunityId) throw new Error("opportunityId é obrigatório na edição");
-      return updateOpportunityAction(projectId, opportunityId, values);
+      const res = await updateOpportunityAction(projectId, opportunityId, values);
+      return res.ok ? { ok: true, data: { redirectTo: `/projetos/${projectId}?atualizado=${opportunityId}` } } : res;
     }
-    return createOpportunityAction(projectId, values);
+    const res = await createOpportunityAction(projectId, values);
+    return res.ok
+      ? { ok: true, data: { redirectTo: `/projetos/${projectId}?publicado=${res.data.opportunityId}` } }
+      : res;
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -216,8 +221,15 @@ export function OpportunityForm({
     setMessage(null);
     const values = toValues({ ...draft, targetCourseIds: specificCourses ? draft.targetCourseIds : [] });
     let res: ActionResult<unknown>;
+    let redirectTo: string | null = null;
     try {
-      res = onSubmit ? await onSubmit(values) : await defaultSubmit(values);
+      if (onSubmit) {
+        res = await onSubmit(values);
+      } else {
+        const saved = await defaultSubmit(values);
+        res = saved;
+        if (saved.ok) redirectTo = saved.data.redirectTo;
+      }
     } catch {
       res = { ok: false, error: "RULE", message: "Não foi possível salvar agora. Tente de novo." };
     }
@@ -229,8 +241,8 @@ export function OpportunityForm({
     }
     setErrors({});
     // Em sucesso o envio continua "pendente" até a navegação, para evitar clique duplo.
-    if (!onSubmit && projectId) {
-      router.push(`/projetos/${projectId}`);
+    if (redirectTo) {
+      router.push(redirectTo);
       router.refresh();
     }
   }
