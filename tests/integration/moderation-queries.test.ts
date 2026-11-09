@@ -6,6 +6,7 @@ import { NotFoundError } from "@/lib/auth/errors";
 import {
   AUTO_REVIEW_NOTICE,
   getHiddenReasons,
+  getModerationContent,
   listReportQueue,
   searchModerationTargets,
 } from "@/lib/moderation/queries";
@@ -209,5 +210,55 @@ describe("searchModerationTargets", () => {
     expect(await searchModerationTargets(admin!, "_")).toHaveLength(0);
     expect(await searchModerationTargets(admin!, "  ")).toEqual([]);
     expect(await searchModerationTargets(admin!, "nucleo")).toHaveLength(20);
+  });
+});
+
+describe("getModerationContent", () => {
+  it("mostra ao admin o conteúdo de um processo oculto, com o motivo", async () => {
+    const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
+    const project = await mkProject({ name: "Projeto denunciado" });
+    const opp = await mkOpportunity(project.id, {
+      title: "Processo denunciado",
+      description: "Texto **suspeito**.",
+      externalUrl: "https://exemplo.com/edital",
+      customQuestion: "Por quê?",
+    });
+    await hideTarget(admin!, { targetType: "OPPORTUNITY", targetId: opp.id, reason: "Link enganoso no edital." });
+
+    const content = await getModerationContent(admin!, "OPPORTUNITY", opp.id);
+    expect(content).toMatchObject({
+      targetType: "OPPORTUNITY",
+      name: "Processo denunciado",
+      projectName: "Projeto denunciado",
+      hidden: true,
+      hiddenReason: "Link enganoso no edital.",
+      description: "Texto **suspeito**.",
+      publicPath: null,
+    });
+    expect(content!.fields).toEqual(
+      expect.arrayContaining([
+        { label: "Edital", value: "https://exemplo.com/edital" },
+        { label: "Pergunta da candidatura", value: "Por quê?" },
+      ]),
+    );
+  });
+
+  it("projeto visível traz o caminho público e os campos de contato", async () => {
+    const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
+    const project = await mkProject({ name: "Projeto visível" });
+    const content = await getModerationContent(admin!, "PROJECT", project.id);
+    expect(content).toMatchObject({ hidden: false, hiddenReason: null, publicPath: `/projeto/${project.slug}` });
+    expect(content!.fields.map((f) => f.label)).toContain("E-mail de contato");
+  });
+
+  it("outra instituição, id inválido ou inexistente: null; quem não é admin: NotFoundError", async () => {
+    const admin = await mkUser("sys@unifei.edu.br", { systemRole: "SYSTEM_ADMIN" });
+    const other = await mkForeignInstitution();
+    const foreign = await mkProject({ institutionId: other.id });
+    expect(await getModerationContent(admin!, "PROJECT", foreign.id)).toBeNull();
+    expect(await getModerationContent(admin!, "PROJECT", "nao-uuid")).toBeNull();
+    expect(await getModerationContent(admin!, "OPPORTUNITY", crypto.randomUUID())).toBeNull();
+    const user = await mkUser("aluno@unifei.edu.br");
+    await expect(getModerationContent(user!, "PROJECT", foreign.id)).rejects.toBeInstanceOf(NotFoundError);
   });
 });

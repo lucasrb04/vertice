@@ -1,4 +1,5 @@
 import { and, asc, desc, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
+import { z } from "zod";
 import { db } from "@/db";
 import { auditLogs, opportunities, projects, reports } from "@/db/schema";
 import { type AuthUser, authorizeSystemAdmin } from "@/lib/auth/guards";
@@ -196,4 +197,102 @@ export async function getHiddenReasons(
     reasons.set(`${r.targetType}:${r.targetId}`, typeof reason === "string" ? reason : null);
   }
   return reasons;
+}
+
+export type ModerationContent = {
+  targetType: ModerationTargetType;
+  name: string;
+  projectName: string;
+  hidden: boolean;
+  hiddenReason: string | null;
+  /** Markdown restrito (D21), renderizado pela página como na vitrine. */
+  description: string | null;
+  /** Campos de texto livre que uma denúncia pode envolver; vazios ficam de fora. */
+  fields: { label: string; value: string }[];
+  /** Página pública, quando o conteúdo está na vitrine; oculto dá 404 lá e fica nulo. */
+  publicPath: string | null;
+};
+
+const present = (fields: { label: string; value: string | null }[]) =>
+  fields.filter((f): f is { label: string; value: string } => Boolean(f.value));
+
+const PUBLIC_PROJECT_STATUSES = ["ACTIVE", "ARCHIVED"];
+
+/**
+ * Conteúdo de um alvo para o admin julgar uma denúncia, inclusive oculto. Só da instituição do admin; id
+ * inválido ou de fora devolve `null` (a página dá 404).
+ */
+export async function getModerationContent(
+  admin: AuthUser,
+  targetType: ModerationTargetType,
+  targetId: string,
+): Promise<ModerationContent | null> {
+  await authorizeSystemAdmin(admin, { path: "moderation:getModerationContent", ipAddress: null });
+  if (!z.uuid().safeParse(targetId).success) return null;
+
+  const content = await (targetType === "PROJECT"
+    ? loadProjectContent(admin.institutionId, targetId)
+    : loadOpportunityContent(admin.institutionId, targetId));
+  if (!content) return null;
+  const reasons = content.hidden
+    ? await getHiddenReasons(admin.institutionId, [{ targetType, targetId }])
+    : new Map<Key, string | null>();
+  return { ...content, hiddenReason: reasons.get(`${targetType}:${targetId}`) ?? null };
+}
+
+async function loadProjectContent(
+  institutionId: string,
+  id: string,
+): Promise<Omit<ModerationContent, "hiddenReason"> | null> {
+  const [p] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, id), eq(projects.institutionId, institutionId)));
+  if (!p) return null;
+  const hidden = isHidden("PROJECT", p.status);
+  return {
+    targetType: "PROJECT",
+    name: p.name,
+    projectName: p.name,
+    hidden,
+    description: p.description,
+    fields: present([
+      { label: "Sigla", value: p.acronym },
+      { label: "Resumo", value: p.shortDescription },
+      { label: "Orientador ou coordenador", value: p.advisorName },
+      { label: "Site", value: p.websiteUrl },
+      { label: "Instagram", value: p.instagramUrl },
+      { label: "E-mail de contato", value: p.contactEmail },
+    ]),
+    publicPath: PUBLIC_PROJECT_STATUSES.includes(p.status) ? `/projeto/${p.slug}` : null,
+  };
+}
+
+async function loadOpportunityContent(
+  institutionId: string,
+  id: string,
+): Promise<Omit<ModerationContent, "hiddenReason"> | null> {
+  const [row] = await db
+    .select({ o: opportunities, projectName: projects.name, projectStatus: projects.status })
+    .from(opportunities)
+    .innerJoin(projects, eq(projects.id, opportunities.projectId))
+    .where(and(eq(opportunities.id, id), eq(opportunities.institutionId, institutionId)));
+  if (!row) return null;
+  const { o } = row;
+  const hidden = isHidden("OPPORTUNITY", o.status);
+  return {
+    targetType: "OPPORTUNITY",
+    name: o.title,
+    projectName: row.projectName,
+    hidden,
+    description: o.description,
+    fields: present([
+      { label: "Área ou função", value: o.roleArea },
+      { label: "Edital", value: o.externalUrl },
+      { label: "Pergunta da candidatura", value: o.customQuestion },
+      { label: "Disponibilidade", value: o.availabilityRequirement },
+      { label: "Fomento", value: o.fundingAgency },
+    ]),
+    publicPath: !hidden && PUBLIC_PROJECT_STATUSES.includes(row.projectStatus) ? `/processo/${o.slug}` : null,
+  };
 }

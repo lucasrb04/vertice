@@ -20,6 +20,8 @@ async function loginAs(page: Page, email: string, name: string) {
 test("sem sessão, Candidatar-se leva ao login com next", async ({ page }) => {
   const { opportunity } = await insertProcess({ title: "Processo com seleção", internalSelectionEnabled: true });
   await page.goto(`/processo/${opportunity.slug}`);
+  // O login é avisado antes do clique.
+  await expect(page.getByText("Para se candidatar, você entra com a sua conta Google @unifei.edu.br.")).toBeVisible();
   await page.getByRole("link", { name: "Candidatar-se" }).click();
   await expect(page).toHaveURL(/\/entrar\?next=/);
   expect(decodeURIComponent(new URL(page.url()).searchParams.get("next")!)).toBe(
@@ -60,10 +62,14 @@ test("com sessão, preenche o perfil, responde e envia", async ({ page }) => {
   await expect(aviso).toContainText("Processo com pergunta");
   await expect(aviso).toContainText("e-mail a cada mudança de etapa");
   await expect(page.getByRole("link", { name: "Processo com pergunta" })).toBeVisible();
-  await expect(page.getByText("Inscrito")).toBeVisible();
+  // Funil: onde a candidatura está e o que vem depois.
+  const funil = page.getByRole("list", { name: "Etapas da candidatura" });
+  await expect(funil.getByRole("listitem")).toHaveText([/Inscrito/, /Em análise/, /Entrevista/, /Resultado/]);
+  await expect(funil.locator('[aria-current="step"]')).toContainText("Inscrito");
 
-  // Na página do processo, o botão vira "Ver minha candidatura".
+  // Na página do processo, o botão vira "Ver minha candidatura" e o aviso de login some.
   await page.goto(`/processo/${opportunity.slug}`);
+  await expect(page.getByText("Para se candidatar, você entra com")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Ver minha candidatura" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Candidatar-se" })).toHaveCount(0);
 

@@ -1,12 +1,13 @@
 import { z } from "zod";
 import { optionalHttpsUrl, optionalText, restrictedMarkdown } from "./common";
 
+/** Ordem de exibição em todo lugar (home, filtros, formulário); "Outro" sempre no fim. */
 export const PROJECT_CATEGORIES = [
-  "SPECIAL_PROJECT",
   "SCIENTIFIC_INIT",
   "EXTENSION",
-  "JUNIOR_ENTERPRISE",
+  "SPECIAL_PROJECT",
   "PET",
+  "JUNIOR_ENTERPRISE",
   "LAB_GROUP",
   "OTHER",
 ] as const;

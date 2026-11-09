@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { ModerationDialog } from "@/components/moderation/moderation-dialog";
 import type { QueueItem, TargetRow } from "@/lib/moderation/queries";
@@ -7,6 +8,7 @@ import { PROJECT_STATUS_LABELS } from "@/lib/projects/labels";
 import { REPORT_REASON_LABELS } from "@/lib/validation/moderation";
 
 const TYPE_LABELS = { PROJECT: "Projeto", OPPORTUNITY: "Processo" } as const;
+const CONTENT_SEGMENTS = { PROJECT: "projeto", OPPORTUNITY: "processo" } as const;
 const OPPORTUNITY_STATUS_LABELS = {
   OPEN: "Aberto",
   PAUSED: "Pausado",
@@ -39,6 +41,14 @@ function Heading({ row }: { row: TargetRow }) {
       <p className="mt-1 text-sm text-stone-700">
         <span className="font-mono text-xs">Estado:</span> {statusLabel(row)}
       </p>
+      {/* O admin vê o que julga antes de ocultar ou restaurar, inclusive o que já está oculto. */}
+      <Link
+        href={`/admin/conteudo/${CONTENT_SEGMENTS[row.targetType]}/${row.targetId}`}
+        aria-label={`Ver conteúdo: ${row.name}`}
+        className="mt-1 inline-block text-sm font-medium text-brand underline-offset-4 hover:underline"
+      >
+        Ver conteúdo
+      </Link>
     </div>
   );
 }

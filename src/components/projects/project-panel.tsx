@@ -121,22 +121,31 @@ export function ProjectPanel({
       </section>
 
       <section aria-labelledby="encerrados">
-        <details className="group">
-          <summary className="flex cursor-pointer list-none items-center gap-2 select-none">
-            <h2 id="encerrados" className="text-lg font-semibold tracking-tight text-stone-900">
-              Encerrados
-            </h2>
-            <span className="font-mono text-sm text-stone-500">{closed.length}</span>
-            <span aria-hidden="true" className="font-mono text-sm text-stone-500 group-open:hidden">
-              +
-            </span>
-            <span aria-hidden="true" className="hidden font-mono text-sm text-stone-500 group-open:inline">
-              −
-            </span>
-          </summary>
-          {closed.length === 0 ? (
+        {closed.length === 0 ? (
+          // Sem encerrados não há o que abrir: a seção já diz isso.
+          <>
+            <div className="flex items-center gap-2">
+              <h2 id="encerrados" className="text-lg font-semibold tracking-tight text-stone-900">
+                Encerrados
+              </h2>
+              <span className="font-mono text-sm text-stone-500">0</span>
+            </div>
             <p className="mt-3 text-sm text-stone-600">Nenhum processo encerrado.</p>
-          ) : (
+          </>
+        ) : (
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center gap-2 select-none">
+              <h2 id="encerrados" className="text-lg font-semibold tracking-tight text-stone-900">
+                Encerrados
+              </h2>
+              <span className="font-mono text-sm text-stone-500">{closed.length}</span>
+              <span aria-hidden="true" className="font-mono text-sm text-stone-500 group-open:hidden">
+                +
+              </span>
+              <span aria-hidden="true" className="hidden font-mono text-sm text-stone-500 group-open:inline">
+                −
+              </span>
+            </summary>
             <ul className="mt-3 divide-y divide-stone-200 rounded-lg border border-stone-200 bg-white">
               {closed.map((o) => (
                 <OpportunityRow
@@ -150,8 +159,8 @@ export function ProjectPanel({
                 />
               ))}
             </ul>
-          )}
-        </details>
+          </details>
+        )}
       </section>
     </div>
   );

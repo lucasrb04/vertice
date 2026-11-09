@@ -3,7 +3,7 @@ import { clearOpportunities, closeTestDb, daysFromNow, insertProcess } from "./h
 
 const SLOGAN = "Encontre o projeto que vai impulsionar sua trajetória.";
 const SUPPORT =
-  "Iniciação científica, extensão, equipes de competição, PETs e empresas juniores da UNIFEI em um só lugar, com prazos e requisitos. Sem precisar de conta.";
+  "Iniciação científica, extensão, equipes de competição, PETs e empresas juniores da UNIFEI em um só lugar, com prazos e requisitos. Para ver os processos e abrir os editais, não precisa de conta.";
 
 const search = (page: Page) => page.getByRole("searchbox", { name: "Buscar processos" });
 

@@ -103,3 +103,35 @@ test("admin descarta denúncias e a fila esvazia; a fila não mostra quem denunc
   await expect(queue.getByText("Nenhuma denúncia pendente.")).toBeVisible();
   await expect(queue.getByRole("heading", { name: "Processo denunciado" })).toHaveCount(0);
 });
+
+test("admin abre o conteúdo de um processo oculto pela fila; quem não é admin recebe 404", async ({
+  page,
+  browser,
+}) => {
+  const { opportunity } = await insertProcess({
+    title: "Processo oculto denunciado",
+    status: "UNDER_REVIEW",
+    description: "Descrição com link suspeito.",
+  });
+  await loginAs(page, "denunciante.conteudo@unifei.edu.br", "Denunciante");
+  await insertReport({ targetType: "OPPORTUNITY", targetId: opportunity.id }, "denunciante.conteudo@unifei.edu.br");
+
+  await page.context().clearCookies();
+  await loginAs(page, "admin@unifei.edu.br", "Admin");
+  await page.goto("/admin");
+  await page.getByRole("link", { name: "Ver conteúdo: Processo oculto denunciado" }).click();
+  await page.waitForURL(`/admin/conteudo/processo/${opportunity.id}`);
+  await expect(page.getByRole("heading", { name: "Processo oculto denunciado" })).toBeVisible();
+  await expect(page.getByRole("main")).toContainText("Oculto pela moderação");
+  await expect(page.getByRole("main")).toContainText("Descrição com link suspeito.");
+  await expect(page.getByRole("link", { name: "Ver página pública" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Voltar à moderação" }).click();
+  await page.waitForURL("/admin");
+
+  const other = await browser.newContext();
+  const otherPage = await other.newPage();
+  await loginAs(otherPage, "curioso.conteudo@unifei.edu.br", "Curioso");
+  const res = await otherPage.goto(`/admin/conteudo/processo/${opportunity.id}`);
+  expect(res?.status()).toBe(404);
+  await other.close();
+});

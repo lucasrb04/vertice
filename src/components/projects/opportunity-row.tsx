@@ -77,23 +77,24 @@ export function OpportunityRow({
             </Button>
           )}
           {canChange && isOpen && (
-            <>
-              <Button asChild variant="outline" size="sm">
-                <Link href={`${base}/${o.id}/editar`}>Editar</Link>
-              </Button>
-              <ConfirmActionButton
-                label="Encerrar agora"
-                title="Encerrar este processo?"
-                description="As inscrições fecham agora e o processo não pode ser reaberto. Para um novo ciclo, duplique-o."
-                confirmLabel="Encerrar processo"
-                action={closeOpportunityAction.bind(null, projectId, o.id)}
-              />
-            </>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`${base}/${o.id}/editar`}>Editar</Link>
+            </Button>
           )}
           {canChange && (
             <Button asChild variant="outline" size="sm">
               <Link href={`${base}/novo?duplicar=${o.id}`}>Duplicar</Link>
             </Button>
+          )}
+          {/* A ação irreversível fica por último, longe de Editar e Duplicar. */}
+          {canChange && isOpen && (
+            <ConfirmActionButton
+              label="Encerrar agora"
+              title="Encerrar este processo?"
+              description="As inscrições fecham agora e o processo não pode ser reaberto. Para um novo ciclo, duplique-o."
+              confirmLabel="Encerrar processo"
+              action={closeOpportunityAction.bind(null, projectId, o.id)}
+            />
           )}
         </div>
       )}

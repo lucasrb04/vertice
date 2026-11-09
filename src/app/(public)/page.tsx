@@ -6,18 +6,13 @@ import type { ProjectCategory } from "@/lib/projects/labels";
 import { CATEGORY_LABELS } from "@/lib/public/labels";
 import { listHomeRows } from "@/lib/public/queries";
 import { getDefaultInstitution } from "@/lib/tenant";
+import { PROJECT_CATEGORIES } from "@/lib/validation/project";
 
 // Prazos e contagens mudam com o relógio: nunca pré-renderizar.
 export const dynamic = "force-dynamic";
 
-const CATEGORY_SHORTCUTS: ProjectCategory[] = [
-  "SCIENTIFIC_INIT",
-  "EXTENSION",
-  "SPECIAL_PROJECT",
-  "PET",
-  "JUNIOR_ENTERPRISE",
-  "LAB_GROUP",
-];
+// Mesma ordem dos filtros; "Outro" não vira atalho.
+const CATEGORY_SHORTCUTS: ProjectCategory[] = PROJECT_CATEGORIES.filter((c) => c !== "OTHER");
 
 export default async function Home() {
   const institution = await getDefaultInstitution();
@@ -33,7 +28,7 @@ export default async function Home() {
             </h1>
             <p className="mt-3 max-w-2xl text-pretty text-stone-600">
               Iniciação científica, extensão, equipes de competição, PETs e empresas juniores da UNIFEI em um só lugar,
-              com prazos e requisitos. Sem precisar de conta.
+              com prazos e requisitos. Para ver os processos e abrir os editais, não precisa de conta.
             </p>
             <div className="mt-6 max-w-2xl">
               <SearchBox autoFocusShortcut />

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { withdrawApplicationAction } from "@/actions/application.actions";
+import { ApplicationFunnel } from "@/components/applications/application-funnel";
 import { ConfirmActionButton } from "@/components/projects/confirm-action-button";
 import { Button } from "@/components/ui/button";
 import { APPLICATION_STATUS_LABELS, IN_PROGRESS_STATUSES } from "@/lib/applications/labels";
@@ -80,6 +81,7 @@ export default async function MinhasCandidaturasPage({
                   {APPLICATION_STATUS_LABELS[a.status]}
                 </p>
               </div>
+              <ApplicationFunnel status={a.status} />
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
                 <p className="font-mono text-xs text-stone-500">Enviada em {formatDay(a.appliedAt)}</p>
                 {IN_PROGRESS_STATUSES.includes(a.status) && (

@@ -31,8 +31,8 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
-type Viewer = { myApplicationId: string | null; canReport: boolean };
-const ANONYMOUS: Viewer = { myApplicationId: null, canReport: false };
+type Viewer = { signedIn: boolean; myApplicationId: string | null; canReport: boolean };
+const ANONYMOUS: Viewer = { signedIn: false, myApplicationId: null, canReport: false };
 
 /** Candidatura do visitante logado e se ele pode denunciar; sem sessão ou com sessão inválida, nada. */
 async function findViewer(opportunity: { id: string; internalSelectionEnabled: boolean }): Promise<Viewer> {
@@ -43,7 +43,7 @@ async function findViewer(opportunity: { id: string; internalSelectionEnabled: b
       opportunity.internalSelectionEnabled ? getMyApplicationId(sessionUser.id, opportunity.id) : null,
       canReport(sessionUser.id, { targetType: "OPPORTUNITY", targetId: opportunity.id }),
     ]);
-    return { myApplicationId, canReport: reportable };
+    return { signedIn: true, myApplicationId, canReport: reportable };
   } catch {
     // Sem o objeto do erro: o do Drizzle traz a consulta e os parâmetros.
     console.error("[processo] falha ao consultar a sessão");
@@ -95,7 +95,7 @@ export default async function ProcessoPage({ params }: Props) {
   }
 
   // Página pública: a sessão é só consultada, nunca exigida; os dados públicos acima não dependem dela.
-  const { myApplicationId, canReport: reportable } = await findViewer(opportunity);
+  const { signedIn, myApplicationId, canReport: reportable } = await findViewer(opportunity);
 
   const editalHref = opportunity.externalUrl && isHttps(opportunity.externalUrl) ? `/processo/${slug}/edital` : null;
   const opensLater = isOpen && opensInFuture(opportunity.applicationsOpenOn);
@@ -157,10 +157,17 @@ export default async function ProcessoPage({ params }: Props) {
                     {opportunity.applicationsOpenOn!.slice(5, 7)}
                   </Button>
                 ) : (
-                  // Página pública: sem sessão aqui; quem decide o login é a página de candidatura.
-                  <Button asChild size="lg" className="w-full">
-                    <Link href={`/processo/${slug}/candidatar`}>Candidatar-se</Link>
-                  </Button>
+                  // Quem exige o login é a página de candidatura; aqui só avisamos antes do clique.
+                  <>
+                    <Button asChild size="lg" className="w-full">
+                      <Link href={`/processo/${slug}/candidatar`}>Candidatar-se</Link>
+                    </Button>
+                    {!signedIn && (
+                      <p className="text-xs leading-relaxed text-stone-600">
+                        Para se candidatar, você entra com a sua conta Google @unifei.edu.br.
+                      </p>
+                    )}
+                  </>
                 ))}
               {editalHref && (
                 <Button

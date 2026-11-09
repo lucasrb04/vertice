@@ -53,6 +53,16 @@ test("encerrar processo move para Encerrados", async ({ page }) => {
 
   const abertos = page.getByRole("region", { name: "Abertos" });
   await expect(abertos.getByText("Processo para encerrar")).toBeVisible();
+  // Sem encerrados, a seção já diz isso, sem um "+" que abre para nada.
+  const vazio = page.getByRole("region", { name: "Encerrados" });
+  await expect(vazio.getByText("Nenhum processo encerrado.")).toBeVisible();
+  await expect(vazio.locator("summary")).toHaveCount(0);
+  // A ação irreversível fica por último, longe de Editar e Duplicar.
+  await expect(abertos.getByRole("listitem").first().locator("a, button")).toHaveText([
+    "Editar",
+    "Duplicar",
+    "Encerrar agora",
+  ]);
   await abertos.getByRole("button", { name: "Encerrar agora" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Encerrar processo" }).click();
 

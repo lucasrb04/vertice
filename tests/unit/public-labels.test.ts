@@ -120,3 +120,18 @@ describe("semesterRange", () => {
     expect(semesterRange(null, null)).toBeNull();
   });
 });
+
+describe("ordem das categorias", () => {
+  it("a mesma na home, nos filtros e no formulário, com Outro no fim", async () => {
+    const { PROJECT_CATEGORIES } = await import("@/lib/validation/project");
+    expect(PROJECT_CATEGORIES).toEqual([
+      "SCIENTIFIC_INIT",
+      "EXTENSION",
+      "SPECIAL_PROJECT",
+      "PET",
+      "JUNIOR_ENTERPRISE",
+      "LAB_GROUP",
+      "OTHER",
+    ]);
+  });
+});
