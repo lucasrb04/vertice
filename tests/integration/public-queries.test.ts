@@ -7,9 +7,7 @@ import {
   getPublicOpportunity,
   getPublicProject,
   listFilterOptions,
-  listHomeRows,
   PAGE_SIZE,
-  ROW_LIMIT,
   searchOpportunities,
 } from "@/lib/public/queries";
 import { parseVitrineParams } from "@/lib/public/search-params";
@@ -472,27 +470,67 @@ describe("visibilidade e filtros", () => {
     expect(card.tags).toEqual(["Alfa", "Beta", "Delta", "Gama"]);
     expect(card).toMatchObject({ projectAcronym: "SIG", verified: true, courseCount: 1, isOpen: true, closedOn: null });
   });
+
+  it("cartão: resumo sem Markdown, data de publicação e formas de inscrição", async () => {
+    const p = await mkProject();
+    const o = await mkOpportunity(p.id, {
+      description: "## Sobre\n\nTrabalhar com **visão computacional** e [ROS](https://ros.org).",
+      internalSelectionEnabled: true,
+      externalUrl: null,
+      maxSemester: 6,
+    });
+    const [card] = (await search({})).items;
+    expect(card.excerpt).toBe("Sobre Trabalhar com visão computacional e ROS.");
+    expect(card.publishedAt).toEqual(o.createdAt);
+    expect(card).toMatchObject({ internalSelectionEnabled: true, hasExternalUrl: false, maxSemester: 6 });
+  });
 });
 
-describe("home", () => {
-  it("só abertos, respeita limites e popular exclui soma 0", async () => {
-    const p = await mkProject();
-    for (let i = 0; i < ROW_LIMIT + 3; i++) {
-      await mkOpportunity(p.id, { title: `Aberta ${i}`, viewsCount: i === 0 ? 4 : 0 });
-    }
-    await mkOpportunity(p.id, { title: "Vencida", deadlineAt: new Date(Date.now() - D), viewsCount: 99 });
-    const rows = await listHomeRows(inst);
-    expect(rows.openCount).toBe(ROW_LIMIT + 3);
-    expect(rows.recent).toHaveLength(ROW_LIMIT);
-    expect(rows.closing).toHaveLength(ROW_LIMIT);
-    expect(rows.popular.map((c) => c.title)).toEqual(["Aberta 0"]);
-    for (const c of [...rows.recent, ...rows.closing]) expect(c.isOpen).toBe(true);
+describe("abas de situação", () => {
+  // 12h de 9/11 em Brasília: "encerrando" vai até 23:59 de 16/11.
+  const now = new Date("2026-11-09T15:00:00Z");
+  const at = (day: string) => new Date(`${day}T23:59:59.000-03:00`);
+
+  async function scenario() {
+    const ic = await mkProject({ category: "SCIENTIFIC_INIT" });
+    const pet = await mkProject({ category: "PET" });
+    await mkOpportunity(ic.id, { title: "Encerra em 2 dias", deadlineAt: at("2026-11-11"), scholarshipType: "PAID" });
+    await mkOpportunity(ic.id, { title: "Encerra em 7 dias", deadlineAt: at("2026-11-16") });
+    await mkOpportunity(pet.id, { title: "Encerra em 8 dias", deadlineAt: at("2026-11-17"), scholarshipType: "PAID" });
+    await mkOpportunity(pet.id, {
+      title: "Abre depois",
+      deadlineAt: at("2026-11-12"),
+      applicationsOpenOn: "2026-11-10",
+    });
+    await mkOpportunity(pet.id, { title: "Já encerrado", deadlineAt: new Date(now.getTime() - D) });
+  }
+
+  it("encerrando: aberto, já recebendo inscrições e prazo até o fim do 7º dia", async () => {
+    await scenario();
+    const r = await search({ situacao: "encerrando" }, now);
+    expect(r.items.map((i) => i.title).sort()).toEqual(["Encerra em 2 dias", "Encerra em 7 dias"]);
   });
 
-  it("sem abertos devolve tudo vazio", async () => {
-    const p = await mkProject();
-    await mkOpportunity(p.id, { deadlineAt: new Date(Date.now() - D) });
-    expect(await listHomeRows(inst)).toEqual({ openCount: 0, recent: [], closing: [], popular: [] });
+  it("em-breve: inscrições começam depois de hoje", async () => {
+    await scenario();
+    expect((await search({ situacao: "em-breve" }, now)).items.map((i) => i.title)).toEqual(["Abre depois"]);
+  });
+
+  it("contagens das abas ignoram a aba escolhida e respeitam os filtros", async () => {
+    await scenario();
+    expect((await search({ situacao: "em-breve" }, now)).situationCounts).toEqual({ all: 4, closing: 2, soon: 1 });
+    expect((await search({ scholarship: "PAID" }, now)).situationCounts).toEqual({ all: 2, closing: 1, soon: 0 });
+    expect((await search({ encerrados: "1" }, now)).situationCounts).toEqual({ all: 5, closing: 2, soon: 1 });
+  });
+
+  it("contagem por categoria ignora a categoria marcada e respeita aba e busca", async () => {
+    await scenario();
+    const r = await search({ category: "PET" }, now);
+    expect(r.categoryCounts.SCIENTIFIC_INIT).toBe(2);
+    expect(r.categoryCounts.PET).toBe(2);
+    expect(r.categoryCounts.EXTENSION).toBe(0);
+    expect((await search({ situacao: "encerrando" }, now)).categoryCounts).toMatchObject({ SCIENTIFIC_INIT: 2, PET: 0 });
+    expect((await search({ q: "abre depois" }, now)).categoryCounts).toMatchObject({ SCIENTIFIC_INIT: 0, PET: 1 });
   });
 });
 
@@ -555,6 +593,8 @@ describe("filtros disponíveis", () => {
     expect(o.tags[0].name).toBe("Tag 13");
     expect(o.tags.map((t) => t.name)).not.toContain("Tag 00");
     expect(o.courses.map((c) => c.code)).toContain("CCO");
+    await mkCourse("TST1");
+    expect((await listFilterOptions(inst)).courses.find((c) => c.code === "TST1")?.institute).toBe("TESTE");
   });
 
   it("tag usada só por processo em revisão, projeto suspenso ou processo encerrado não aparece", async () => {

@@ -5,6 +5,10 @@ import { PROJECT_CATEGORIES } from "@/lib/validation/project";
 export const VITRINE_SORTS = ["relevance", "recent", "deadline", "popular"] as const;
 export type VitrineSort = (typeof VITRINE_SORTS)[number];
 
+/** Abas da lista: todos os abertos, os que encerram em 7 dias e os que ainda vão abrir inscrições. */
+export const VITRINE_SITUATIONS = ["", "encerrando", "em-breve"] as const;
+export type VitrineSituation = (typeof VITRINE_SITUATIONS)[number];
+
 export type VitrineParams = {
   q: string;
   categories: ProjectCategory[];
@@ -16,6 +20,8 @@ export type VitrineParams = {
   page: number;
   /** `corrigir=0`: busca sem corrigir nenhuma palavra. */
   exact: boolean;
+  /** `situacao=`: aba escolhida. */
+  situation: VitrineSituation;
 };
 
 type RawParams = Record<string, string | string[] | undefined>;
@@ -54,6 +60,7 @@ const courseSchema = z
   .catch(null);
 const tagSlugSchema = z.string().min(1).max(64);
 const sortSchema = z.enum(VITRINE_SORTS);
+const situationSchema = z.enum(VITRINE_SITUATIONS).catch("");
 const pageSchema = z
   .string()
   .regex(/^\d{1,5}$/)
@@ -101,10 +108,11 @@ export function parseVitrineParams(raw: RawParams): VitrineParams {
     sort,
     page,
     exact: first(raw.corrigir) === "0",
+    situation: situationSchema.parse(first(raw.situacao) ?? ""),
   };
 }
 
-/** Monta o link de `/processos` omitindo padrões. Mudar qualquer filtro volta à página 1. */
+/** Monta o link da lista (`/`) omitindo padrões. Mudar qualquer filtro volta à página 1. */
 export function vitrineHref(params: VitrineParams, overrides: Partial<VitrineParams> = {}): string {
   const p: VitrineParams = { ...params, ...overrides };
   if (!("page" in overrides)) p.page = 1;
@@ -118,6 +126,7 @@ export function vitrineHref(params: VitrineParams, overrides: Partial<VitrinePar
   if (p.includeClosed) add("encerrados", "1");
   if (p.sort !== defaultSort(p.q)) add("sort", p.sort);
   if (p.exact) add("corrigir", "0");
+  if (p.situation) add("situacao", p.situation);
   if (p.page > 1) add("page", String(p.page));
-  return parts.length ? `/processos?${parts.join("&")}` : "/processos";
+  return parts.length ? `/?${parts.join("&")}` : "/";
 }

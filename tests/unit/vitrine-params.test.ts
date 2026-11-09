@@ -13,7 +13,13 @@ describe("parseVitrineParams", () => {
       sort: "recent",
       page: 1,
       exact: false,
+      situation: "",
     });
+  });
+  it("situacao válida ou vazia", () => {
+    expect(parseVitrineParams({ situacao: "encerrando" }).situation).toBe("encerrando");
+    expect(parseVitrineParams({ situacao: "em-breve" }).situation).toBe("em-breve");
+    expect(parseVitrineParams({ situacao: "x" }).situation).toBe("");
   });
   it("sort padrão depende de q", () => {
     expect(parseVitrineParams({ q: "robô" }).sort).toBe("relevance");
@@ -69,18 +75,24 @@ describe("byte nulo", () => {
 describe("vitrineHref", () => {
   const base = parseVitrineParams({});
   it("omite padrões", () => {
-    expect(vitrineHref(base)).toBe("/processos");
-    expect(vitrineHref(parseVitrineParams({ q: "ia" }))).toBe("/processos?q=ia");
+    expect(vitrineHref(base)).toBe("/");
+    expect(vitrineHref(parseVitrineParams({ q: "ia" }))).toBe("/?q=ia");
   });
   it("mudar filtro volta à página 1; page explícito é mantido", () => {
     const p = parseVitrineParams({ page: "4", q: "ia" });
-    expect(vitrineHref(p, { includeClosed: true })).toBe("/processos?q=ia&encerrados=1");
-    expect(vitrineHref(p, { exact: true })).toBe("/processos?q=ia&corrigir=0");
-    expect(vitrineHref(p, { page: 5 })).toBe("/processos?q=ia&page=5");
+    expect(vitrineHref(p, { includeClosed: true })).toBe("/?q=ia&encerrados=1");
+    expect(vitrineHref(p, { exact: true })).toBe("/?q=ia&corrigir=0");
+    expect(vitrineHref(p, { page: 5 })).toBe("/?q=ia&page=5");
+  });
+  it("preserva situacao e volta à página 1 ao remover um filtro", () => {
+    const p = parseVitrineParams({ situacao: "em-breve", page: "3", category: "PET" });
+    expect(vitrineHref(p, { categories: [] })).toBe("/?situacao=em-breve");
+    const q = parseVitrineParams({ q: "robô", page: "3", sort: "deadline" });
+    expect(vitrineHref(q, { q: "" })).toBe("/?sort=deadline");
   });
   it("inclui sort fora do padrão e tags", () => {
     const p = parseVitrineParams({ tags: "python,cad", sort: "popular", category: "PET" });
-    expect(vitrineHref(p)).toBe("/processos?category=PET&tags=python,cad&sort=popular");
+    expect(vitrineHref(p)).toBe("/?category=PET&tags=python,cad&sort=popular");
   });
   it("round trip", () => {
     const p = parseVitrineParams({

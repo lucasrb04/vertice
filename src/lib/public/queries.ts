@@ -3,6 +3,9 @@ import { db } from "@/db";
 import { courses, opportunities, opportunityTags, projects, searchDocuments, tags } from "@/db/schema";
 import { closedOnDate, isOpportunityOpen, openOpportunitySql } from "@/lib/opportunities/status";
 import type { ProjectCategory, ScholarshipType } from "@/lib/projects/labels";
+import { deadlineFromDay, todayInSaoPaulo } from "@/lib/time";
+import { PROJECT_CATEGORIES } from "@/lib/validation/project";
+import { plainTextExcerpt } from "./labels";
 import {
   groupTsQuery,
   planSearch,
@@ -33,7 +36,13 @@ export type PublicCard = {
   scholarshipValueCents: number | null;
   weeklyHours: number | null;
   minSemester: number | null;
+  maxSemester: number | null;
   courseCount: number;
+  /** Texto puro do começo da descrição, para o card. */
+  excerpt: string;
+  publishedAt: Date;
+  internalSelectionEnabled: boolean;
+  hasExternalUrl: boolean;
   deadlineAt: Date;
   applicationsOpenOn: string | null;
   isOpen: boolean;
@@ -148,6 +157,28 @@ function searchSql(plan: SearchPlan): { where: SQL; order: SQL[] } {
   return { where, order: [...onlyCorrected, tier, ...rank] };
 }
 
+const CLOSING_DAYS = 7;
+
+/** Último instante de "encerra em 7 dias": 23:59 do 7º dia depois de hoje, em Brasília. */
+function closingCutoff(now: Date): Date {
+  const [y, m, d] = todayInSaoPaulo(now).split("-").map(Number);
+  const day = new Date(Date.UTC(y!, m! - 1, d! + CLOSING_DAYS)).toISOString().slice(0, 10);
+  return deadlineFromDay(day);
+}
+
+/** Inscrições começam depois de hoje (Brasília); o processo já está aberto, só não recebe ainda. */
+function opensLaterSql(now: Date): SQL {
+  return sql`(${opportunities.applicationsOpenOn} IS NOT NULL AND ${opportunities.applicationsOpenOn} > ${todayInSaoPaulo(now)}::date)`;
+}
+
+function closingSql(now: Date): SQL {
+  return sql`(${openOpportunitySql(now)} AND NOT ${opensLaterSql(now)} AND ${opportunities.deadlineAt} <= ${closingCutoff(now).toISOString()}::timestamptz)`;
+}
+
+function soonSql(now: Date): SQL {
+  return sql`(${openOpportunitySql(now)} AND ${opensLaterSql(now)})`;
+}
+
 function filtersSql(
   institutionId: string,
   p: VitrineParams,
@@ -158,6 +189,8 @@ function filtersSql(
   if (!p.includeClosed) conds.push(openOpportunitySql(now));
   if (search) conds.push(search.where);
   if (p.categories.length) conds.push(inArray(projects.category, p.categories));
+  if (p.situation === "encerrando") conds.push(closingSql(now));
+  if (p.situation === "em-breve") conds.push(soonSql(now));
   if (p.scholarship) {
     conds.push(inArray(opportunities.scholarshipType, [p.scholarship, "BOTH"]));
   }
@@ -196,7 +229,12 @@ const cardColumns = {
   scholarshipValueCents: opportunities.scholarshipValueCents,
   weeklyHours: opportunities.weeklyHours,
   minSemester: opportunities.minSemester,
+  maxSemester: opportunities.maxSemester,
   courseCount: sql<number>`jsonb_array_length(${opportunities.targetCourseIds})`.mapWith(Number),
+  description: opportunities.description,
+  createdAt: opportunities.createdAt,
+  internalSelectionEnabled: opportunities.internalSelectionEnabled,
+  externalUrl: opportunities.externalUrl,
   deadlineAt: opportunities.deadlineAt,
   applicationsOpenOn: opportunities.applicationsOpenOn,
   status: opportunities.status,
@@ -260,7 +298,12 @@ async function fetchCards(opts: {
       scholarshipValueCents: r.scholarshipValueCents,
       weeklyHours: r.weeklyHours,
       minSemester: r.minSemester,
+      maxSemester: r.maxSemester,
       courseCount: r.courseCount,
+      excerpt: plainTextExcerpt(r.description, 180),
+      publishedAt: r.createdAt,
+      internalSelectionEnabled: r.internalSelectionEnabled,
+      hasExternalUrl: !!r.externalUrl,
       deadlineAt: r.deadlineAt,
       applicationsOpenOn: r.applicationsOpenOn,
       isOpen,
@@ -270,7 +313,42 @@ async function fetchCards(opts: {
   });
 }
 
-// ---------- /processos ----------
+// ---------- contagens das abas e das categorias ----------
+
+export type SituationCounts = { all: number; closing: number; soon: number };
+
+/** Uma consulta para as três abas; `where` já vem sem a aba escolhida. */
+async function countSituations(where: SQL, now: Date, searching: boolean): Promise<SituationCounts> {
+  const q = db
+    .select({
+      all: sql<number>`count(*)`.mapWith(Number),
+      closing: sql<number>`count(*) filter (where ${closingSql(now)})`.mapWith(Number),
+      soon: sql<number>`count(*) filter (where ${soonSql(now)})`.mapWith(Number),
+    })
+    .from(opportunities)
+    .innerJoin(projects, eq(projects.id, opportunities.projectId))
+    .where(where)
+    .$dynamic();
+  const [row] = await (searching ? q.leftJoin(searchDocuments, eq(searchDocuments.opportunityId, opportunities.id)) : q);
+  return row ?? { all: 0, closing: 0, soon: 0 };
+}
+
+/** Quantos processos cada categoria teria; `where` já vem sem o filtro de categoria. */
+async function countCategories(where: SQL, searching: boolean): Promise<Record<ProjectCategory, number>> {
+  const q = db
+    .select({ category: projects.category, n: sql<number>`count(*)`.mapWith(Number) })
+    .from(opportunities)
+    .innerJoin(projects, eq(projects.id, opportunities.projectId))
+    .where(where)
+    .groupBy(projects.category)
+    .$dynamic();
+  const rows = await (searching ? q.leftJoin(searchDocuments, eq(searchDocuments.opportunityId, opportunities.id)) : q);
+  const counts = Object.fromEntries(PROJECT_CATEGORIES.map((c) => [c, 0])) as Record<ProjectCategory, number>;
+  for (const r of rows) counts[r.category] = r.n;
+  return counts;
+}
+
+// ---------- lista (/) ----------
 
 export async function searchOpportunities(
   institutionId: string,
@@ -282,6 +360,8 @@ export async function searchOpportunities(
   page: number;
   pageCount: number;
   correction: { original: string; corrected: string } | null;
+  situationCounts: SituationCounts;
+  categoryCounts: Record<ProjectCategory, number>;
 }> {
   const plan = await planSearch(institutionId, params.q, { exact: params.exact });
   const search = plan ? searchSql(plan) : null;
@@ -334,7 +414,11 @@ export async function searchOpportunities(
       })
     : [];
   const correction = plan?.corrected && total > 0 ? { original: plan.original, corrected: plan.corrected } : null;
-  return { items, total, page, pageCount, correction };
+  const [situationCounts, categoryCounts] = await Promise.all([
+    countSituations(filtersSql(institutionId, { ...params, situation: "" }, now, search), now, !!search),
+    countCategories(filtersSql(institutionId, { ...params, categories: [] }, now, search), !!search),
+  ]);
+  return { items, total, page, pageCount, correction, situationCounts, categoryCounts };
 }
 
 // ---------- home ----------
@@ -499,13 +583,13 @@ export async function getPublicProject(institutionId: string, slug: string, now:
 
 export async function listFilterOptions(
   institutionId: string,
-): Promise<{ courses: { code: string; name: string }[]; tags: { slug: string; name: string }[] }> {
+): Promise<{ courses: { code: string; name: string; institute: string }[]; tags: { slug: string; name: string }[] }> {
   const [courseRows, tagRows] = await Promise.all([
     db
-      .select({ code: courses.code, name: courses.name })
+      .select({ code: courses.code, name: courses.name, institute: courses.institute })
       .from(courses)
       .where(eq(courses.institutionId, institutionId))
-      .orderBy(asc(courses.name)),
+      .orderBy(asc(courses.institute), asc(courses.name)),
     db
       .select({ slug: tags.normalizedSlug, name: tags.name })
       .from(opportunityTags)

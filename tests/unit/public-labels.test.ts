@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  applicationRouteLabel,
   closedChip,
+  coursesLabel,
   deadlineChip,
+  deadlineDate,
   formatCents,
   plainTextExcerpt,
+  publishedLabel,
   requirementsSummary,
   scholarshipSummary,
   semesterRange,
@@ -23,13 +27,49 @@ describe("deadlineChip", () => {
     expect(deadlineChip(endOfDay("2026-11-02"), tarde)).toEqual({ text: "Encerra hoje", urgent: true });
   });
 
-  it("singular em 1 dia", () => {
-    expect(deadlineChip(endOfDay("2026-11-03"), now)).toEqual({ text: "Encerra em 1 dia", urgent: true });
+  it("amanhã", () => {
+    expect(deadlineChip(endOfDay("2026-11-03"), now)).toEqual({ text: "Encerra amanhã", urgent: true });
   });
 
-  it("7 dias é urgente, 8 não", () => {
-    expect(deadlineChip(endOfDay("2026-11-09"), now)).toEqual({ text: "Encerra em 7 dias", urgent: true });
-    expect(deadlineChip(endOfDay("2026-11-10"), now)).toEqual({ text: "Encerra em 8 dias", urgent: false });
+  it("3 dias é urgente, 4 não", () => {
+    expect(deadlineChip(endOfDay("2026-11-05"), now)).toEqual({ text: "Encerra em 3 dias", urgent: true });
+    expect(deadlineChip(endOfDay("2026-11-06"), now)).toEqual({ text: "Encerra em 4 dias", urgent: false });
+  });
+});
+
+describe("deadlineDate", () => {
+  it("dia e mês abreviado, sem ponto, em Brasília", () => {
+    expect(deadlineDate(endOfDay("2026-11-12"))).toBe("12 nov");
+    expect(deadlineDate(new Date("2026-12-01T01:00:00Z"))).toBe("30 nov");
+  });
+});
+
+describe("publishedLabel", () => {
+  it("hoje, ontem, dias e data", () => {
+    expect(publishedLabel(new Date("2026-11-02T10:00:00Z"), now)).toBe("Publicado hoje");
+    expect(publishedLabel(new Date("2026-11-01T20:00:00Z"), now)).toBe("Publicado ontem");
+    expect(publishedLabel(new Date("2026-10-28T12:00:00Z"), now)).toBe("Publicado há 5 dias");
+    expect(publishedLabel(new Date("2026-09-23T12:00:00Z"), now)).toBe("Publicado em 23 set");
+  });
+});
+
+describe("applicationRouteLabel", () => {
+  it("as três formas de inscrição", () => {
+    expect(applicationRouteLabel({ internalSelectionEnabled: true, hasExternalUrl: false })).toBe(
+      "Inscrição pelo Vértice",
+    );
+    expect(applicationRouteLabel({ internalSelectionEnabled: false, hasExternalUrl: true })).toBe("Edital externo");
+    expect(applicationRouteLabel({ internalSelectionEnabled: true, hasExternalUrl: true })).toBe(
+      "Pelo Vértice ou pelo edital",
+    );
+  });
+});
+
+describe("coursesLabel", () => {
+  it("todos, um ou vários", () => {
+    expect(coursesLabel(0)).toBe("Todos os cursos");
+    expect(coursesLabel(1)).toBe("1 curso");
+    expect(coursesLabel(4)).toBe("4 cursos");
   });
 });
 

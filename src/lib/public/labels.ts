@@ -1,17 +1,45 @@
 import { CATEGORY_LABELS, SCHOLARSHIP_LABELS, type ScholarshipType } from "@/lib/projects/labels";
-import { daysUntil, formatDay } from "@/lib/time";
+import { daysUntil, formatDay, TIMEZONE } from "@/lib/time";
 
 export { CATEGORY_LABELS, SCHOLARSHIP_LABELS };
 
 export type DeadlineChip = { text: string; urgent: boolean };
 
-const URGENT_DAYS = 7;
+const URGENT_DAYS = 3;
 
 /** Prazo de um processo aberto, em dias de calendário de Brasília. */
 export function deadlineChip(deadlineAt: Date, now: Date = new Date()): DeadlineChip {
   const days = daysUntil(deadlineAt, now);
-  const text = days <= 0 ? "Encerra hoje" : days === 1 ? "Encerra em 1 dia" : `Encerra em ${days} dias`;
+  const text = days <= 0 ? "Encerra hoje" : days === 1 ? "Encerra amanhã" : `Encerra em ${days} dias`;
   return { text, urgent: days <= URGENT_DAYS };
+}
+
+const shortDay = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "short", timeZone: TIMEZONE });
+
+/** `12 nov`: dia e mês abreviado, no dia de Brasília. */
+export function deadlineDate(value: Date): string {
+  return shortDay.format(value).replace(/\./g, "").replace(" de ", " ");
+}
+
+const RECENT_DAYS = 30;
+
+/** Quando o processo entrou na vitrine, contado em dias de calendário de Brasília. */
+export function publishedLabel(publishedAt: Date, now: Date = new Date()): string {
+  const days = -daysUntil(publishedAt, now);
+  if (days <= 0) return "Publicado hoje";
+  if (days === 1) return "Publicado ontem";
+  if (days <= RECENT_DAYS) return `Publicado há ${days} dias`;
+  return `Publicado em ${deadlineDate(publishedAt)}`;
+}
+
+/** Por onde o aluno se inscreve, para o rodapé do card. */
+export function applicationRouteLabel(card: { internalSelectionEnabled: boolean; hasExternalUrl: boolean }): string {
+  if (card.internalSelectionEnabled && card.hasExternalUrl) return "Pelo Vértice ou pelo edital";
+  return card.internalSelectionEnabled ? "Inscrição pelo Vértice" : "Edital externo";
+}
+
+export function coursesLabel(courseCount: number): string {
+  return courseCount === 0 ? "Todos os cursos" : courseCount === 1 ? "1 curso" : `${courseCount} cursos`;
 }
 
 /** Prazo de um processo encerrado; `closedOn` pode faltar (ex.: pausado com prazo futuro). */
@@ -21,7 +49,7 @@ export function closedChip(closedOn: Date | null): DeadlineChip {
 
 export function requirementsSummary(card: { courseCount: number; minSemester: number | null }): string {
   const { courseCount, minSemester } = card;
-  const courses = courseCount === 0 ? "Todos os cursos" : courseCount === 1 ? "1 curso" : `${courseCount} cursos`;
+  const courses = coursesLabel(courseCount);
   return minSemester ? `${courses} · A partir do ${minSemester}º período` : courses;
 }
 
