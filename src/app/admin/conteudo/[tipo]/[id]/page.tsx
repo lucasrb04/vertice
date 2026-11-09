@@ -19,11 +19,11 @@ export default async function ConteudoModeradoPage({ params }: { params: Promise
   if (!content) notFound();
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-16">
+    <section className="mx-auto w-full max-w-[880px] px-4 pt-8 sm:px-6">
       <Link href="/admin" className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2">
         Voltar à moderação
       </Link>
-      <h1 className="mt-6 font-heading text-2xl font-bold tracking-tight [overflow-wrap:anywhere] text-stone-900">
+      <h1 className="mt-5 text-[1.75rem] leading-tight font-extrabold text-ink [overflow-wrap:anywhere]">
         {content.name}
       </h1>
       <p className="mt-1 [overflow-wrap:anywhere] text-stone-600">

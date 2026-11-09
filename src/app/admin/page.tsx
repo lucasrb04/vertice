@@ -15,8 +15,8 @@ export default async function AdminPage({
     query ? searchModerationTargets(admin, query) : [],
   ]);
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16">
-      <h1 className="font-heading text-3xl font-bold tracking-tight text-stone-900">Portal do administrador</h1>
+    <section className="mx-auto w-full max-w-[1320px] px-4 pt-8 sm:px-6">
+      <h1 className="text-[1.75rem] leading-tight font-extrabold text-ink">Portal do administrador</h1>
       <p className="mt-3 max-w-prose text-stone-600">Moderação de projetos e processos.</p>
       <div className="mt-10">
         <AdminQueue queue={queue} query={query} results={results} />

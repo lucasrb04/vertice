@@ -5,6 +5,7 @@ import { useState } from "react";
 import { createProjectWithOpportunityAction } from "@/actions/project.actions";
 import type { ActionResult } from "@/actions/result";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { OpportunityFormValues } from "@/lib/validation/opportunity";
 import { projectInputSchema } from "@/lib/validation/project";
 import { FormMessage } from "./field";
@@ -34,12 +35,26 @@ function validateRequired(draft: ProjectDraft): FieldErrors {
 
 function StepIndicator({ step }: { step: 1 | 2 }) {
   const item = (n: 1 | 2, label: string) => (
-    <li className={n === step ? "text-stone-900" : "text-stone-500"} aria-current={n === step ? "step" : undefined}>
-      <span className="tabular-nums">{n}.</span> {label}
+    <li
+      aria-current={n === step ? "step" : undefined}
+      className={cn(
+        "flex items-center gap-2.5 rounded-xl px-3.5 py-2 font-semibold",
+        n === step ? "bg-ipe text-ink" : "text-ink-2",
+      )}
+    >
+      <span
+        className={cn(
+          "grid size-6 place-items-center rounded-full text-sm tabular-nums",
+          n === step ? "bg-ink text-white" : "bg-fact text-ink-2",
+        )}
+      >
+        {n}
+      </span>
+      {label}
     </li>
   );
   return (
-    <ol className="flex gap-6 border-b border-stone-200 pb-3 text-sm font-medium">
+    <ol className="flex flex-wrap gap-1.5 rounded-2xl bg-surface p-1.5 shadow-card sm:w-fit">
       {item(1, "Sobre o projeto")}
       {item(2, "Sobre o processo")}
     </ol>
@@ -96,12 +111,12 @@ export function PublishWizard({ courses, siteKey, bypass }: { courses: Course[];
       <StepIndicator step={step} />
 
       <form onSubmit={goToStep2} noValidate hidden={step !== 1} className="space-y-4">
-        <section className="rounded-2xl bg-surface shadow-card p-5">
+        <section className="rounded-2xl bg-surface p-5 shadow-card sm:p-7">
           <ProjectFields values={project} onChange={setProject} errors={projectErrors} />
         </section>
         <FormMessage message={projectMessage} />
         <div className="flex justify-end">
-          <Button type="submit" size="lg" className="px-4">
+          <Button type="submit" size="lg">
             Continuar
           </Button>
         </div>
@@ -117,7 +132,7 @@ export function PublishWizard({ courses, siteKey, bypass }: { courses: Course[];
             submitLabel="Publicar"
             submitDisabled={!token}
             actions={
-              <Button type="button" variant="outline" size="lg" className="px-4" onClick={() => setStep(1)}>
+              <Button type="button" variant="outline" size="lg" onClick={() => setStep(1)}>
                 Voltar
               </Button>
             }

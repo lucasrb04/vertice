@@ -55,8 +55,8 @@ function AddMemberForm({ projectId }: { projectId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate className="space-y-4 rounded-2xl bg-surface shadow-card p-5">
-      <h2 className="text-base font-semibold tracking-tight text-stone-900">Adicionar membro</h2>
+    <form onSubmit={handleSubmit} noValidate className="space-y-4 rounded-2xl bg-surface p-5 shadow-card sm:p-7">
+      <h2 className="text-[1.2rem] font-bold text-ink">Adicionar membro</h2>
       <div className="grid gap-5 sm:grid-cols-6">
         <Field
           label="E-mail da pessoa"
@@ -161,7 +161,7 @@ export function MemberManager({
         <h2 id="membros-do-projeto" className="text-[1.2rem] font-bold text-ink">
           Membros do projeto <span className="tabular-nums text-sm font-normal text-stone-500">{members.length}</span>
         </h2>
-        <ul className="mt-3 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
+        <ul className="mt-3 divide-y divide-line rounded-2xl bg-surface shadow-card">
           {members.map((m) => {
             const editable = canManage && m.role !== "OWNER";
             return (

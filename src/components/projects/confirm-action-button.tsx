@@ -86,13 +86,13 @@ export function ConfirmActionButton({
           {srLabel && <span className="sr-only"> {srLabel}</span>}
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent className="rounded-lg ring-stone-200">
+      <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-stone-900">{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-stone-600">{description}</AlertDialogDescription>
+          <AlertDialogTitle className="font-heading text-[1.2rem] font-bold text-ink">{title}</AlertDialogTitle>
+          <AlertDialogDescription className="text-ink-2">{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <FormMessage message={message} />
-        <AlertDialogFooter className="rounded-b-lg border-stone-200 bg-stone-50">
+        <AlertDialogFooter className="rounded-b-2xl border-line bg-surface-2">
           <AlertDialogCancel disabled={pending}>{cancelLabel}</AlertDialogCancel>
           <AlertDialogAction variant="destructive" disabled={pending} onClick={confirm}>
             {pending ? "Aguarde…" : confirmLabel}

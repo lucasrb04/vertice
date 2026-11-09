@@ -9,11 +9,7 @@ import { cn } from "@/lib/utils";
 import { ConfirmActionButton } from "./confirm-action-button";
 
 function ChannelBadge({ children }: { children: string }) {
-  return (
-    <span className="rounded-md border border-stone-200 bg-stone-100 px-1.5 py-0.5 tabular-nums text-xs text-stone-700">
-      {children}
-    </span>
-  );
+  return <span className="rounded-[8px] bg-fact px-2 py-0.5 text-[0.82rem] font-semibold text-ink">{children}</span>;
 }
 
 /**
@@ -42,27 +38,27 @@ export function OpportunityRow({
   const canChange = canEdit && !o.hidden;
 
   return (
-    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6">
       <div className="min-w-0 space-y-1">
-        <p className="font-medium text-stone-900">{o.title}</p>
+        <p className="text-[1.05rem] font-bold [overflow-wrap:anywhere] text-ink">{o.title}</p>
         {o.hidden ? (
           <div className="space-y-0.5 text-sm">
-            <p className="tabular-nums text-xs text-stone-700">Oculto pela moderação</p>
-            {o.hiddenReason && <p className="[overflow-wrap:anywhere] text-stone-600">{o.hiddenReason}</p>}
+            <p className="font-semibold text-danger-ink">Oculto pela moderação</p>
+            {o.hiddenReason && <p className="[overflow-wrap:anywhere] text-ink-2">{o.hiddenReason}</p>}
           </div>
         ) : (
-          <p className={cn("tabular-nums text-xs", closingSoon ? "text-urgent-ink" : "text-stone-600")}>
+          <p className={cn("text-sm", closingSoon ? "font-semibold text-urgent-ink" : "text-ink-2")}>
             {isOpen ? deadlineLabel(o.deadlineAt) : o.closedOn ? `Encerrado em ${formatDay(o.closedOn)}` : "Encerrado"}
           </p>
         )}
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="tabular-nums text-xs text-stone-600">
+          <span className="text-sm text-ink-2">
             {o.vacanciesCount} {o.vacanciesCount === 1 ? "vaga" : "vagas"}
           </span>
           {o.hasExternalUrl && <ChannelBadge>Edital</ChannelBadge>}
           {o.internalSelectionEnabled && <ChannelBadge>Plataforma</ChannelBadge>}
         </div>
-        <p className="tabular-nums text-xs text-stone-600">
+        <p className="text-sm text-ink-3 tabular-nums">
           {opportunityStatsParts({
             views: o.views,
             externalClicks: o.hasExternalUrl ? o.externalClicks : null,

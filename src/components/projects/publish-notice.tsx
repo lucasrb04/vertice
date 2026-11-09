@@ -32,8 +32,8 @@ export function PublishNotice({ kind, title, publicPath, publicUrl, shareText }:
   }
 
   return (
-    <section aria-labelledby={headingId} className="mb-8 rounded-lg border border-stone-300 bg-white p-5">
-      <h2 id={headingId} className="text-base font-semibold text-stone-900">
+    <section aria-labelledby={headingId} className="rounded-2xl bg-money-soft p-5 sm:p-6">
+      <h2 id={headingId} className="font-sans text-[1.1rem] font-bold tracking-normal text-money-ink">
         {published ? "Processo publicado" : "Alterações salvas"}
       </h2>
       <p className="mt-1 text-sm [overflow-wrap:anywhere] text-stone-700">
@@ -51,7 +51,7 @@ export function PublishNotice({ kind, title, publicPath, publicUrl, shareText }:
           readOnly
           value={publicUrl}
           onFocus={(e) => e.currentTarget.select()}
-          className="h-9 min-w-0 flex-1 rounded-md border border-stone-200 bg-stone-50 px-3 tabular-nums text-sm text-stone-800"
+          className="h-11 min-w-0 flex-1 rounded-[10px] border border-line bg-surface px-3 text-sm text-ink"
         />
         <Button type="button" variant="outline" onClick={() => copy(publicUrl, "Link copiado.")}>
           Copiar link
@@ -61,7 +61,7 @@ export function PublishNotice({ kind, title, publicPath, publicUrl, shareText }:
       {published && (
         <div className="mt-4">
           <p className="text-sm font-medium text-stone-900">Texto para grupos e redes</p>
-          <p className="mt-1 rounded-md border border-stone-200 bg-stone-50 p-3 text-sm whitespace-pre-line [overflow-wrap:anywhere] text-stone-700">
+          <p className="mt-1 rounded-xl bg-surface p-3.5 text-sm whitespace-pre-line [overflow-wrap:anywhere] text-stone-700">
             {shareText}
           </p>
           <Button type="button" variant="outline" className="mt-2" onClick={() => copy(shareText, "Texto copiado.")}>

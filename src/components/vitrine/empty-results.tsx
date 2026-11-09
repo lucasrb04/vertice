@@ -44,6 +44,7 @@ export function EmptyResults({ kind, allHref }: { kind: "none" | "tab" | "filter
       <p className={text}>Tente tirar um filtro ou buscar por outra palavra.</p>
       {/* <a> comum: recarrega e zera os campos não controlados do formulário. */}
       <Button asChild variant="ink">
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- recarregar é o objetivo (ver acima). */}
         <a href="/">Limpar filtros e busca</a>
       </Button>
     </div>

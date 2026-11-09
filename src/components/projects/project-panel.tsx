@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ProjectTile } from "@/components/vitrine/project-tile";
 import type { Project, ProjectRole } from "@/db/schema";
 import { CATEGORY_LABELS, PROJECT_STATUS_LABELS, ROLE_LABELS, SYSTEM_ADMIN_READ_ONLY } from "@/lib/projects/labels";
 import type { PanelOpportunity } from "@/lib/projects/queries";
@@ -36,39 +37,48 @@ export function ProjectPanel({
   const base = `/projetos/${project.id}`;
 
   return (
-    <div className="space-y-8">
-      <header className="space-y-3 border-b border-stone-200 pb-6">
-        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">
-          {CATEGORY_LABELS[project.category]}
-        </p>
-        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <h1 className="font-heading text-3xl font-bold tracking-tight text-stone-900">{project.name}</h1>
-          {project.acronym && <span className="tabular-nums text-sm text-stone-600">{project.acronym}</span>}
+    <div className="space-y-7">
+      <header className="flex gap-4 rounded-2xl bg-surface p-5 shadow-card sm:gap-5 sm:p-7">
+        <ProjectTile category={project.category} name={project.name} acronym={project.acronym} size="lg" />
+        <div className="min-w-0 space-y-2">
+          <h1 className="text-[1.6rem] leading-tight font-extrabold [overflow-wrap:anywhere] text-ink sm:text-[2rem]">
+            {project.name}
+          </h1>
+          <p className="text-ink-2">
+            {CATEGORY_LABELS[project.category]}
+            {project.acronym && <> · {project.acronym}</>}
+          </p>
+          <dl className="flex flex-wrap gap-2 text-sm">
+            <div
+              className={cn(
+                "flex gap-1.5 rounded-[9px] px-2.5 py-1",
+                active ? "bg-money-soft text-money-ink" : "bg-fact",
+              )}
+            >
+              <dt>Status</dt>
+              <dd className="font-semibold">{PROJECT_STATUS_LABELS[project.status]}</dd>
+            </div>
+            <div className="flex gap-1.5 rounded-[9px] bg-fact px-2.5 py-1">
+              <dt className="text-ink-2">Seu papel</dt>
+              <dd className="font-semibold text-ink">{role ? ROLE_LABELS[role] : SYSTEM_ADMIN_READ_ONLY}</dd>
+            </div>
+          </dl>
         </div>
-        <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
-          <div className="flex gap-1.5">
-            <dt className="text-stone-500">Status</dt>
-            <dd className={cn("font-medium", active ? "text-stone-900" : "text-stone-600")}>
-              {PROJECT_STATUS_LABELS[project.status]}
-            </dd>
-          </div>
-          <div className="flex gap-1.5">
-            <dt className="text-stone-500">Seu papel</dt>
-            <dd className="font-medium text-stone-900">{role ? ROLE_LABELS[role] : SYSTEM_ADMIN_READ_ONLY}</dd>
-          </div>
-        </dl>
       </header>
 
       {hidden && (
-        <div role="status" className="space-y-1 rounded-2xl bg-surface-2 shadow-card px-4 py-3 text-sm text-stone-700">
-          <p className="font-medium text-stone-900">Oculto pela moderação</p>
+        <div
+          role="status"
+          className="space-y-1 rounded-2xl border border-danger-ink/25 bg-danger-soft px-5 py-4 text-danger-ink"
+        >
+          <p className="font-bold">Oculto pela moderação</p>
           {hiddenReason && <p>{hiddenReason}</p>}
           <p>O painel fica disponível só para leitura e nenhum processo recebe inscrições.</p>
         </div>
       )}
 
       {!active && !hidden && (
-        <p role="status" className="rounded-2xl bg-surface-2 shadow-card px-4 py-3 text-sm text-stone-700">
+        <p role="status" className="rounded-2xl bg-surface-2 px-5 py-4 text-ink-2 shadow-card">
           Projeto {PROJECT_STATUS_LABELS[project.status].toLowerCase()}: o painel fica disponível só para leitura e
           nenhum processo recebe inscrições.
         </p>
@@ -77,19 +87,19 @@ export function ProjectPanel({
       <nav aria-label="Ações do projeto" className="flex flex-wrap items-center gap-2">
         {canEdit && (
           <>
-            <Button asChild size="lg" className="px-4">
+            <Button asChild>
               <Link href={`${base}/processos/novo`}>Novo processo</Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="px-4">
+            <Button asChild variant="outline">
               <Link href={`${base}/editar`}>Editar projeto</Link>
             </Button>
           </>
         )}
-        <Button asChild variant="outline" size="lg" className="px-4">
+        <Button asChild variant="outline">
           <Link href={`${base}/membros`}>Membros</Link>
         </Button>
         {(active || project.status === "ARCHIVED") && (
-          <Button asChild variant="outline" size="lg" className="px-4">
+          <Button asChild variant="outline">
             <Link href={`/projeto/${project.slug}`}>Ver página pública</Link>
           </Button>
         )}
@@ -98,12 +108,12 @@ export function ProjectPanel({
 
       <section aria-labelledby="abertos">
         <h2 id="abertos" className="text-[1.2rem] font-bold text-ink">
-          Abertos <span className="tabular-nums text-sm font-normal text-stone-500">{open.length}</span>
+          Abertos <span className="text-base font-semibold text-ink-3 tabular-nums">{open.length}</span>
         </h2>
         {open.length === 0 ? (
-          <p className="mt-3 text-sm text-stone-600">Nenhum processo aberto.</p>
+          <p className="mt-3 rounded-2xl bg-surface p-5 text-ink-2 shadow-card">Nenhum processo aberto.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
+          <ul className="mt-3 divide-y divide-line rounded-2xl bg-surface shadow-card">
             {open.map((o) => (
               <OpportunityRow
                 key={o.id}
@@ -127,9 +137,9 @@ export function ProjectPanel({
               <h2 id="encerrados" className="text-[1.2rem] font-bold text-ink">
                 Encerrados
               </h2>
-              <span className="tabular-nums text-sm text-stone-500">0</span>
+              <span className="text-base font-semibold text-ink-3 tabular-nums">0</span>
             </div>
-            <p className="mt-3 text-sm text-stone-600">Nenhum processo encerrado.</p>
+            <p className="mt-3 text-ink-2">Nenhum processo encerrado.</p>
           </>
         ) : (
           <details className="group">
@@ -137,15 +147,15 @@ export function ProjectPanel({
               <h2 id="encerrados" className="text-[1.2rem] font-bold text-ink">
                 Encerrados
               </h2>
-              <span className="tabular-nums text-sm text-stone-500">{closed.length}</span>
-              <span aria-hidden="true" className="tabular-nums text-sm text-stone-500 group-open:hidden">
+              <span className="text-base font-semibold text-ink-3 tabular-nums">{closed.length}</span>
+              <span aria-hidden="true" className="text-ink-3 group-open:hidden">
                 +
               </span>
-              <span aria-hidden="true" className="hidden tabular-nums text-sm text-stone-500 group-open:inline">
+              <span aria-hidden="true" className="hidden text-ink-3 group-open:inline">
                 −
               </span>
             </summary>
-            <ul className="mt-3 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
+            <ul className="mt-3 divide-y divide-line rounded-2xl bg-surface shadow-card">
               {closed.map((o) => (
                 <OpportunityRow
                   key={o.id}

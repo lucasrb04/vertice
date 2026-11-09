@@ -35,11 +35,11 @@ function Actions({ row, onDone }: { row: TargetRow; onDone: (message: string) =>
 function Heading({ row }: { row: TargetRow }) {
   return (
     <div className="min-w-0">
-      <p className="tabular-nums text-xs uppercase tracking-wide text-stone-500">{TYPE_LABELS[row.targetType]}</p>
+      <p className="text-sm font-semibold text-ink-2">{TYPE_LABELS[row.targetType]}</p>
       <h3 className="font-heading text-base font-semibold text-stone-900">{row.name}</h3>
       {row.targetType === "OPPORTUNITY" && <p className="text-sm text-stone-600">{row.projectName}</p>}
       <p className="mt-1 text-sm text-stone-700">
-        <span className="tabular-nums text-xs">Estado:</span> {statusLabel(row)}
+        <span className="text-ink-2">Estado:</span> {statusLabel(row)}
       </p>
       {/* O admin vê o que julga antes de ocultar ou restaurar, inclusive o que já está oculto. */}
       <Link
@@ -98,10 +98,7 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
                 </div>
                 <ul className="mt-3 flex flex-wrap gap-2">
                   {item.reasons.map((r) => (
-                    <li
-                      key={r.code}
-                      className="rounded-md bg-stone-100 px-2 py-0.5 tabular-nums text-xs text-stone-700"
-                    >
+                    <li key={r.code} className="rounded-[8px] bg-fact px-2 py-0.5 text-sm text-ink">
                       {REPORT_REASON_LABELS[r.code]} ({r.count})
                     </li>
                   ))}
@@ -139,11 +136,11 @@ export function AdminQueue({ queue, query, results }: { queue: QueueItem[]; quer
               defaultValue={query}
               maxLength={100}
               placeholder="Nome do projeto ou do processo"
-              className="h-9 min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-900 placeholder:text-stone-500"
+              className="h-11 min-w-0 flex-1 rounded-[10px] border border-line bg-surface px-3 text-base text-ink placeholder:text-ink-3 hover:border-line-strong focus-visible:border-ink"
             />
             <button
               type="submit"
-              className="h-9 rounded-lg border border-stone-300 bg-white px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"
+              className="h-11 rounded-[11px] border border-ipe bg-ipe px-4 font-bold text-ink hover:bg-ipe-hover"
             >
               Buscar
             </button>

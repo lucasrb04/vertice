@@ -107,9 +107,9 @@ const KNOWN_FIELDS = new Set<string>([...Object.keys(toDraft(undefined)), "schol
 
 function Block({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl bg-surface shadow-card p-5">
-      <h2 className="text-base font-semibold tracking-tight text-stone-900">{title}</h2>
-      {description && <p className="mt-1 text-sm text-stone-600">{description}</p>}
+    <section className="rounded-2xl bg-surface p-5 shadow-card sm:p-7">
+      <h2 className="text-[1.2rem] font-bold text-ink">{title}</h2>
+      {description && <p className="mt-1 text-sm text-ink-2">{description}</p>}
       <div className="mt-4 grid gap-5 sm:grid-cols-6">{children}</div>
     </section>
   );
@@ -118,14 +118,14 @@ function Block({ title, description, children }: { title: string; description?: 
 function OptionalBlock({ title, open, children }: { title: string; open: boolean; children: ReactNode }) {
   return (
     <details open={open || undefined} className="group rounded-2xl bg-surface shadow-card">
-      <summary className="flex cursor-pointer list-none items-center justify-between px-5 py-4 select-none">
-        <span className="text-base font-semibold tracking-tight text-stone-900">{title}</span>
-        <span className="text-xs text-stone-500">
+      <summary className="flex cursor-pointer list-none items-center justify-between rounded-2xl px-5 py-4 select-none sm:px-7">
+        <span className="text-[1.2rem] font-bold text-ink">{title}</span>
+        <span className="text-sm text-ink-3">
           opcional <span className="tabular-nums group-open:hidden">+</span>
           <span className="hidden tabular-nums group-open:inline">−</span>
         </span>
       </summary>
-      <div className="grid gap-5 border-t border-stone-200 p-5 sm:grid-cols-6">{children}</div>
+      <div className="grid gap-5 border-t border-line p-5 sm:grid-cols-6 sm:p-7">{children}</div>
     </details>
   );
 }
@@ -530,7 +530,7 @@ export function OpportunityForm({
             </label>
           </div>
           {specificCourses && (
-            <ul className="grid max-h-64 gap-2 overflow-y-auto rounded-lg border border-stone-200 p-3 sm:grid-cols-2">
+            <ul className="grid max-h-64 gap-2 overflow-y-auto rounded-xl border border-line bg-surface-2 p-3 sm:grid-cols-2">
               {courses.map((c) => {
                 const id = `course-${c.id}`;
                 return (

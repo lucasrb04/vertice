@@ -22,33 +22,35 @@ export default async function PublicarPage({ searchParams }: { searchParams: Pro
   }
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-bold tracking-tight text-stone-900">Publicar processo seletivo</h1>
+    <section className="mx-auto w-full max-w-[880px] px-4 pt-8 sm:px-6">
+      <h1 className="text-[1.75rem] leading-tight font-extrabold text-ink">Publicar processo seletivo</h1>
       {showWizard ? (
         <>
-          <p className="mt-3 text-stone-600">
+          <p className="mt-2 text-ink-2">
             Primeiro, conte sobre o projeto; depois, sobre o processo. Nada é publicado até o último passo.
           </p>
           <div className="mt-8">{wizard}</div>
         </>
       ) : (
         <>
-          <p className="mt-3 text-stone-600">Escolha o projeto do novo processo seletivo.</p>
-          <ul className="mt-8 divide-y divide-stone-200 rounded-2xl bg-surface shadow-card">
+          <p className="mt-2 text-ink-2">Escolha o projeto do novo processo seletivo.</p>
+          <ul className="mt-8 divide-y divide-line rounded-2xl bg-surface shadow-card">
             {projects.map((p) => (
               <li key={p.id}>
                 <Link
                   href={`/projetos/${p.id}/processos/novo`}
-                  className="flex items-center justify-between px-5 py-4 text-stone-900 hover:bg-stone-50"
+                  className="flex items-center justify-between gap-4 px-5 py-4 text-ink first:rounded-t-2xl last:rounded-b-2xl hover:bg-surface-2 sm:px-6"
                 >
-                  <span className="font-medium">{p.name}</span>
-                  <span className="text-sm text-brand">Novo processo →</span>
+                  <span className="font-semibold [overflow-wrap:anywhere]">{p.name}</span>
+                  <span className="shrink-0 text-sm font-semibold text-ink underline underline-offset-4">
+                    Novo processo
+                  </span>
                 </Link>
               </li>
             ))}
           </ul>
           <div className="mt-6">
-            <Button asChild variant="outline" size="lg" className="px-4">
+            <Button asChild variant="outline">
               <Link href="/publicar?novo=1">Criar novo projeto</Link>
             </Button>
           </div>

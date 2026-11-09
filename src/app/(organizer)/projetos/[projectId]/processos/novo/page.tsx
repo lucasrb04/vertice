@@ -24,14 +24,14 @@ export default async function NewOpportunityPage({
   const courses = await listCourses(project.institutionId);
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12">
+    <section className="mx-auto w-full max-w-[880px] px-4 pt-8 sm:px-6">
       <Link
         href={`/projetos/${project.id}`}
         className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2"
       >
         ← {project.name}
       </Link>
-      <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">
+      <h1 className="mt-2 text-[1.75rem] leading-tight font-extrabold text-ink">
         {source ? "Duplicar processo seletivo" : "Novo processo seletivo"}
       </h1>
       {source && (

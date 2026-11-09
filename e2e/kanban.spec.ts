@@ -82,6 +82,17 @@ test("REVIEWER move dois candidatos para Entrevista com mensagem e o aluno vê",
   await expect(page.getByText("Entrevista na sexta, às 14h.")).toBeVisible();
 });
 
+test("o quadro fica alinhado ao cabeçalho", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const { project, opportunity } = await boardWithTwoCandidates(page);
+  await page.goto(`/projetos/${project.id}/processos/${opportunity.id}/candidatos`);
+  const header = await page.getByRole("banner").locator("> div > div").boundingBox();
+  const title = await page.getByRole("heading", { level: 1, name: "Candidatos" }).boundingBox();
+  const firstColumn = await page.getByRole("region", { name: /^Inscrito/ }).boundingBox();
+  expect(Math.abs(title!.x - header!.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(firstColumn!.x - header!.x)).toBeLessThanOrEqual(1);
+});
+
 test("o fluxo completo funciona só com teclado", async ({ page }) => {
   const { project, opportunity, ana, bia } = await boardWithTwoCandidates(page);
   await page.goto(`/projetos/${project.id}/processos/${opportunity.id}/candidatos`);

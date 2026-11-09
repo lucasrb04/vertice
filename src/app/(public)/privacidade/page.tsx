@@ -11,8 +11,8 @@ const UPDATED_AT = "8 de novembro de 2026";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-10 border-t border-stone-200 pt-8 first-of-type:mt-8">
-      <h2 className="font-heading text-xl font-semibold tracking-tight text-stone-900">{title}</h2>
+    <section className="mt-10 border-t border-line pt-8 first-of-type:mt-8">
+      <h2 className="text-[1.25rem] font-bold text-ink">{title}</h2>
       <div className="mt-3 space-y-3 leading-relaxed text-stone-700">{children}</div>
     </section>
   );
@@ -40,10 +40,10 @@ const ContactLink = () => (
 
 export default function PrivacidadePage() {
   return (
-    <div className="bg-stone-50 px-4 py-12">
-      <article className="mx-auto max-w-3xl rounded-md border border-stone-200 bg-white p-6 sm:p-10">
-        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">Atualizada em {UPDATED_AT}</p>
-        <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">Política de Privacidade</h1>
+    <div className="px-4 pt-8 sm:px-6">
+      <article className="mx-auto max-w-[880px] rounded-[20px] bg-surface p-6 shadow-card sm:p-10">
+        <h1 className="text-[1.75rem] leading-tight font-extrabold text-ink">Política de Privacidade</h1>
+        <p className="mt-1 text-sm text-ink-3">Atualizada em {UPDATED_AT}</p>
         <p className="mt-4 leading-relaxed text-stone-700">
           Esta política explica quais dados pessoais o Vértice trata, para quê, com quem eles são compartilhados e como
           você exerce seus direitos, conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018, a LGPD).

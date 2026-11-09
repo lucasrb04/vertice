@@ -36,7 +36,7 @@ function CandidateCard({
   const showControls = canMove && !card.isOwn;
 
   return (
-    <li className="space-y-2 rounded-2xl bg-surface shadow-card p-3">
+    <li className="space-y-2.5 rounded-xl bg-surface p-3.5 shadow-card">
       <div className="flex items-start gap-2.5">
         {showControls && (
           <Checkbox
@@ -47,7 +47,7 @@ function CandidateCard({
           />
         )}
         <div className="min-w-0 space-y-0.5">
-          <p className="font-medium [overflow-wrap:anywhere] text-stone-900">{card.name}</p>
+          <p className="font-bold [overflow-wrap:anywhere] text-ink">{card.name}</p>
           {details.length > 0 && (
             <p className="text-sm [overflow-wrap:anywhere] text-stone-600">{details.join(" · ")}</p>
           )}
@@ -56,7 +56,7 @@ function CandidateCard({
         </div>
       </div>
       <details className="text-sm">
-        <summary className="cursor-pointer rounded-sm text-brand select-none">
+        <summary className="cursor-pointer rounded-sm font-semibold text-ink underline underline-offset-4 select-none">
           Abrir<span className="sr-only"> {card.name}</span>
         </summary>
         <dl className="mt-2 space-y-2 [overflow-wrap:anywhere]">
@@ -92,7 +92,7 @@ function CandidateCard({
           <div>
             <dt className="text-xs text-stone-500">Histórico</dt>
             <dd>
-              <ol className="mt-1 space-y-1.5 border-l-2 border-stone-200 pl-3">
+              <ol className="mt-1 space-y-1.5 rounded-lg bg-surface-2 px-3 py-2">
                 {card.history.map((h, i) => (
                   // biome-ignore lint/suspicious/noArrayIndexKey: lista fixa, só de exibição, que não muda de ordem.
                   <li key={`${h.createdAt.toISOString()}-${i}`}>
@@ -166,9 +166,9 @@ export function ApplicationBoard({ board }: { board: Board }) {
         <div
           role="group"
           aria-label="Candidatos selecionados"
-          className="sticky top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-surface shadow-card px-3 py-2"
+          className="sticky top-2 z-10 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl bg-surface px-4 py-2.5 shadow-card-hover"
         >
-          <p aria-live="polite" className="tabular-nums text-xs text-stone-600">
+          <p aria-live="polite" className="text-sm font-medium text-ink-2 tabular-nums">
             {selectedCards.length === 1 ? "1 selecionado" : `${selectedCards.length} selecionados`}
             {overLimit && ` · até ${MOVE_ITEMS_MAX} de cada vez`}
           </p>
@@ -203,19 +203,24 @@ export function ApplicationBoard({ board }: { board: Board }) {
       </p>
 
       {/* `relative`: sem ele, os textos `sr-only` dos cards escapam da rolagem e alargam a página. */}
-      <div className="relative grid gap-6 md:flex md:gap-3 md:overflow-x-auto md:pb-2">
+      <div className="relative grid gap-5 md:flex md:gap-3.5 md:overflow-x-auto md:pb-2">
         {board.columns.map((column) => (
           <section
             key={column.status}
             aria-labelledby={`etapa-${column.status}`}
-            className="min-w-0 md:min-w-60 md:flex-1"
+            className="min-w-0 rounded-2xl bg-surface-2 p-3 md:min-w-56 md:flex-1"
           >
-            <h2 id={`etapa-${column.status}`} className="flex items-baseline gap-2 font-medium text-stone-900">
+            <h2
+              id={`etapa-${column.status}`}
+              className="flex items-baseline gap-2 px-1 pt-0.5 text-[1.05rem] font-bold text-ink"
+            >
               {APPLICATION_STATUS_LABELS[column.status]}
-              <span className="tabular-nums text-sm font-normal text-stone-500">{column.cards.length}</span>
+              <span className="rounded-[7px] bg-[#ece7dd] px-1.5 text-[0.82rem] font-bold text-ink tabular-nums">
+                {column.cards.length}
+              </span>
             </h2>
             {column.cards.length === 0 ? (
-              <p className="mt-2 text-sm text-stone-500">Nenhum candidato.</p>
+              <p className="mt-2 px-1 text-sm text-ink-3">Nenhum candidato.</p>
             ) : (
               <ul className="mt-2 space-y-2">
                 {column.cards.map((card) => (

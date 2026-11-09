@@ -26,14 +26,14 @@ export default async function EditProjectPage({ params }: { params: Promise<{ pr
   const { project } = await loadProjectEditPage(projectId);
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12">
+    <section className="mx-auto w-full max-w-[880px] px-4 pt-8 sm:px-6">
       <Link
         href={`/projetos/${project.id}`}
         className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2"
       >
         ← {project.name}
       </Link>
-      <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">Editar projeto</h1>
+      <h1 className="mt-2 text-[1.75rem] leading-tight font-extrabold text-ink">Editar projeto</h1>
       <div className="mt-8">
         <ProjectEditForm projectId={project.id} initialValues={toDraft(project)} />
       </div>

@@ -10,11 +10,10 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
   }, [error]);
 
   return (
-    <section className="bg-stone-50 px-4 py-16">
-      <div className="mx-auto max-w-xl rounded-md border border-stone-200 bg-white p-8">
-        <p className="tabular-nums text-xs tracking-wide text-stone-500 uppercase">Erro</p>
-        <h1 className="mt-2 text-[1.75rem] leading-tight font-extrabold text-ink">Algo deu errado</h1>
-        <p className="mt-3 text-stone-600">Não foi possível carregar esta página agora. Tente de novo em instantes.</p>
+    <section className="px-4 pt-10 sm:pt-16">
+      <div className="mx-auto max-w-xl rounded-[20px] bg-surface p-7 shadow-card sm:p-9">
+        <h1 className="text-[1.75rem] leading-tight font-extrabold text-ink">Algo deu errado</h1>
+        <p className="mt-3 text-ink-2">Não foi possível carregar esta página agora. Tente de novo em instantes.</p>
         <Button type="button" variant="outline" className="mt-6" onClick={reset}>
           Tentar de novo
         </Button>

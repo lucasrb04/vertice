@@ -42,7 +42,7 @@ export function ProjectEditForm({ projectId, initialValues }: { projectId: strin
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-4">
-      <section className="rounded-2xl bg-surface shadow-card p-5">
+      <section className="rounded-2xl bg-surface p-5 shadow-card sm:p-7">
         <ProjectFields values={values} onChange={setValues} errors={errors} />
       </section>
       <FormMessage message={message} />

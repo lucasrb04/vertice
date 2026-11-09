@@ -10,7 +10,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
 
   return (
     <html lang="pt-BR">
-      <body style={{ margin: 0, background: "#fafaf9", color: "#1c1917", fontFamily: "system-ui, sans-serif" }}>
+      <body style={{ margin: 0, background: "#f5f2ec", color: "#1f1b16", fontFamily: "system-ui, sans-serif" }}>
         <section style={{ padding: "4rem 1rem" }}>
           <div
             style={{
@@ -18,7 +18,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               margin: "0 auto",
               padding: "2rem",
               background: "#fff",
-              border: "1px solid #e7e5e4",
+              border: "1px solid #e6e0d4",
               borderRadius: "0.375rem",
             }}
           >
@@ -27,14 +27,14 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
                 margin: 0,
                 fontFamily: "ui-monospace, monospace",
                 fontSize: "0.75rem",
-                color: "#78716c",
+                color: "#6f675b",
                 textTransform: "uppercase",
               }}
             >
               Erro
             </p>
             <h1 style={{ margin: "0.5rem 0 0", fontSize: "1.5rem" }}>Algo deu errado</h1>
-            <p style={{ marginTop: "0.75rem", color: "#57534e" }}>
+            <p style={{ marginTop: "0.75rem", color: "#5a5348" }}>
               Não foi possível carregar o Vértice agora. Tente de novo em instantes.
             </p>
             <button
@@ -43,7 +43,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
               style={{
                 marginTop: "1.5rem",
                 padding: "0.5rem 1rem",
-                border: "1px solid #e7e5e4",
+                border: "1px solid #e6e0d4",
                 borderRadius: "0.375rem",
                 background: "#fff",
                 cursor: "pointer",

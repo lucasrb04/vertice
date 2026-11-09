@@ -24,14 +24,14 @@ export default async function EditOpportunityPage({
   const courses = isOpen ? await listCourses(project.institutionId) : [];
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12">
+    <section className="mx-auto w-full max-w-[880px] px-4 pt-8 sm:px-6">
       <Link
         href={`/projetos/${project.id}`}
         className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2"
       >
         ← {project.name}
       </Link>
-      <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">Editar processo seletivo</h1>
+      <h1 className="mt-2 text-[1.75rem] leading-tight font-extrabold text-ink">Editar processo seletivo</h1>
       <div className="mt-8">
         {isOpen ? (
           <OpportunityForm
@@ -45,7 +45,7 @@ export default async function EditOpportunityPage({
             questionLockedHint={hasApplications ? QUESTION_LOCKED : undefined}
           />
         ) : (
-          <div className="space-y-4 rounded-2xl bg-surface shadow-card p-5">
+          <div className="space-y-4 rounded-2xl bg-surface p-5 shadow-card sm:p-7">
             <p className="font-medium text-stone-900">{values.title}</p>
             <p role="status" className="text-sm text-stone-700">
               {OPPORTUNITY_CLOSED}

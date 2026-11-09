@@ -10,7 +10,8 @@
       "!reports",
       "!research_notes",
       "!**/*.md",
-      "!tests/search-eval/baseline.json"
+      "!tests/search-eval/baseline.json",
+      "!docs/superpowers/specs/assets"
     ]
   },
   "formatter": {

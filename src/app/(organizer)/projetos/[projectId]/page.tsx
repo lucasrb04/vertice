@@ -1,3 +1,4 @@
+import { Shell } from "@/components/layout/shell";
 import { ProjectPanel } from "@/components/projects/project-panel";
 import { PublishNotice } from "@/components/projects/publish-notice";
 import { getEnv } from "@/env";
@@ -24,7 +25,7 @@ export default async function ProjectPanelPage({
   const publicUrl = notice ? processPublicUrl(getEnv().NEXT_PUBLIC_APP_URL, notice.opportunity.slug) : "";
 
   return (
-    <section className="mx-auto max-w-4xl px-4 py-12">
+    <Shell className="mt-8 space-y-6">
       {notice && (
         <PublishNotice
           kind={notice.kind}
@@ -50,6 +51,6 @@ export default async function ProjectPanelPage({
         hidden={hidden}
         hiddenReason={hiddenReason}
       />
-    </section>
+    </Shell>
   );
 }

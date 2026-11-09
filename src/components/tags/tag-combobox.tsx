@@ -109,14 +109,14 @@ export function TagCombobox({
             return (
               <li
                 key={key}
-                className="inline-flex items-center gap-1 rounded-md border border-stone-200 bg-stone-100 py-0.5 pr-1 pl-2 tabular-nums text-xs text-stone-700"
+                className="inline-flex items-center gap-1 rounded-full border border-line bg-surface py-0.5 pr-1 pl-2.5 text-sm text-ink"
               >
                 {name}
                 <button
                   type="button"
                   aria-label={`Remover ${name}`}
                   onClick={() => onChange(removeTagRef(value, key))}
-                  className="rounded-sm p-0.5 text-stone-500 hover:bg-stone-200 hover:text-stone-900"
+                  className="rounded-full p-0.5 text-ink-3 hover:bg-fact hover:text-ink"
                 >
                   <XIcon className="size-3" />
                 </button>
@@ -125,7 +125,7 @@ export function TagCombobox({
           })}
         </ul>
       )}
-      <Command shouldFilter={false} label={label} className="rounded-lg! border border-stone-200 bg-white p-0">
+      <Command shouldFilter={false} label={label} className="rounded-[10px]! border border-line bg-surface p-0">
         <CommandInput
           value={query}
           onValueChange={changeQuery}

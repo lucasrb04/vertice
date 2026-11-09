@@ -11,14 +11,14 @@ export default async function MembersPage({ params }: { params: Promise<{ projec
   const members = await listMembers(access);
 
   return (
-    <section className="mx-auto max-w-3xl px-4 py-12">
+    <section className="mx-auto w-full max-w-[880px] px-4 pt-8 sm:px-6">
       <Link
         href={`/projetos/${access.project.id}`}
         className="text-sm font-semibold text-ink underline underline-offset-4 hover:decoration-2"
       >
         ← {access.project.name}
       </Link>
-      <h1 className="mt-2 font-heading text-3xl font-bold tracking-tight text-stone-900">Membros</h1>
+      <h1 className="mt-2 text-[1.75rem] leading-tight font-extrabold text-ink">Membros</h1>
       <p className="mt-3 text-stone-600">
         O dono gerencia os membros. Administradores editam o projeto e os processos; revisores só acompanham.
       </p>
