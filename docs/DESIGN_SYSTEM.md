@@ -1,79 +1,98 @@
-# Design System — Vértice
+# Design System — Identidade Ipê
 
-Este documento define a identidade visual, padrões de componentes, tipografia e diretrizes de design para o projeto **Vértice** (plataforma de vagas e projetos da UNIFEI). O objetivo principal é garantir que a aplicação fuja completamente dos clichês visuais de softwares gerados por inteligência artificial (evitando fundos escuros com gradientes neon roxo/azul, sombras pesadas e cards genéricos), adotando uma estética **Editorial Acadêmica / Moderna** (estilo Read.cv, Linear ou Are.na).
+Identidade visual do Vértice desde a etapa 4 do plano de UI/UX (D51). Substitui a estética "Editorial Acadêmica"
+(D25–D27). Spec: [`superpowers/specs/2026-11-09-identidade-ipe-design.md`](superpowers/specs/2026-11-09-identidade-ipe-design.md);
+mockup de referência: [`superpowers/specs/assets/2026-11-09-processos-mockup.html`](superpowers/specs/assets/2026-11-09-processos-mockup.html).
 
-> Decisões visuais consolidadas em [`DECISIONS.md`](DECISIONS.md) (D25–D29).
+A referência do autor foi a listagem do Welcome to the Jungle: conceito e sensação (filtros laterais, cards largos,
+pílulas, creme quente com amarelo forte), nunca a marca, a fonte ou o amarelo deles.
 
-## 1. Princípios Visuais Fundamentais
+## 1. Princípios
 
-- **Clareza e Densidade Informacional:** O estudante universitário quer ver prazos, bolsas e requisitos de forma rápida. Menos firulas visuais, mais escaneabilidade.
-- **Contraste Limpo e Neutro:** Paleta baseada em tons de cinza/stone frios e quentes, com acentos de cor funcionais e elegantes (azul institucional `#0F3D75`, esmeralda para match alto e âmbar para prazos próximos).
-- **Bordas Delicadas e Linhas Limpas:** Uso extensivo de bordas finas (`1px solid border-border`) em vez de sombras pesadas (`drop-shadow` / `box-shadow`).
-- **Tipografia com Personalidade:** Combinação de uma fonte sem-serifa geométrica/limpa para títulos com fontes monoespaçadas para dados técnicos (prazos, códigos, tags, porcentagens de match).
+- **Acolhedor e prático:** fundo creme, cards brancos macios, um amarelo que convida; o que decide uma candidatura
+  (prazo, bolsa, horas, requisitos) aparece em etiquetas escaneáveis.
+- **Cor com função:** amarelo para a ação principal e o estado ativo; rosa para "filtrando" e "abre em"; verde para
+  bolsa e sucesso; laranja para prazo curto; vermelho para erro e ação destrutiva; uma cor por categoria de projeto.
+- **Amarelo nunca é texto.** Texto sobre amarelo é sempre `ink`. Links são `ink` sublinhados.
+- **Uma casca só:** toda página parte de `max-w-[1320px]` com 16/24px de margem (`<Shell>`).
+- **Sem fonte mono na interface:** números usam `tabular-nums`.
 
-## 2. Paleta de Cores (Tokens CSS / Tailwind)
+## 2. Cores (`src/app/globals.css`)
 
-### Modo Claro (Padrão Principal)
+| Token (Tailwind) | Valor | Uso |
+| --- | --- | --- |
+| `ground` | `#f5f2ec` | fundo de todas as páginas |
+| `surface` | `#ffffff` | cards, painéis, cabeçalho, campos |
+| `surface-2` | `#faf8f4` | grupos dentro de painéis, colunas do Kanban, blocos de dados |
+| `fact` | `#f6f3ee` | fundo das etiquetas de fato e selos neutros |
+| `ink` | `#1f1b16` | texto principal, botão escuro, foco, links, caixas marcadas |
+| `ink-2` | `#5a5348` | texto secundário |
+| `ink-3` | `#6f675b` | metadados (4,99:1 sobre `ground`, 5,57:1 sobre branco) |
+| `line` / `line-strong` | `#e6e0d4` / `#cfc7b8` | bordas / hover de bordas |
+| `ipe` / `ipe-hover` | `#f4bf3a` / `#eab12a` | botão principal, pílula e aba ativas, marca |
+| `ipe-soft` | `#fcf0cc` | dica para quem publica, realce da busca (`<mark>`), seleção de texto |
+| `rosa-soft` / `rosa-ink` | `#f7dde6` / `#6b2340` | "Filtrando por", "Inscrições abrem em", avatar sem foto |
+| `money-soft` / `money-ink` | `#e7f3e5` / `#1e5a33` | etiqueta de bolsa, "Candidatura enviada", status ativo |
+| `urgent-soft` / `urgent-ink` | `#fff0e0` / `#a24b00` | prazo em até 3 dias |
+| `danger-soft` / `danger-ink` | `#fdecea` / `#b42318` | erros, alertas e botão destrutivo |
 
-| Elemento | Token / Valor |
-| --- | --- |
-| Background Geral | `stone-50` (`#fafaf9`) |
-| Background de Superfícies / Cards | `white` (`#ffffff`) com borda `stone-200` (`#e7e5e4`) |
-| Texto Primário (Headings) | `stone-900` (`#1c1917`) |
-| Texto Secundário (Descrições) | `stone-600` (`#57534e`) |
-| Cor de Destaque / Acento (Brand Primary) | Azul Institucional `#0F3D75` (token CSS `--brand`) |
-| Badge de Match (Compatibilidade Alta ≥ 80%) | Fundo `emerald-50`, Texto `emerald-700`, Borda `emerald-200` |
-| Badge de Vaga (IC / Extensão / Equipe) | Fundo `stone-100`, Texto `stone-700` |
-| Prazo Encerrando (≤ 7 dias) | Âmbar `#B45309` (`amber-700`); texto de prazo usa `amber-700` para contraste AA sobre branco (D44) |
+Todos os pares de texto passam AA (≥ 4,5:1). A escala `stone-*` do Tailwind está remapeada para esses neutros
+quentes e `brand` aponta para `ink`, para código antigo não voltar ao cinza frio; código novo usa os tokens acima.
 
-### Modo Escuro (Fora do MVP)
+**Cor por categoria** (`CATEGORY_COLORS` em `src/components/vitrine/project-tile.tsx`):
 
-Os tokens são definidos como variáveis CSS para permitir o modo escuro no futuro, mas ele **não será implementado no MVP**. Valores de referência:
-
-| Elemento | Token / Valor |
-| --- | --- |
-| Background Geral | `stone-950` (`#0c0a09`) |
-| Background de Superfícies / Cards | `stone-900` (`#1c1917`) com borda `stone-800` (`#292524`) |
-| Texto Primário | `stone-100` (`#f5f5f4`) |
-| Texto Secundário | `stone-400` (`#a8a29e`) |
+| Categoria | Fundo | Tinta |
+| --- | --- | --- |
+| Iniciação científica | `#dde8fb` | `#1d3f8f` |
+| Extensão | `#dcefdf` | `#1e5a33` |
+| Projeto especial | `#fde3cf` | `#8a3a05` |
+| PET | `#ebe1fa` | `#4f2a8f` |
+| Empresa júnior | `#d6f0ee` | `#0f5b56` |
+| Laboratório | `#fbdfe3` | `#8c2236` |
+| Outro | `#eee9df` | `#5a5348` |
 
 ## 3. Tipografia
 
-- **Títulos e Headings:** **Plus Jakarta Sans** (`font-heading`), pesos 600/700, `tracking-tight` (`-0.02em`).
-- **Corpo de Texto:** **Inter** (`font-sans`), pesos 400 para texto corrente e 500 para destaques inline.
-- **Dados Técnicos, Badges, Prazos e % de Match:** **JetBrains Mono** (`font-mono`). Todas carregadas via `next/font`. Ex: `88% Match`, `Prazo: 14/11`, `12h/sem`.
+- **Bricolage Grotesque** (`font-heading`, 500–800) em `h1`–`h4`, com `letter-spacing: -0.015em`. A marca usa 800 e
+  −0,03em.
+- **Figtree** (`font-sans`, 400–700) no resto; corpo 16px, nunca abaixo de 14px.
+- Escala usada: título de página `text-[1.75rem] font-extrabold`; título de processo/projeto `1.6rem → 2.1rem`;
+  título de card `1.14rem → 1.32rem font-bold`; título de seção `1.2rem font-bold`.
+- Carregadas por `next/font/google` em `src/app/layout.tsx` (auto-hospedadas).
 
-## 4. Diretrizes de Componentes (Evitando o Padrão "IA Generativa")
+## 4. Forma e profundidade
 
-### ❌ O que NÃO fazer (Clichês de IA)
+- Raios: cards/painéis `rounded-2xl` (16px); cabeçalho 20px; botões 11px; campos 10px; etiquetas 9px; habilidades
+  e tags em pílula.
+- Sombra `shadow-card` (`0 1px 2px` + `0 4px 14px`, marrom a 5%) em cards brancos sem borda; `shadow-card-hover` no
+  hover (com borda `line-strong`) e em diálogos. Nada de sombra dura.
+- Foco: contorno de 3px `ink` com afastamento de 2px em todo elemento interativo (global em `:focus-visible`).
+- Movimento: entrada dos cards (`animate-card-in`, 280ms, ease-out exponencial) e a folha de filtros do celular;
+  ambos desligados com `prefers-reduced-motion`.
 
-- Fundos totalmente pretos com gradientes mesh em roxo, azul neon e rosa choque.
-- Cards com sombras exageradas (`shadow-2xl` em tudo) e cantos arredondados excessivos (`rounded-3xl`).
-- Ícones genéricos coloridos flutuando em caixas coloridas ao lado de cada título de seção.
-- Efeitos de brilho (glow) em botões principais.
+## 5. Componentes
 
-### ✅ O que FAZER (Padrão Vértice / Editorial)
+- **Marca** (`src/components/layout/brand.tsx`): quadrado amarelo com "V" e ponto no vértice + "vértice". O mesmo
+  desenho é o favicon (`src/app/icon.svg`).
+- **Cabeçalho**: barra branca arredondada sobre o fundo; pílulas `NavPill` com `aria-current="page"` (amarela quando
+  ativa). Abaixo de 1100px as pílulas da conta vão para o menu do avatar; abaixo de 640px, só marca e conta.
+- **Botões** (`src/components/ui/button.tsx`): `default` (amarelo), `outline` (branco com borda), `ink` (escuro),
+  `secondary`, `ghost`, `destructive` (`danger-soft` com borda), `link`. Alturas 40/36/44px.
+- **Campos**: 44px, texto 16px, borda `line`, foco com borda `ink`.
+- **Quadrado do projeto** (`ProjectTile`): sigla ou até três iniciais (sem preposições) na cor da categoria; `sm` 40px,
+  `md` 48/60px, `lg` 64/72px. É decorativo: o nome do projeto sempre aparece ao lado.
+- **Card de processo** (`OpportunityCard`): um por linha; título é o único link e cobre o card; etiquetas de fato com
+  ícone Lucide 16px; habilidades em pílula; rodapé com prazo, forma de inscrição, "Publicado há…" e "Ver processo"
+  (visual).
+- **Painel de filtros** (`Filters` + `FilterSheet*`): coluna de 340px fixa ao rolar no desktop; abaixo de 1100px,
+  folha modal que sobe de baixo (só com JavaScript, via `@custom-variant scripting`). "Filtrando por" em rosa só com
+  algo ativo; grupos em `<details>` com contador amarelo.
+- **Abas de situação** (`SituationTabs`): links com `aria-current`, contador em pílula escura na aba ativa.
+- **Estados vazios** (`EmptyResults`): `none`, `tab` e `filtered`, sempre com uma ação.
 
-- **Cards de Vagas na Timeline:** Fundo branco, borda sutil `stone-200`, hover com transição suave na borda (`hover:border-stone-400` e leve elevação `shadow-xs`).
-- **Tags Abertas:** Badges compactas em formato pílula (`rounded-md` ou `rounded-full`), fundo `stone-100`, texto `stone-700`, tamanho de fonte `text-xs font-mono`.
-- **Botões:**
-  - **Primário:** Fundo escuro (`stone-900` com texto branco) ou azul institucional sólido, cantos moderados (`rounded-lg`). Hover com inversão ou escurecimento simples.
-  - **Secundário:** Estilo Outline (borda `stone-300`, fundo transparente, texto `stone-800`).
-- **Badges de Match:** Sempre destacadas no canto superior direito do card da vaga com fonte monoespaçada e ícone sutil de alvo/compatibilidade.
+## 6. Regras que não mudam
 
-## 5. Estrutura Visual da Timeline de Vagas
-
-### Filtros no Topo (Barra Horizontal / Sticky)
-
-- Input de busca por palavra-chave com atalho de teclado simulado (`⌘K` ou `/`).
-- Dropdowns limpos e minimalistas para Filtrar por Tipo (IC, Extensão, Competição) e Área de Interesse.
-
-### Listagem de Cards
-
-- Grid responsivo (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) ou formato de lista limpa tipo feed do GitHub/Read.cv.
-- Cada card exibe:
-  - Nome do Projeto / Laboratório / Equipe (com selo discreto de verificação institucional).
-  - Título da Vaga em destaque (`font-semibold text-stone-900`).
-  - Tipo de fomento/bolsa (Bolsa FAPEMIG, Voluntário, etc.).
-  - Tags técnicas resumidas (ex: Python, CAD, Gestão de Projetos).
-  - Rodapé do card: Prazo restante (Encerra em 5 dias) + Botão de Ação ("Ver Detalhes / Inscrever-se").
+- Sem kicker (rótulo pequeno em caixa alta) acima de título; sem texto em gradiente; sem borda lateral colorida maior
+  que 1px; sem sombra dura; sem emoji como ícone (só `lucide-react`).
+- Nenhuma página com rolagem horizontal a 360px.
+- Modo escuro segue fora do MVP (D28).

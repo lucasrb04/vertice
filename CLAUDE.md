@@ -5,7 +5,7 @@ Este arquivo define as diretrizes, comandos e padrões arquiteturais para o agen
 ## 1. Visão Geral do Projeto
 
 - **Nome do Projeto:** Vértice (Plataforma de Divulgação de Vagas, ICs, Extensão e Projetos Especiais da UNIFEI).
-- **Objetivo:** MVP robusto, seguro, rápido e com estética Editorial Acadêmica ("Anti-cara de IA"), pronto para deploy em container na Oracle Cloud Infrastructure (OCI).
+- **Objetivo:** MVP robusto, seguro, rápido e com a identidade visual Ipê (acolhedora e prática, D51), pronto para deploy em container na Oracle Cloud Infrastructure (OCI).
 
 ### Stack Tecnológica
 
@@ -42,13 +42,13 @@ Este arquivo define as diretrizes, comandos e padrões arquiteturais para o agen
 
 ### Estética Visual
 
-Siga rigorosamente o guia em [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md). Proibidos gradientes neon, fundos totalmente pretos sem propósito ou sombras exageradas. Priorize o estilo Editorial Acadêmico (limpo, bordas finas `border-stone-200`, fontes mono para dados técnicos).
+Siga rigorosamente o guia em [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) (identidade Ipê, D51): fundo creme, cards brancos com sombra suave, amarelo `ipe` só em fundos (nunca como texto), cor por categoria, Bricolage Grotesque + Figtree, sem fonte mono. Use os tokens semânticos (`bg-surface`, `text-ink`, `bg-ipe`…) e o `<Shell>` para a largura. Proibidos gradientes neon, sombras duras e rótulos pequenos acima de títulos.
 
 ### Organização de Pastas (Next.js App Router)
 
 Estrutura completa em [`docs/ARCHITECTURE.md §3`](docs/ARCHITECTURE.md). Resumo:
 
-- `src/app/(public)`: Timeline pública, detalhes de vagas e páginas de projetos.
+- `src/app/(public)`: Lista de processos na página inicial (`/`), detalhes de processos e páginas de projetos.
 - `src/app/(auth)`: Página de login ("Entrar com Google").
 - `src/app/(student)`: Onboarding, perfil e "Minhas Candidaturas".
 - `src/app/(organizer)`: Wizard de projeto + vaga, painel do projeto e Kanban.

@@ -23,7 +23,7 @@ Este documento define a arquitetura de software, modelagem de banco de dados, re
 | **Banco de Dados** | **PostgreSQL 16 (Alpine)** | Suporte robusto a extensões de busca textual (`pg_trgm`, `unaccent`), índices GIN e transações ACID. |
 | **ORM & Migrations** | **Drizzle ORM** + `drizzle-kit` | Leve, SQL-like, zero overhead de binários Rust (ideal para containers Linux/ARM na OCI) e geração limpa de migrations. |
 | **Autenticação** | **Better-Auth** (Adapter Drizzle) | Sessões no Postgres, login **somente via Google OAuth** restrito a `@unifei.edu.br` (D32) e campos customizados de usuário. |
-| **Estilização & UI** | **Tailwind CSS v4** + **shadcn/ui** (Radix UI) | Componentes acessíveis e customizáveis para construir uma interface autoral (Editorial/Acadêmica) sem "cara de IA". |
+| **Estilização & UI** | **Tailwind CSS v4** + **shadcn/ui** (Radix UI) | Componentes acessíveis e customizáveis para construir uma interface autoral (identidade Ipê, D51) sem "cara de IA". |
 | **Validação & Forms** | **Zod** + **React Hook Form** | Validação compartilhada entre cliente e servidor, bloqueando payloads malformados ou protocolos inseguros (`javascript:`). |
 | **Testes** | **Vitest** + **Playwright** | Unidade (match, tags, URLs) e integração contra Postgres real de teste; E2E nos fluxos críticos. |
 | **Qualidade de código** | **Biome** + **ESLint** enxuto | Biome formata, organiza imports e faz a maior parte do lint em menos de um segundo; o ESLint fica só com as regras do Next e do `react-hooks`, que o Biome não cobre. |
@@ -54,13 +54,13 @@ vertice-unifei/
 ├── drizzle/                      # Migrations SQL geradas pelo drizzle-kit
 ├── src/
 │   ├── app/                      # Rotas do Next.js App Router
-│   │   ├── (public)/             # Rotas públicas: / (home), /processos, /processo/[slug] (+ /edital), /projeto/[slug]
+│   │   ├── (public)/             # Rotas públicas: / (lista de processos), /processos (redireciona para /), /processo/[slug] (+ /edital), /projeto/[slug]
 │   │   ├── (auth)/               # Login ("Entrar com Google")
 │   │   ├── (student)/            # Onboarding, Perfil Completo, Minhas Candidaturas
 │   │   ├── (organizer)/          # Wizard de Criação (Projeto + Vaga), Painel do Projeto, Kanban
 │   │   ├── admin/                # Portal do SYSTEM_ADMIN (Dashboard, Projetos, Merge de Tags, Audit)
 │   │   └── api/                  # Webhooks/Rotas do Better-Auth e Cron de Alertas
-│   ├── proxy.ts                  # Proxy do Next.js em /processos: limite de buscas por IP (429 com link de volta)
+│   ├── proxy.ts                  # Proxy do Next.js em /: limite de buscas por IP (429 com link de volta)
 │   ├── components/
 │   │   ├── ui/                   # Primitivos do shadcn/ui customizados pelo Design System
 │   │   ├── layout/               # Header, Footer, CommandBar, Navegação
@@ -653,7 +653,7 @@ Quando o `SYSTEM_ADMIN` aciona a ferramenta de **Merge de Tags** (mesclando `sou
 4. Recalcula o `usageCount` de `targetTagId`, remove `sourceTagId` e grava um registro em `audit_logs`.
 
 ### 6.3. Query de Busca na Timeline
-`/processos` (`searchOpportunities` em `src/lib/public/queries.ts`; parâmetros validados por `parseVitrineParams`, inválidos são ignorados) combina:
+A lista em `/` (`searchOpportunities` em `src/lib/public/queries.ts`; parâmetros validados por `parseVitrineParams`, inválidos são ignorados) combina:
 * **Busca por Texto Livre (`q`, até 100 caracteres), D39:** cascata no PostgreSQL, sem motor externo. `planSearch` (`src/lib/search/query.ts`) monta o plano e `searchOpportunities` aplica:
   1. **Corretor por vocabulário** (`src/lib/search/corrector.ts`): palavra que já existe no vocabulário nunca é corrigida; as demais desfazem o diminutivo (`casinha` → `casa`) ou trocam pela palavra pública mais próxima por distância de edição (`fuzzystrmatch`, `pyhton` → `python`), com travas contra falsas correções. O vocabulário (`search_vocabulary`) vem só de processos públicos. `corrigir=0` desliga a etapa.
   2. **Sinônimos e aliases de tag** (`search_synonyms`, `tag_aliases`): cada palavra vira um grupo de variantes; basta casar uma.
@@ -668,6 +668,7 @@ Quando o `SYSTEM_ADMIN` aciona a ferramenta de **Merge de Tags** (mesclando `sou
   * `course`: Código do curso da UNIFEI (`CCO`, `ECO`, `EME`, etc.); processo sem cursos definidos sempre entra
   * `tags`: Lista de slugs de tags (`?tags=python,solidworks`), com semântica AND
   * `encerrados=1`: inclui encerrados, sempre depois dos abertos
+  * `situacao`: aba da lista (D51). `encerrando` = aberto, já recebendo inscrições e prazo até 23:59 do 7º dia (Brasília); `em-breve` = `applicationsOpenOn` depois de hoje. Contagens das abas (ignoram a aba) e por categoria (ignoram a categoria) saem com os mesmos filtros e busca, em `situationCounts` e `categoryCounts`.
   * `sort`: `relevance` (padrão com `q`), `recent` (padrão sem `q`), `deadline` (encerrando em breve) ou `popular` (`viewsCount + externalClicksCount`, D38).
   * `page`: 12 itens por página; fora do intervalo cai na página válida mais próxima.
 * A consulta exibe apenas processos abertos de projetos `ACTIVE` (`openOpportunitySql`). Público (`publicOpportunitySql`) é `status <> 'UNDER_REVIEW'` em projeto `ACTIVE` ou `ARCHIVED`; fora disso, as páginas `/processo/[slug]` e `/projeto/[slug]` respondem 404.
@@ -687,7 +688,7 @@ Como a plataforma rodará na UNIFEI (onde há forte presença de alunos de Ciên
 3. **Proteção Anti-Spam e Rate Limiting:**
    * Validação server-side do token **Cloudflare Turnstile** na criação de projeto.
    * Rate Limiter em memória (`LRU Cache` no processo Node standalone) limitando mutações por IP e por `userId` (ex: máx. 3 projetos criados por usuário por dia, máx. 20 candidaturas por hora).
-   * **Limite de buscas (`src/proxy.ts` + `src/lib/security/search-limit.ts`):** `/processos` com `q` aceita 120 buscas por minuto por IP, em memória (D22, D44). Excedido, responde 429 com `Retry-After: 60` e HTML mínimo com link para `/processos`, que nunca é limitado. Links internos para `/processos?q=` usam `prefetch={false}`, porque o prefetch gastaria o limite. Não se isenta o cabeçalho `next-router-prefetch`: abriria um desvio.
+   * **Limite de buscas (`src/proxy.ts` + `src/lib/security/search-limit.ts`):** `/` com `q` aceita 120 buscas por minuto por IP, em memória (D22, D44). Excedido, responde 429 com `Retry-After: 60` e HTML mínimo com link para `/`, que sem `q` nunca é limitado. Links internos para `/?q=` usam `prefetch={false}`, porque o prefetch gastaria o limite. Não se isenta o cabeçalho `next-router-prefetch`: abriria um desvio.
 4. **Moderação (`src/lib/moderation/service.ts`, D43, D46):**
    * `hideTarget`, `restoreTarget` e `dismissReports` exigem `SYSTEM_ADMIN` (`authorizeSystemAdmin`: não admin recebe `NotFoundError` e gera `ADMIN_ACCESS_DENIED`), motivo de 10 a 500 caracteres e alvo da mesma instituição.
    * Ocultar: projeto vai para `SUSPENDED`, processo para `UNDER_REVIEW`; o estado anterior fica em `status_before_moderation`, e restaurar volta a ele, zera a coluna e resolve as denúncias pendentes do alvo. Descartar só resolve as denúncias.

@@ -51,7 +51,7 @@ professores publicando de verdade e alunos se candidatando), com a **defesa do T
   vitrine e abrem editais externos.
 - Editais oficiais vivem fora (PDF, SIGAA, Google Forms); o Vértice aponta para eles e conta cliques.
 - Comunicação com candidatos acontece por e-mail (mudança de status com mensagem do gestor); não há chat.
-- Rotas principais hoje: vitrine `/`, busca `/processos`, processo `/processo/[slug]`, projeto `/projeto/[slug]`,
+- Rotas principais hoje: lista de processos com busca e filtros em `/` (`/processos` redireciona para ela), processo `/processo/[slug]`, projeto `/projeto/[slug]`,
   login `/entrar`, painel do usuário `/painel` (meus projetos), `/minhas-candidaturas`, publicação `/publicar`,
   gestão do projeto `/projetos/[id]` (editar, membros, processos, candidatos/Kanban), `/admin`, `/privacidade`.
 - Navegação da conta pelo menu do cabeçalho (foto/iniciais + nome).
@@ -81,7 +81,7 @@ universidades na interface.
 
 Nenhum compromisso obrigatório (confirmado pelo autor em 2026-11-08): até o nome pode mudar (o PRD ainda lista Nexo,
 Órbita, Vetor e Pulso como alternativas a Vértice). Hoje o produto usa o nome **Vértice** e o domínio
-`verticehub.online`. A estética "Editorial Acadêmica / Anti-cara de IA" de `docs/DESIGN_SYSTEM.md` (D25–D29) é a
+`verticehub.online`. A identidade visual atual é a **Ipê** (D51, `docs/DESIGN_SYSTEM.md`), escolhida pelo autor em 2026-11-09 a partir da referência do Welcome to the Jungle; ela substitui a estética "Editorial Acadêmica" e é a
 implementação atual, não um compromisso: um redesenho pode revê-la.
 
 ## Evidence on Hand
